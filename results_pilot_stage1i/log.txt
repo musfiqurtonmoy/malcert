@@ -1,0 +1,101 @@
+=== preset quick | device cuda | split random | blocks clean,attacks,ablation,smoothing,certified | commit d5bde79 | Fri Nov 13 05:14:11 2026 ===
+seed 0: train 20995 / val 3001 / test 6004; mutable dims 2313; blocks clean,attacks,ablation,smoothing,certified
+  LightGBM {'acc': 0.9953364423717521, 'f1': 0.9945226917057903, 'tpr': 0.9937451133698202, 'fpr': 0.003482298316889147, 'auc': 0.9998402698713128}  (57s)
+    [clean] epoch 1/15 loss 0.0891 (1s)
+    [clean] epoch 6/15 loss 0.0064 (2s)
+    [clean] epoch 11/15 loss 0.0014 (4s)
+    [clean] epoch 15/15 loss 0.0007 (5s)
+  MLP {'acc': 0.9910059960026649, 'f1': 0.9894572432643499, 'tpr': 0.9906176700547302, 'fpr': 0.008705745792222866, 'auc': 0.9991251712447651}
+  [block clean done in 64s]
+    [pgd] epoch 1/15 loss 0.1555 (2s)
+    [pgd] epoch 6/15 loss 0.0142 (13s)
+    [pgd] epoch 11/15 loss 0.0052 (24s)
+    [pgd] epoch 15/15 loss 0.0031 (32s)
+  PGD-AT {'acc': 0.9936708860759493, 'f1': 0.9925723221266615, 'tpr': 0.9925723221266615, 'fpr': 0.005513639001741149, 'auc': 0.9998358455282598}
+  attacks on mlp: {'constrained': {'fgsm': [0.983, 0.974, 0.718, 0.236, 0.003, 0.0], 'pgd': [0.983, 0.973, 0.686, 0.193, 0.001, 0.0]}, 'unconstrained': {'fgsm': [0.983, 0.97, 0.655, 0.186, 0.001, 0.0], 'pgd': [0.983, 0.97, 0.605, 0.148, 0.001, 0.0]}}
+  attacks on pgd_at: {'constrained': {'fgsm': [0.992, 0.991, 0.99, 0.981, 0.778, 0.046], 'pgd': [0.992, 0.991, 0.989, 0.976, 0.598, 0.004]}, 'unconstrained': {'fgsm': [0.992, 0.991, 0.987, 0.964, 0.436, 0.001], 'pgd': [0.992, 0.991, 0.986, 0.948, 0.31, 0.0]}}
+  [block attacks done in 38s]
+  group-transplant on MLP, detection vs r: [1.0, 0.08666666666666667, 0.013333333333333334, 0.0]
+    [ablation] epoch 1/15 loss 0.4210 (0s)
+    [ablation] epoch 6/15 loss 0.2619 (2s)
+    [ablation] epoch 11/15 loss 0.2237 (3s)
+    [ablation] epoch 15/15 loss 0.2089 (4s)
+  ablation k=1: {'clean': {'acc': 0.9748500999333778, 'f1': 0.970140399446312, 'tpr': 0.9589523064894449, 'fpr': 0.013348810214741729, 'auc': 0.9971295656384191}, 'cert_tpr': [0.9589523064894449, 0.9081313526192337, 0.7873338545738858, 0.6399530883502736, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0], 'cert_acc': [0.9748500999333778, 0.9478680879413725, 0.8822451698867422, 0.7966355762824784, 0.4596935376415723, 0.0, 0.0, 0.0, 0.0, 0.0], 'empirical_tpr': [0.9733333333333334, 0.9333333333333333, 0.81, 0.65], 'violations': 0, 'n_subsets': 9}
+    [ablation] epoch 1/15 loss 0.3049 (0s)
+    [ablation] epoch 6/15 loss 0.1396 (2s)
+    [ablation] epoch 11/15 loss 0.1151 (3s)
+    [ablation] epoch 15/15 loss 0.1012 (4s)
+  ablation k=2: {'clean': {'acc': 0.9858427714856762, 'f1': 0.9833822091886608, 'tpr': 0.9831899921813917, 'fpr': 0.012188044109112013, 'auc': 0.9991024255836843}, 'cert_tpr': [0.980453479280688, 0.9405785770132916, 0.754886630179828, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0], 'cert_acc': [0.9846768820786143, 0.9487008660892738, 0.8114590273151232, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0], 'empirical_tpr': [0.99, 0.9633333333333334, 0.82, 0.006666666666666667], 'violations': 0, 'n_subsets': 36}
+    [ablation] epoch 1/15 loss 0.2416 (0s)
+    [ablation] epoch 6/15 loss 0.0915 (2s)
+    [ablation] epoch 11/15 loss 0.0705 (3s)
+    [ablation] epoch 15/15 loss 0.0643 (4s)
+  ablation k=3: {'clean': {'acc': 0.9918387741505663, 'f1': 0.9904240766073872, 'tpr': 0.9906176700547302, 'fpr': 0.007254788160185722, 'auc': 0.9995243831217892}, 'cert_tpr': [0.990226739640344, 0.9382329945269742, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0], 'cert_acc': [0.991672218520986, 0.9447035309793471, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0], 'empirical_tpr': [0.9966666666666667, 0.9666666666666667, 0.04, 0.0], 'violations': 0, 'n_subsets': 84}
+  [block ablation done in 180s]
+    [gauss] epoch 1/15 loss 0.0947 (1s)
+    [gauss] epoch 6/15 loss 0.0083 (2s)
+    [gauss] epoch 11/15 loss 0.0029 (3s)
+    [gauss] epoch 15/15 loss 0.0017 (5s)
+  smoothing isotropic_0.25: {'sigma': 0.25, 'variant': 'isotropic', 'clean_acc': 0.996, 'abstain': 0.002, 'tpr': 0.9954128440366973}
+    [gauss] epoch 1/15 loss 0.0915 (0s)
+    [gauss] epoch 6/15 loss 0.0086 (2s)
+    [gauss] epoch 11/15 loss 0.0029 (3s)
+    [gauss] epoch 15/15 loss 0.0014 (4s)
+  smoothing subspace_0.25: {'sigma': 0.25, 'variant': 'subspace', 'clean_acc': 0.994, 'abstain': 0.0, 'tpr': 0.9908256880733946}
+    [gauss] epoch 1/15 loss 0.1031 (0s)
+    [gauss] epoch 6/15 loss 0.0146 (2s)
+    [gauss] epoch 11/15 loss 0.0062 (3s)
+    [gauss] epoch 15/15 loss 0.0050 (4s)
+  smoothing isotropic_0.5: {'sigma': 0.5, 'variant': 'isotropic', 'clean_acc': 0.998, 'abstain': 0.0, 'tpr': 1.0}
+    [gauss] epoch 1/15 loss 0.1064 (0s)
+    [gauss] epoch 6/15 loss 0.0116 (2s)
+    [gauss] epoch 11/15 loss 0.0054 (3s)
+    [gauss] epoch 15/15 loss 0.0040 (4s)
+  smoothing subspace_0.5: {'sigma': 0.5, 'variant': 'subspace', 'clean_acc': 1.0, 'abstain': 0.0, 'tpr': 1.0}
+    [gauss] epoch 1/15 loss 0.1388 (0s)
+    [gauss] epoch 6/15 loss 0.0347 (2s)
+    [gauss] epoch 11/15 loss 0.0217 (3s)
+    [gauss] epoch 15/15 loss 0.0166 (4s)
+  smoothing isotropic_1.0: {'sigma': 1.0, 'variant': 'isotropic', 'clean_acc': 0.998, 'abstain': 0.0, 'tpr': 1.0}
+    [gauss] epoch 1/15 loss 0.1332 (0s)
+    [gauss] epoch 6/15 loss 0.0295 (2s)
+    [gauss] epoch 11/15 loss 0.0164 (3s)
+    [gauss] epoch 15/15 loss 0.0139 (4s)
+  smoothing subspace_1.0: {'sigma': 1.0, 'variant': 'subspace', 'clean_acc': 0.998, 'abstain': 0.0, 'tpr': 1.0}
+  [block smoothing done in 49s]
+    [clean] epoch 1/15 loss 0.0936 (0s)
+    [clean] epoch 6/15 loss 0.0054 (1s)
+    [clean] epoch 11/15 loss 0.0013 (2s)
+    [clean] epoch 15/15 loss 0.0007 (3s)
+  certified training standard: {'clean': {'acc': 0.9920053297801465, 'f1': 0.990625, 'tpr': 0.9913995308835027, 'fpr': 0.0075449796865931515, 'auc': 0.9991748600205924}, 'cert_tpr': [0.9867083659108679, 0.9734167318217357, 0.72869429241595, 0.07857701329163409, 0.0], 'cert_acc': [0.9870086608927382, 0.9736842105263158, 0.8236175882744837, 0.17871419053964024, 0.012325116588940706], 'cert_tpr_unconstrained': [0.9867083659108679, 0.9667709147771697, 0.6907740422204848, 0.060203283815480846, 0.0], 'pgd_tpr': [0.986, 0.984, 0.965, 0.652, 0.189], 'violations': 0}
+    [pgd] epoch 1/15 loss 0.1739 (2s)
+    [pgd] epoch 6/15 loss 0.0165 (10s)
+    [pgd] epoch 11/15 loss 0.0062 (18s)
+    [pgd] epoch 15/15 loss 0.0038 (25s)
+  certified training pgd_at: {'clean': {'acc': 0.9936708860759493, 'f1': 0.9925752246971473, 'tpr': 0.9929632525410477, 'fpr': 0.005803830528148578, 'auc': 0.999829606070108}, 'cert_tpr': [0.9913995308835027, 0.9851446442533229, 0.9124315871774824, 0.0218921032056294, 0.0], 'cert_acc': [0.9925049966688874, 0.9858427714856762, 0.927381745502998, 0.09776815456362425, 0.0], 'cert_tpr_unconstrained': [0.9910086004691165, 0.9824081313526193, 0.838154808444097, 0.003518373729476153, 0.0], 'pgd_tpr': [0.993, 0.993, 0.991, 0.986, 0.966], 'violations': 0}
+    [ibp] epoch 1/30 loss 0.0943 (0s)
+    [ibp] epoch 6/30 loss 0.0065 (1s)
+    [ibp] epoch 11/30 loss 0.0111 (4s)
+    [ibp] epoch 16/30 loss 0.0162 (6s)
+    [ibp] epoch 21/30 loss 0.0187 (8s)
+    [ibp] epoch 26/30 loss 0.0091 (10s)
+    [ibp] epoch 30/30 loss 0.0084 (11s)
+  certified training ibp: {'clean': {'acc': 0.9936708860759493, 'f1': 0.9925723221266615, 'tpr': 0.9925723221266615, 'fpr': 0.005513639001741149, 'auc': 0.9994356126489926}, 'cert_tpr': [0.9921813917122753, 0.991790461297889, 0.9890539483971853, 0.9636434714620797, 0.23534010946051603], 'cert_acc': [0.9931712191872085, 0.9923384410393071, 0.9900066622251832, 0.9676882078614257, 0.512491672218521], 'cert_tpr_unconstrained': [0.9921813917122753, 0.9906176700547302, 0.9870992963252541, 0.95426114151681, 0.08092259577795152], 'pgd_tpr': [0.991, 0.991, 0.988, 0.975, 0.718], 'violations': 0}
+    [crownibp] epoch 1/30 loss 0.0961 (0s)
+    [crownibp] epoch 6/30 loss 0.0066 (2s)
+    [crownibp] epoch 11/30 loss 0.0112 (5s)
+    [crownibp] epoch 16/30 loss 0.0211 (9s)
+    [crownibp] epoch 21/30 loss 0.0233 (12s)
+    [crownibp] epoch 26/30 loss 0.0118 (14s)
+    [crownibp] epoch 30/30 loss 0.0108 (16s)
+  certified training crownibp: {'clean': {'acc': 0.9938374417055297, 'f1': 0.9927663734115347, 'tpr': 0.9925723221266615, 'fpr': 0.00522344747533372, 'auc': 0.9995575089723409}, 'cert_tpr': [0.9921813917122753, 0.9921813917122753, 0.990226739640344, 0.9714620797498046, 0.4151681000781861], 'cert_acc': [0.9935043304463691, 0.9931712191872085, 0.9910059960026649, 0.9721852098600933, 0.6307461692205196], 'cert_tpr_unconstrained': [0.9921813917122753, 0.9921813917122753, 0.9894448788115715, 0.9609069585613761, 0.19468334636434714], 'pgd_tpr': [0.991, 0.991, 0.99, 0.978, 0.866], 'violations': 0}
+    [crownibp] epoch 1/30 loss 0.0940 (0s)
+    [crownibp] epoch 6/30 loss 0.0058 (2s)
+    [crownibp] epoch 11/30 loss 0.0138 (5s)
+    [crownibp] epoch 16/30 loss 0.0152 (9s)
+    [crownibp] epoch 21/30 loss 0.0190 (12s)
+    [crownibp] epoch 26/30 loss 0.0097 (14s)
+    [crownibp] epoch 30/30 loss 0.0090 (16s)
+  certified training crownibp_asym: {'clean': {'acc': 0.9850099933377748, 'f1': 0.9826723142087024, 'tpr': 0.9976544175136826, 'fpr': 0.024376088218224026, 'auc': 0.9969101636008616}, 'cert_tpr': [0.9972634870992964, 0.99687255668491, 0.9937451133698202, 0.975371383893667, 0.1872556684910086], 'cert_acc': [0.9821785476349101, 0.9766822118587608, 0.9533644237175216, 0.75, 0.13474350433044638], 'cert_tpr_unconstrained': [0.9972634870992964, 0.9964816262705238, 0.993354182955434, 0.9667709147771697, 0.05824863174354965], 'pgd_tpr': [0.998, 0.998, 0.994, 0.985, 0.88], 'violations': 0}
+  [block certified done in 78s]
+done

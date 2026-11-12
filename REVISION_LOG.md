@@ -267,8 +267,69 @@ carry a **Basis:** line saying what they were fixed from.
   `unit_evidence.csv` and `tab_annotation_full.tex`: the two units not treated as increase-only
   (`Strings.registry`, `Section.n_empty_name`) and the five kept mutable without an observed change.
 
+### 1i. Addendum (commit `d5bde79`)
+- **1-20** `[A1, B1, B3]` **PE32 files.** 50 benign PE32 (I386) files from `C:\Windows\SysWOW64` (25 exe,
+  25 dll, 17 KB–1.7 MB), copied as `w32__<name>` (`ps_build.py corpus --set syswow64`); every edit rerun
+  on them, donors drawn within the set. Edit map per architecture: `edit_map.csv` (`arch` column),
+  `paper/tables/tab_edit_map_arch.tex`. Groups touched are the same for PE32 and PE32+ (medians equal for
+  every edit; E3 max 5 vs 6); ε needed differs little (E1 2.3 vs 1.7, E2 11.8 vs 9.8, E6 19.5 vs 27.9).
+  E4 and the E0 import rebuild produce unparsable files for 28 of 50 PE32 files (LIEF 0.10.1 builder),
+  so E4 rests on 22 PE32 files.
+  **Annotation difference:** on PE32 files alone the rule would give 4 different statuses
+  (`Strings.paths`, `DataDir.IAT.size` increase-only instead of mutable; `General.has_relocations`,
+  `Header.sizeof_headers` immutable instead of mutable/increase-only). The frozen annotation is the union
+  over both architectures, i.e. always the larger threat set, so no change is needed.
+- **1-21** `[A1, B1]` **Edit E10** (`ps_build.py`, in scope in `EDIT_SCOPE`, "plausibly
+  functionality-preserving, not verified by execution"): each field on its own: linker major/minor and image
+  major/minor set to another random value; OS and subsystem major lowered (floor 4) and minor lowered;
+  DYNAMIC_BASE and NX_COMPAT cleared. E10 changes 2–3 groups (Header plus the byte histograms) and needs
+  ε 0.9–20. OS-minor lowering never applied (every corpus file has OS minor version 0); subsystem-minor
+  applied to 6 files only.
+  **Annotation changes (8 units, immutable → mutable, all through E10 only):** `Header.dll_characteristics`
+  (10 hashed features), `.major_image_version`, `.minor_image_version`, `.major_linker_version`,
+  `.minor_linker_version`, `.major_os_version`, `.major_subsystem_version`, `.minor_subsystem_version`.
+  `Header.minor_os_version`, machine, magic, subsystem, characteristics and sizeof_code stay immutable.
+  **Final counts: mutable 2,313 (draft 2,284), increase-only 9 (draft 15), attackable groups 9 of 9.**
+  All 4,169 in-scope edited files (2,819 PE32+, 1,350 PE32) lie inside the repaired threat set.
+- **1-22** `[A1, B1]` **Extractor compatibility** (`tools/extractor_check.py` → `ps_results/extractor_check.json`,
+  `extractor_units.csv`, `paper/tables/numbers_xc.tex`, macros `\Xc...`):
+  - exact SHA-256 matches with BODMAS: 1 of 150 (`cliconfg.dll`, BODMAS label benign), vector identical
+    in all 2,381 features; no PE32 file is in BODMAS;
+  - a LightGBM trained on BODMAS (seed-0 split, run_all.py settings; test accuracy 99.53%, FPR 0.35%)
+    classifies **150 of 150** corpus originals as benign (median score 0.0000);
+  - 3 files have a value outside the range of all BODMAS rows (1 in ByteHistogram, 2 in Imports.libraries);
+    0.80% of feature entries lie outside the BODMAS-benign 1–99% band (2% for BODMAS benign by construction).
+  Conclusion: no sign that the vectors extracted here are off-distribution for BODMAS.
+- **1-23** `[B2]` **Coverage table: three levels** (`tab_coverage.tex`, `ps_results/coverage.csv`):
+  (a) inside the threat set and certified, with the measured certified detection at the r the edit needs
+  (the largest r observed for it); (b) inside but not certifiable; (c) out of scope.
+  Already (b) under the 9 EMBER groups: E3 (r = 6), E4 (7), E8 (6). E1, E2, E5, E6, E7, E10 are filled in
+  after Stage 2b (`problem_space.py --res <results>`); until then they read "to be measured".
+- **1-24** `[infra]` **Memory** (`tools/mem_dry_run.py` → `checks/memory_dry_run.json`). New
+  `load_full()` (all 134,435 rows, loaded once, float32) and `Preprocessor.fit_transform_inplace()`
+  (statistics in float64, standardised in place, row chunks). Peak RAM: 30K-subset path 1.04 GB (commit
+  2.15 GB); full data, lean path **1.46 GB** (commit 1.83 GB; one copy of X = 1.19 GiB). The naive path on the
+  full data is estimated at about 7.2 GB and was not run. Heavy jobs one at a time.
+  Test: the in-place path is checked against a float64 reference and is at least as accurate as
+  `fit`/`transform` (which accumulates in float32: up to 2e-4 relative error in sd on low-spread features).
+- **1-25** `[A6, B8]` **Backup.** Remote not yet set: creating a private GitHub repository needs the
+  author's login. Steps are in `RUN_NEXT.md` (repository is 12.8 MB; `data/`, `ps_corpus/`, `ps_tools/`
+  are not tracked).
+
+- **1-26** `[A1, B1]` **Pilot** `results_pilot_stage1i/` (commit `d5bde79`, clean, quick preset, 1 seed):
+  all 8 `violations` 0; data records 2,313 mutable, 9 increase-only, 9 attackable groups. Against
+  `results_pilot_stage1/`: clean metrics and group-ablation certificates identical (k=1: 90.8 / 78.7 / 64.0%
+  at r = 1..3); the 17 newly mutable header features enlarge the L∞ box, so certified detection at ε = 0.1
+  falls a little more (CROWN-IBP 44.9 → 41.5%, IBP 26.5 → 23.5%, asymmetric 19.8 → 18.7%) and constrained
+  PGD against PGD-AT at ε = 0.2 is stronger (64.7 → 59.8% detected). At ε = 0.05 CROWN-IBP is 97.1%
+  (draft v1, full: 97.9%).
+
+### Ideas not done
+- Execution check of edited binaries in a sandboxed VM (would turn "plausibly functionality-preserving" into
+  "verified"); out of the lean scope.
+
 ### Tests
-- **1-10** `[A1, B1]` `tests/test_threat_model.py` (8 tests): units tile the vector and respect groups;
+- **1-10** `[A1, B1]` `tests/test_threat_model.py` (9 tests since 1i): units tile the vector and respect groups;
   annotation well-formed; natural bounds hold on BODMAS; box not clipped at the training maximum; attack
   projection and certificate box describe the same set; every in-scope edited file is inside the threat set
   (groups, and box at the ε it needs); frozen annotation equals the evidence rule; block bookkeeping of
