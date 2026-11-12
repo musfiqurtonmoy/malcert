@@ -11,12 +11,12 @@ Feature unit & Group & Dim. & Kind & Draft & Repaired & Rule and evidence & Ref.
 \texttt{Strings.entropy} & Strings & 1 & value & mutable & mutable & changed by E1, E2, E3, E4, E6, E7, E8 & \citep{anderson2018learning,demetrio2021exemples} \\
 \texttt{Strings.paths} & Strings & 1 & count & monotone & \textbf{mutable} & changed by E1, E2, E3, E8; decreased under E8 & \citep{anderson2018learning,demetrio2021exemples} \\
 \texttt{Strings.urls} & Strings & 1 & count & monotone & \textbf{mutable} & changed by E1, E2, E3, E8; decreased under E8 & \citep{anderson2018learning,demetrio2021exemples} \\
-\texttt{Strings.registry} & Strings & 1 & count & monotone & \textbf{mutable} & changed by E1, E2, E3; never decreased, but not increase-only by reasoning (E8 removes bytes) & \citep{anderson2018learning,demetrio2021exemples} \\
+\texttt{Strings.registry} & Strings & 1 & count & monotone & \textbf{mutable} & changed by E1, E2, E3; not increase-only (conservative, not observed: never decreased, but E8 removes bytes) & \citep{anderson2018learning,demetrio2021exemples} \\
 \texttt{Strings.MZ} & Strings & 1 & count & monotone & \textbf{mutable} & changed by E1, E3, E7, E8; decreased under E8 & \citep{anderson2018learning,demetrio2021exemples} \\
 \texttt{General.size} & General+TS & 1 & count & monotone & \textbf{mutable} & changed by E1, E2, E3, E4, E8; decreased under E8 & \citep{anderson2018learning,demetrio2021exemples} \\
 \texttt{General.vsize} & General+TS & 1 & count & monotone & monotone & changed by E3, E4; never decreased & \citep{anderson2018learning,demetrio2021exemples} \\
 \texttt{General.has\_debug} & General+TS & 1 & flag & immutable & \textbf{mutable} & changed by E8 & \citep{anderson2018learning} \\
-\texttt{General.exports} & General+TS & 1 & count & monotone & monotone & not changed by any in-scope edit; kept mutable from draft v1 (conservative); never decreased & -- \\
+\texttt{General.exports} & General+TS & 1 & count & monotone & monotone & conservative, not observed: no in-scope edit changed it; kept mutable as in draft v1; never decreased & -- \\
 \texttt{General.imports} & General+TS & 1 & count & monotone & monotone & changed by E4; never decreased & \citep{anderson2018learning} \\
 \texttt{General.has\_relocations} & General+TS & 1 & flag & immutable & \textbf{mutable} & changed by E1, E2, E3, E4 & \citep{anderson2018learning,demetrio2021exemples} \\
 \texttt{General.has\_resources} & General+TS & 1 & flag & immutable & immutable & not changed by any in-scope edit & -- \\
@@ -41,18 +41,18 @@ Feature unit & Group & Dim. & Kind & Draft & Repaired & Rule and evidence & Ref.
 \texttt{Header.sizeof\_headers} & Header(static) & 1 & count & immutable & \textbf{monotone} & changed by E3; never decreased & \citep{anderson2018learning,demetrio2021exemples} \\
 \texttt{Header.sizeof\_heap\_commit} & Header(static) & 1 & count & immutable & immutable & not changed by any in-scope edit & -- \\
 \texttt{Section.n\_sections} & Section & 1 & count & monotone & monotone & changed by E3, E4; never decreased & \citep{anderson2018learning,demetrio2021exemples} \\
-\texttt{Section.n\_zero\_size} & Section & 1 & count & monotone & monotone & not changed by any in-scope edit; kept mutable from draft v1 (conservative); never decreased & -- \\
-\texttt{Section.n\_empty\_name} & Section & 1 & count & monotone & \textbf{mutable} & not changed by any in-scope edit; kept mutable from draft v1 (conservative); never decreased, but not increase-only by reasoning (E6 renames sections) & -- \\
+\texttt{Section.n\_zero\_size} & Section & 1 & count & monotone & monotone & conservative, not observed: no in-scope edit changed it; kept mutable as in draft v1; never decreased & -- \\
+\texttt{Section.n\_empty\_name} & Section & 1 & count & monotone & \textbf{mutable} & conservative, not observed: no in-scope edit changed it; kept mutable as in draft v1; not increase-only (conservative, not observed: never decreased, but E6 renames sections) & -- \\
 \texttt{Section.n\_rx} & Section & 1 & count & monotone & monotone & changed by E4; never decreased & \citep{anderson2018learning} \\
 \texttt{Section.n\_w} & Section & 1 & count & monotone & monotone & changed by E3, E4; never decreased & \citep{anderson2018learning,demetrio2021exemples} \\
 \texttt{Section.sizes} & Section & 50 & hashed & mutable & mutable & changed by E3, E4, E6 & \citep{anderson2018learning,demetrio2021exemples} \\
 \texttt{Section.entropy} & Section & 50 & hashed & mutable & mutable & changed by E3, E4, E6, E8 & \citep{anderson2018learning,demetrio2021exemples} \\
 \texttt{Section.vsizes} & Section & 50 & hashed & mutable & mutable & changed by E3, E4, E6 & \citep{anderson2018learning,demetrio2021exemples} \\
 \texttt{Section.entry\_name} & Section & 50 & hashed & mutable & mutable & changed by E6 & \citep{anderson2018learning,demetrio2021exemples} \\
-\texttt{Section.entry\_characteristics} & Section & 50 & hashed & mutable & mutable & not changed by any in-scope edit; kept mutable from draft v1 (conservative) & -- \\
+\texttt{Section.entry\_characteristics} & Section & 50 & hashed & mutable & mutable & conservative, not observed: no in-scope edit changed it; kept mutable as in draft v1 & -- \\
 \texttt{Imports.libraries} & Imports & 256 & hashed & mutable & mutable & changed by E4 & \citep{anderson2018learning} \\
 \texttt{Imports.functions} & Imports & 1024 & hashed & mutable & mutable & changed by E4 & \citep{anderson2018learning} \\
-\texttt{Exports.functions} & Exports & 128 & hashed & mutable & mutable & not changed by any in-scope edit; kept mutable from draft v1 (conservative) & -- \\
+\texttt{Exports.functions} & Exports & 128 & hashed & mutable & mutable & conservative, not observed: no in-scope edit changed it; kept mutable as in draft v1 & -- \\
 \texttt{DataDir.EXPORT\_TABLE.size} & DataDir & 1 & count & immutable & immutable & not changed by any in-scope edit & -- \\
 \texttt{DataDir.EXPORT\_TABLE.address} & DataDir & 1 & value & immutable & immutable & not changed by any in-scope edit & -- \\
 \texttt{DataDir.IMPORT\_TABLE.size} & DataDir & 1 & count & immutable & \textbf{monotone} & changed by E4; never decreased & \citep{anderson2018learning} \\

@@ -29,6 +29,7 @@ Windows PC, 7.9 GB RAM, NVIDIA GTX 1050 Ti (4 GB, Pascal sm_61). C: is short on 
 - `tools/ps_build.py`   problem-space check, part 1 (`malcert-ps` env): corpus, edits E0-E9, EMBER features
 - `tools/problem_space.py`  part 2 (`malcert` env): edit map, annotation evidence, coverage table, `numbers_ps.tex`
 - `tools/eps_units.py`  epsilon in real units -> `numbers_eps.tex`
+- `tools/eps_coverage.py --res <results>`  share of measured edits inside the box vs certified detection, per epsilon
 - `tools/make_temporal.py`, `tools/compare.py`  temporal-vs-random tables; compare two results.json
 - `ps_results/`         outputs of the problem-space check (versioned); `ps_corpus/`, `ps_tools/` are not versioned
 - `paper/`              elsarticle manuscript; `results_text.tex` holds the Results section

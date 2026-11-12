@@ -5,7 +5,9 @@ Runs in the `malcert` environment, after tools/ps_build.py has written ps_result
     python tools/problem_space.py
 
 Reads   ps_results/features.npz, edits_manifest.csv, corpus_manifest.csv, and BODMAS (training statistics)
-Writes  ps_results/edit_map.csv            per edit and variant: groups touched, epsilon needed, inside threat set
+Writes  ps_results/edit_map.csv            per edit and variant: groups touched, epsilon needed, inside threat set;
+                                           for LIEF edits also the edit's own footprint against the E0 rebuild
+        ps_results/eps_coverage.csv        share of in-scope edited files with epsilon needed <= eps (grid)
         ps_results/edit_files.csv          the same per edited file
         ps_results/unit_evidence.csv       per feature unit: which edits change it, did it ever decrease,
                                            and the annotation that follows from the rule below
@@ -51,6 +53,10 @@ EDITS = OrderedDict([
 ])
 NUM = {"E0": "Ezero", "E1": "Eone", "E2": "Etwo", "E3": "Ethree", "E4": "Efour", "E5": "Efive", "E6": "Esix",
        "E7": "Eseven", "E8": "Eeight", "E9": "Enine"}
+# LIEF-based edits rebuild the whole file. Their control is the same rebuild WITHOUT the edit (E0), so the
+# footprint of the edit itself is the difference between the edited file and the rebuilt-only file (1h).
+REBUILD_CONTROL = {"E3_section": "plain", "E4_imports": "imports"}
+EPS_GRID = [0.005, 0.01, 0.02, 0.05, 0.1, 0.2, 0.5, 1, 2, 5, 10, 20, 50, 100]
 NOT_MEASURED = [   # out of scope by design; not measured because they rewrite the code itself
     ("Repacking, crypters", "replace the file by a stub that unpacks the original at run time"),
     ("Code obfuscation, metamorphism", "rewrite the instructions, so every content-derived feature changes"),
@@ -95,6 +101,7 @@ def main():
     assert X.shape[1] == 2381 and np.isfinite(X).all()
     orig = {f: X[i] for i, f in enumerate(f_file) if f_edit[i] == "orig"}
     assert len(orig) == len(corpus)
+    rebuilt = {(f, f_var[i]): X[i] for i, f in enumerate(f_file) if f_edit[i] == "E0_rebuild"}
 
     pp, zmin, zmax = bodmas_stats()
     np.savez_compressed(os.path.join(RES, "bodmas_train_stats_seed0.npz"), mu=pp.mu, sd=pp.sd, zmin=zmin, zmax=zmax)
@@ -118,6 +125,13 @@ def main():
             Zo, Ze = Z(O), Z(E)
             ch = E != O
             gch = np.stack([ch[:, gid == g].any(1) for g in range(G)], 1)
+            # footprint of the edit itself: against the rebuilt-only file for LIEF edits, else against the original
+            if e in REBUILD_CONTROL:
+                Bv = np.stack([rebuilt[(f, REBUILD_CONTROL[e])] for f in f_file[idx]])
+                own = np.stack([(E != Bv)[:, gid == g].any(1) for g in range(G)], 1)
+                reb = np.stack([(Bv != O)[:, gid == g].any(1) for g in range(G)], 1)
+            else:
+                own, reb = gch, np.zeros_like(gch)
             linf = np.abs(Ze - Zo).max(1)
             nat_ok = ((E >= lo_nat) & (E <= hi_nat)).all(1)
             rng_ok = ((Ze <= np.maximum(zmax, Zo) + 1e-9) & (Ze >= np.minimum(zmin, Zo) - 1e-9)).all(1)
@@ -126,6 +140,10 @@ def main():
                     file=f_file[i], edit=e, variant=v, scope=EDIT_SCOPE[e], n_groups=int(gch[j].sum()),
                     groups="+".join(GROUP_NAMES[g] for g in range(G) if gch[j, g]),
                     n_features_changed=int(ch[j].sum()), eps_needed=float(linf[j]),
+                    n_groups_edit_only=int(own[j].sum()),
+                    groups_edit_only="+".join(GROUP_NAMES[g] for g in range(G) if own[j, g]),
+                    n_groups_rebuild=int(reb[j].sum()),
+                    **{"own_" + GROUP_NAMES[g]: bool(own[j, g]) for g in range(G)},
                     # draft-v1 threat set: its masks, its monotone set, the training-range clip, its 7 groups
                     draft_immutable_changed=bool((ch[j] & ~mut_d).any()),
                     draft_monotone_decreased=bool(((E[j] < O[j]) & mono_d).any()),
@@ -155,6 +173,11 @@ def main():
                           groups_median=float(d.n_groups.median()), groups_max=int(d.n_groups.max()))
         for g in GROUP_NAMES:
             row["share_" + g] = float(d["g_" + g].mean())
+        row.update(groups_edit_only_median=float(d.n_groups_edit_only.median()),
+                   groups_edit_only_max=int(d.n_groups_edit_only.max()),
+                   groups_rebuild_median=float(d.n_groups_rebuild.median()))
+        for g in GROUP_NAMES:
+            row["own_share_" + g] = float(d["own_" + g].mean())
         row.update(features_changed_median=float(d.n_features_changed.median()),
                    eps_median=float(d.eps_needed.median()), eps_p90=float(d.eps_needed.quantile(0.9)),
                    eps_max=float(d.eps_needed.max()),
@@ -178,6 +201,18 @@ def main():
     M.to_csv(os.path.join(RES, "edit_map.csv"), index=False)
     Mall = M[M.variant == "all"].set_index("edit")
 
+    # ---------------- 1h: share of measured edits inside the L-infinity box, as a function of epsilon ----------------
+    Dsc = D[D.scope == "in"]
+    cov_rows = []
+    for eps in EPS_GRID:
+        row = OrderedDict(eps=eps, all_in_scope=float((Dsc.eps_needed <= eps).mean()))
+        for e in EDITS:
+            if EDIT_SCOPE[e] == "in":
+                row[e] = float((Dsc.eps_needed[Dsc.edit == e] <= eps).mean())
+        cov_rows.append(row)
+    COV = pd.DataFrame(cov_rows)
+    COV.to_csv(os.path.join(RES, "eps_coverage.csv"), index=False)
+
     # ---------------- unit evidence and the annotation the rule gives ----------------
     in_scope = [e for e in EDITS if EDIT_SCOPE[e] == "in"]
     ev = []
@@ -195,7 +230,7 @@ def main():
         if obs:
             rule = "changed by " + ", ".join(x.split("_")[0] for x in obs)
         elif mutable:
-            rule = "not changed by any in-scope edit; kept mutable from draft v1 (conservative)"
+            rule = "conservative, not observed: no in-scope edit changed it; kept mutable as in draft v1"
         else:
             rule = "not changed by any in-scope edit"
         if mutable and kind == "count":
@@ -204,7 +239,8 @@ def main():
             elif dec:
                 rule += "; decreased under " + ", ".join(x.split("_")[0] for x in dec)
             else:
-                rule += "; never decreased, but not increase-only by reasoning (" + NOT_MONOTONE_BY_REASONING[n].split(",")[0].split(";")[0] + ")"
+                rule += ("; not increase-only (conservative, not observed: never decreased, but "
+                         + NOT_MONOTONE_BY_REASONING[n].split(",")[0].split(";")[0] + ")")
         frozen = "monotone" if mono_r[s] else ("mutable" if mut_r[s] else "immutable")
         row = OrderedDict(unit=n, start=s, end=t, n_features=t - s, kind=kind, group=uidx[n][3], draft_v1=draft,
                           rule_gives=status, frozen_in_data_py=frozen, rule=rule,
@@ -307,10 +343,20 @@ def write_tables(paper, corpus, man, D, M, Mall, EV, mut_d, mono_d, mut_r, mono_
         if e == "E9_upx":
             T.append("\\midrule")
         dag = "$^\\dagger$" if EDIT_SCOPE[e] == "out" else ""      # (no backslash allowed inside an f-string field)
-        T.append(f"{lab}{dag} & {int(r.n_files)} & "
-                 + " & ".join(mark(r['share_' + g]) for g in GROUP_NAMES)
-                 + f" & {r.groups_median:.0f} & {int(r.groups_max)} & {fe(r.eps_median)} & {fe(r.eps_p90)}"
-                 + f" & {pct(r.draft_box_inside)} & {pct(r.draft_group_inside)} \\\\")
+        line = lambda lab_, r_, pre="share_": (
+            f"{lab_} & {int(r_.n_files)} & " + " & ".join(mark(r_[pre + g]) for g in GROUP_NAMES)
+            + f" & {r_.groups_median:.0f} & {int(r_.groups_max)} & {fe(r_.eps_median)} & {fe(r_.eps_p90)}"
+            + f" & {pct(r_.draft_box_inside)} & {pct(r_.draft_group_inside)} \\\\")
+        if e == "E0_rebuild":                                       # the two rebuild controls differ: one row each
+            for v, vl in (("plain", "E0 LIEF rebuild, no edit (control for E3)"),
+                          ("imports", "E0 LIEF import rebuild, no edit (control for E4)")):
+                T.append(line(vl, M[(M.edit == e) & (M.variant == v)].iloc[0]))
+            continue
+        T.append(line(lab + dag, r))
+        if e in REBUILD_CONTROL:                                    # 1h: the edit's own footprint, rebuild removed
+            T.append("\\quad\\emph{of which the edit itself (vs.\\ E0)} & & "
+                     + " & ".join(mark(r['own_share_' + g]) for g in GROUP_NAMES)
+                     + f" & {r.groups_edit_only_median:.0f} & {int(r.groups_edit_only_max)} & & & & \\\\")
     T += ["\\bottomrule", "\\end{tabular}"]
     open(os.path.join(tdir, "tab_edit_map.tex"), "w").write("\n".join(T))
 
@@ -398,6 +444,20 @@ def write_tables(paper, corpus, man, D, M, Mall, EV, mut_d, mono_d, mut_r, mono_
     N["PsGroupsLeCeilPct"] = pct((Din.n_groups <= R_CEIL).mean(), 1)
     N["PsGroupsLeOnePct"] = pct((Din.n_groups <= 1).mean(), 1)
     N["PsEpsLeTenthPct"] = pct((Din.eps_needed <= 0.1).mean(), 1)
+    N["PsEpsLeTrainPct"] = pct((Din.eps_needed <= 0.05).mean(), 1)       # at the certified-training budget 0.05
+    N["PsEpsLeOnePct"] = pct((Din.eps_needed <= 1).mean(), 1)
+    N["PsEpsLeTenPct"] = pct((Din.eps_needed <= 10).mean(), 1)
+    for e in REBUILD_CONTROL:
+        k = "Ps" + NUM[e.split("_")[0]]
+        N[k + "OwnGroupsMed"] = f"{Mall.loc[e].groups_edit_only_median:.0f}"
+        N[k + "OwnGroupsMax"] = str(int(Mall.loc[e].groups_edit_only_max))
+        N[k + "RebuildGroupsMed"] = f"{Mall.loc[e].groups_rebuild_median:.0f}"
+    # 1h: files whose has_relocations flag flips under an overlay append (a LIEF 0.10.1 artefact: the flag is
+    # False when the relocation table ends at the end of the file, True once bytes follow it)
+    i_rel = unit_index()["General.has_relocations"][0]
+    Xf, ff, fed = F["X"], F["fname"], F["edit"]
+    o_rel = {f: Xf[i, i_rel] for i, f in enumerate(ff) if fed[i] == "orig"}
+    N["PsNRelocArtefact"] = str(len({f for i, f in enumerate(ff) if fed[i] == "E1_overlay" and Xf[i, i_rel] != o_rel[f]}))
     N["PsNBodmasOverlap"] = str(n_bodmas)
     for e in EDITS:
         if e not in Mall.index:

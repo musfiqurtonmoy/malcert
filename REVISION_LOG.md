@@ -166,10 +166,10 @@ carry a **Basis:** line saying what they were fixed from.
   - **Draft-v1 threat set.** 65.6% of the in-scope files lie inside its box and 83.6% inside its group set.
     Reasons for falling outside the box: a feature annotated immutable changed (17.5% of files), an
     "increase-only" feature decreased (11.3%), the vector left the training range (12.4%).
-  - E4 through LIEF changes 7 groups, of which 6 come from LIEF rebuilding the import table (control E0
-    with import rebuild: 6 groups); a plain LIEF rebuild leaves the vector unchanged in 96 of 100 files.
-  - `General.has_relocations` flips in 2 of the 100 files under every append-type edit (E1–E4): an effect
-    of how LIEF parses those files, observed, not designed.
+  - LIEF rebuild controls: a plain rebuild (E0, control for E3) leaves the vector unchanged in 96 of 100
+    files; a rebuild with the import table (E0, control for E4) changes 6 groups by itself. See 1-16 for the
+    separation of the edit's own footprint.
+  - `General.has_relocations` flips in 2 of the 100 files under every append-type edit (E1–E4); see 1-17.
 
 ### 1e. Threat-model repair (evidence-based part)
 - **1-12** `[A1, B1]` **Annotation re-derived from the measurements** and frozen in `malcert/data.py`
@@ -229,8 +229,43 @@ carry a **Basis:** line saying what they were fixed from.
   - certified detection at the training budget ε=0.05 barely moves (CROWN-IBP 97.3 → 97.3%, IBP 96.8 → 96.5%),
     but at ε=0.1 it falls: CROWN-IBP 49.3 → 44.9%, IBP 31.1 → 26.5%, asymmetric CROWN-IBP 31.4 → 19.8%.
   One seed, quick budgets: directions are indicative only; the full runs are Stage 3.
-- **Open:** plan section **1h** (announced by the author) is not in the `REVISION_PLAN.md` on disk and was
-  therefore not done.
+  Section 1h (below) was done after this pilot; it changed only analysis tools, not `run_all.py` or
+  `malcert/`, so the pilot is still the result of the current method code.
+
+### 1h. Coverage of the L-infinity certificate, and loose ends
+(The plan was updated on 2026-11-13 with this section and a rewritten 2b; 2b belongs to Stage 2.)
+- **1-16** `[A1, B2]` **Edit footprint separated from rebuild footprint** (`tools/problem_space.py`): for the
+  LIEF edits the edited file is also compared with the same file rebuilt by LIEF without the edit
+  (E0 `plain` for E3, E0 `imports` for E4). New columns `groups_edit_only_*`, `groups_rebuild_median`,
+  `own_share_<group>` in `edit_map.csv`; a sub-row "of which the edit itself" and one row per control in
+  `tab_edit_map.tex`; macros `\PsEthreeOwnGroups*`, `\PsEfourOwnGroups*`, `\Ps*RebuildGroupsMed`.
+  - E3: the edit itself changes 5 groups in every file; the sixth group (Header, 3% of files) is the rebuild's.
+  - E4: the import rebuild alone changes 6 groups, **and the edit itself still changes 7** relative to the
+    rebuilt file. The rebuild therefore does not inflate E4's footprint. (An earlier wording of entry 1-11,
+    "6 of the 7 groups come from the rebuild", was wrong and has been replaced.)
+- **1-17** `[B1]` **`General.has_relocations` under append-only edits: a LIEF artefact, documented.**
+  In `dsregcmd.exe` and `wsmprovhost.exe` the relocation directory is present and well formed (7 and 3
+  blocks, which LIEF parses in the original and in every edited copy), and the table ends at the last byte
+  of the file (resp. 4 bytes before it). LIEF 0.10.1 then reports `has_relocations = False`; once any bytes
+  follow the table it reports `True`; in-place edits leave it `False`. These are the only 2 of the 97 corpus
+  files with a relocation directory for which LIEF reports none. The files' relocations do not change, but
+  the feature the detector sees does, so it stays **mutable**. Macro `\PsNRelocArtefact`.
+- **1-18** `[A1, Am2]` **Coverage of the L-infinity certificate as a function of ε.**
+  `ps_results/eps_coverage.csv` (share of in-scope edited files with ε needed ≤ ε, overall and per edit;
+  macros `\PsEpsLeTrainPct`, `\PsEpsLeTenthPct`, `\PsEpsLeOnePct`, `\PsEpsLeTenPct`), and
+  `tools/eps_coverage.py --res <results>` → `paper/figures/fig_eps_coverage.*`,
+  `paper/tables/tab_eps_coverage.tex`, `ps_results/eps_coverage_vs_certified.csv`: that share next to the
+  certified detection of the standard, IBP and CROWN-IBP networks at the same ε.
+  - Finding: 12.0% of the measured edits fit at ε ≤ 0.05 and 14.6% at ε ≤ 0.1 (checksum and DOS-header
+    edits, some 1 KB appends and timestamp edits); 30.8% at ε ≤ 1; 59.5% at ε ≤ 10. String padding needs
+    about 8–15, section and import addition about 17–22, section renaming about 28.
+  - **To state plainly in the paper (Stage 4):** the L-infinity certificate covers only header-level and
+    very small edits; the emphasis moves to the group certificate.
+  - **The certified-detection values in the figure and table are from the quick pilot**
+    (`results_pilot_stage1`, 1 seed). Rerun the script on the final results before they enter the paper.
+- **1-19** `[B1]` Reasoned annotation decisions are labelled **"conservative, not observed"** in
+  `unit_evidence.csv` and `tab_annotation_full.tex`: the two units not treated as increase-only
+  (`Strings.registry`, `Section.n_empty_name`) and the five kept mutable without an observed change.
 
 ### Tests
 - **1-10** `[A1, B1]` `tests/test_threat_model.py` (8 tests): units tile the vector and respect groups;
