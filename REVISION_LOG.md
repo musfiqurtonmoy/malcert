@@ -366,6 +366,20 @@ carry a **Basis:** line saying what they were fixed from.
   - Select the eligible configuration with the highest score; within 0.5 points, prefer fewer views,
     then higher clean accuracy.
 
+- **2-4** `[A3, B5]` **Validation results** (`tools/grouping_select.py` → `results_grouping_val/`; 3,001 validation
+  samples, 1,278 malware; test split not used). Validation clean accuracy: ember k=1/2/3 97.23 / 98.13 / 98.73%;
+  aligned4 k=1 97.83%; aligned5 k=1/2 96.73 / 98.97%; aligned7 k=1/2/3 95.37 / 98.00 / 98.90%.
+  Score (mean certified detection over the 9 edit types): ember 20.9 / 0 / 0; aligned4 45.7; aligned5 70.8 / 45.8;
+  aligned7 81.2 / 40.2 / 39.6. Eligibility cut 98.97 − 1.0 = 97.97% excludes every k = 1 configuration.
+  **Selected by the rule: aligned5, k = 2** (10 views, ceiling r = 1). Certified at r = 1: E1, E2, E5, E7, E10,
+  each 82.5% of validation malware. Not certifiable (r needed 2 > ceiling 1): E3, E6, E8; E4 (r = 3).
+  The rule's accuracy cut, not the score, decided: aligned7 k = 1 certifies all 9 types (61–90%) but has
+  3.6 points lower validation accuracy (FPR 3.4%). Flagged to the author.
+  Exact vs 2·Δ bound: largest gain 0.08 points (ember k = 3, aligned7 k = 2), as the plan's pre-check expected.
+  `grouping` config field added (default still `ember` until the author approves the selection);
+  `run_all.py` ablation block now records the exact certificate, the ceiling, per-view vote rates and uses
+  the exact certificate for the violation check. Unit tests: 15 pass.
+
 ### Ideas not done
 - Execution check of edited binaries in a sandboxed VM (would turn "plausibly functionality-preserving" into
   "verified"); out of the lean scope.

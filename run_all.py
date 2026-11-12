@@ -18,7 +18,9 @@ from malcert.data import (load_subset, split_indices, Preprocessor, threat_masks
                           GROUP_NAMES, attackable_groups)
 from malcert.models import MLP, AblationNet, ibp, crown, input_box
 from malcert.attacks import Constraints, pgd, group_transplant
-from malcert.certify import ablation_votes, ablation_certify, smooth_certify
+from malcert.certify import (ablation_votes, ablation_certify, ablation_certify_exact, ablation_view_votes,
+                             ceiling_r, smooth_certify, votes_from_views)
+from malcert.partitions import attackable, partition
 from malcert.train import fit
 
 ROOT = os.path.dirname(os.path.abspath(__file__))
@@ -236,9 +238,11 @@ def run_seed(cfg, seed, dev, log, todo, R, S, run_id, legacy_rng=False, save=lam
         t0 = time.time()
         std = get_std()
         reseed("ablation")
-        G = len(GROUP_NAMES)
-        mut_groups = attackable_groups()            # groups with at least one mutable feature
-        R["ablation"] = {}
+        agid, anames = partition(cfg.grouping)      # feature partition used by the group certificate and attack
+        G = len(anames)
+        mut_groups = attackable(agid)               # groups with at least one mutable feature
+        R["ablation"] = {"_grouping": dict(name=cfg.grouping, groups=anames,
+                                           attackable=[anames[g] for g in mut_groups])}
         gm_idx = torch.where(yte == 1)[0][:cfg.group_attack_points]
         donors_pool = Xtr[ytr == 0]
         gen = torch.Generator().manual_seed(seed)
@@ -248,7 +252,7 @@ def run_seed(cfg, seed, dev, log, todo, R, S, run_id, legacy_rng=False, save=lam
         def emp_curve(score_fn):
             rows = []
             for j, i in enumerate(gm_idx):
-                det = group_transplant(score_fn, Xte[i], donor_sets[j], gid, mut_groups, cfg.group_attack_max_r)
+                det = group_transplant(score_fn, Xte[i], donor_sets[j], agid, mut_groups, cfg.group_attack_max_r)
                 rows.append(np.cumprod(det).astype(bool))   # budget r allows any r' <= r
             return np.array(rows)
 
@@ -256,19 +260,31 @@ def run_seed(cfg, seed, dev, log, todo, R, S, run_id, legacy_rng=False, save=lam
         R["group_attack_mlp"] = std_emp.mean(0).tolist()
         log(f"  group-transplant on MLP, detection vs r: {R['group_attack_mlp']}")
         for k in cfg.keep_list:
-            net = fit(AblationNet(d, G, gid, cfg.hidden).to(dev), Xtr, ytr, cfg, "ablation", k=k, seed=seed, log=log)
-            votes = ablation_votes(net, Xte, k)
+            if ceiling_r(G, k) < 1:
+                log(f"  ablation k={k}: skipped, certifies nothing with G={G} (ceiling r=0)")
+                continue
+            net = fit(AblationNet(d, G, agid, cfg.hidden).to(dev), Xtr, ytr, cfg, "ablation", k=k, seed=seed, log=log)
+            vm = ablation_view_votes(net, Xte, k)
+            votes = votes_from_views(vm)
             pred = (votes[:, 1] >= votes[:, 0]).long().cpu().numpy()      # ties -> malware
-            cert = ablation_certify(votes, yte, G, k, len(mut_groups))
+            cert = ablation_certify(votes, yte, G, k, len(mut_groups))      # 2*Delta bound
+            cert_ex = ablation_certify_exact(vm, yte, net.subsets(k), mut_groups, len(mut_groups))   # exact (2a)
             n_sub = len(net.subsets(k))
             emp = emp_curve(lambda Z: (ablation_votes(net, Z, k)[:, 1] / n_sub).cpu())
-            cert_sub = cert[gm_idx.cpu().numpy()][:, :cfg.group_attack_max_r + 1]
-            viol = int((cert_sub & ~emp).sum())
+            cert_sub = cert_ex[gm_idx.cpu().numpy()][:, :cfg.group_attack_max_r + 1]
+            viol = int((cert_sub & ~emp).sum())                             # exact contains the bound
+            vmn, mal_np = vm.cpu().numpy(), yte_np == 1
             R["ablation"][str(k)] = dict(clean=metrics(yte_np, pred, (votes[:, 1] / n_sub).cpu().numpy()),
-                                         cert_tpr=cert[yte_np == 1].mean(0).tolist(),
+                                         cert_tpr=cert[mal_np].mean(0).tolist(),
                                          cert_acc=cert.mean(0).tolist(),
+                                         cert_tpr_exact=cert_ex[mal_np].mean(0).tolist(),
+                                         cert_acc_exact=cert_ex.mean(0).tolist(), ceiling_r=ceiling_r(G, k),
+                                         view_vote_rate_malware=vmn[mal_np].mean(0).tolist(),
+                                         view_vote_rate_benign=(1 - vmn[~mal_np]).mean(0).tolist(),
+                                         views=["+".join(anames[g] for g in s) for s in net.subsets(k)],
                                          empirical_tpr=emp.mean(0).tolist(), violations=viol, n_subsets=n_sub)
             S[f"abl{k}_cert"] = cert
+            S[f"abl{k}_cert_exact"] = cert_ex
             log(f"  ablation k={k}: {R['ablation'][str(k)]}")
         finish("ablation", t0)
 

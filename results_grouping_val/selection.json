@@ -1,0 +1,10 @@
+{
+ "selected": {
+  "partition": "aligned5",
+  "k": 2
+ },
+ "rule": "REVISION_LOG 2-3",
+ "best_val_acc": 0.9896701099633456,
+ "n_val": 3001,
+ "n_val_malware": 1278
+}

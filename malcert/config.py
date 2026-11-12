@@ -39,6 +39,7 @@ class Config:
 
     # ---- C2a: feature-group ablation certificates -------------------------
     keep_list: tuple = (1, 2, 3)    # number of groups each ablated view keeps
+    grouping: str = "ember"         # feature partition (malcert/partitions.py); chosen on validation (log 2-3)
     group_attack_points: int = 500
     group_attack_donors: int = 10
     group_attack_max_r: int = 3
