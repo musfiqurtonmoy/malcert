@@ -1,0 +1,12 @@
+# Python
+__pycache__/
+*.pyc
+
+# BODMAS data (download with gdown, see README; 280 MB)
+data/*.npz
+data/*.csv
+
+# Problem-space check (Stage 1): copies of system binaries, edited binaries, downloaded tools.
+# Only the extracted feature vectors and the result tables (ps_results/) are versioned.
+ps_corpus/
+ps_tools/

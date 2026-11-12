@@ -1,0 +1,87 @@
+%% Results narrative. Numbers are macros from tables/numbers.tex; re-check every qualitative
+%% sentence (marked %CHECK) after the final full run, since directions can change.
+
+\subsection{Clean detection}
+Table~\ref{tab:clean} lists clean performance. LightGBM, the EMBER reference model, reaches \LgbmAcc\% accuracy and the standard MLP \MlpAcc\%. Most certifiable models cost little or no clean accuracy: the symmetric CROWN-IBP network reaches \CrownSymAcc\% (standard network of the same size: \StdAccSmall\%). The clearest cost is group ablation with single-group views ($k=1$, \AblOneCleanAcc\%), which loses more than one point against the standard MLP; larger keep sizes recover most of it ($k=3$: \AblThreeCleanAcc\%). %CHECK
+
+\begin{table}[t]\centering\small
+\caption{Clean test performance (mean $\pm$ std over \NSeeds{} \SeedsNoun{}).}\label{tab:clean}
+\resizebox{\linewidth}{!}{\input{tables/tab_clean.tex}}
+\end{table}
+
+\subsection{C1: constrained attacks}
+Figure~\ref{fig:attacks} and Table~\ref{tab:attacks} show the malware detection rate that survives FGSM and PGD. Restricting the attacker to the reachable region weakens every attack: at $\epsilon=\AtkEps$, PGD evades the standard MLP on \MlpPgdCon\% of malware under constraints versus \MlpPgdUnc\% without them, so unconstrained evaluations overstate the threat. PGD adversarial training at $\epsilon=0.1$ reduces constrained evasion at the same budget to \AtPgdCon\%; its protection degrades beyond the training budget and is gone by $\epsilon=0.5$ (Table~\ref{tab:attacks}). %CHECK The group-transplant attack is far more damaging: copying a single feature group from a benign file evades the standard MLP on \MlpGroupEvadeOne\% of attacked malware (Fig.~\ref{fig:group}, grey). This motivates certificates against group-level edits rather than small norm balls.
+
+\begin{figure}[t]\centering
+\includegraphics[width=\linewidth]{figures/fig_attacks.pdf}
+\caption{Malware still detected under FGSM and PGD as the $\ell_\infty$ budget grows. Dashed: unconstrained attacker; solid: constrained (C1) attacker.}\label{fig:attacks}
+\end{figure}
+
+\begin{table}[t]\centering\small
+\caption{Malware detection rate (\%) under PGD.}\label{tab:attacks}
+\resizebox{\linewidth}{!}{\input{tables/tab_attacks.tex}}
+\end{table}
+
+\subsection{C2a: feature-group ablation certificates}
+Table~\ref{tab:group} and Fig.~\ref{fig:group} report certified detection as a function of the number $r$ of modified groups. Keep-size $k$ trades clean accuracy for certifiable $r$: with $k=1$ (nine single-group views) the detector certifies \AblOneCertR\% of malware against any change to one group and \AblOneCertRtwo\% against two, at \AblOneCleanAcc\% clean accuracy; $k=2$ certifies \AblTwoCertR\% at $r=1$ with \AblTwoCleanAcc\% accuracy; $k=3$ certifies \AblThreeCertR\% at $r=1$ with \AblThreeCleanAcc\% accuracy but nothing at $r\geq2$, as Theorem~\ref{thm:abl} predicts ($2\Delta_2=98$ exceeds the 84 views). The greedy group-transplant attack against the $k=1$ detector leaves \AblOneEmpR\% and \AblOneEmpRtwo\% of malware detected at $r=1,2$, close to the certified values, so the certificate is nearly tight. Across all runs the attack never evaded a certified sample (\AblViolations{} violations), as required by soundness.
+
+\begin{figure}[t]\centering
+\includegraphics[width=0.88\linewidth]{figures/fig_group_cert.pdf}
+\caption{Certified malware detection (solid) and detection under the group-transplant attack (dotted) versus the number of modified groups. Grey: undefended MLP.}\label{fig:group}
+\end{figure}
+
+\begin{table}[t]\centering\small
+\caption{Certified malware detection (\%) of group-ablation smoothing against $r$ modified groups.}\label{tab:group}
+\resizebox{\linewidth}{!}{\input{tables/tab_group_cert.tex}}
+\end{table}
+
+\subsection{C2b: randomized smoothing}
+Contrary to the common assumption that smoothing collapses clean accuracy on PE features, Gaussian smoothing in standardised feature space keeps clean accuracy high: at $\sigma=\RsSigmaMax$ it is \RsIsoAccMax\% (isotropic) and \RsSubAccMax\% (subspace) on the \NCertPoints{} certified test points. %CHECK
+Restricting noise to the mutable subspace gives at most a small change (\RsSubHalf\% vs.\ \RsIsoHalf\% certified at $R=0.5$, $\sigma=\RsSigma$), because \MutablePct\% of the features are mutable: the subspace removes little noise. %CHECK
+The sharp drop of each curve in Fig.~\ref{fig:smoothing} is the sampling ceiling $\sigma\Phi^{-1}(\underline{p_A})$ for $n=\NCert$ samples, not a property of the classifier. Smoothing radii in standardised $\ell_2$ units are also hard to relate to real edits, which is why we treat this certificate as a baseline rather than a headline result.
+
+\begin{figure}[t]\centering
+\includegraphics[width=0.62\linewidth]{figures/fig_smoothing.pdf}
+\caption{Certified malware detection of Gaussian smoothing versus $\ell_2$ radius; dashed: noise on all features, solid: noise only on mutable features.}\label{fig:smoothing}
+\end{figure}
+
+\begin{table}[t]\centering\small
+\caption{Randomized smoothing: clean accuracy and certified malware detection (\%) at several radii.}\label{tab:smoothing}
+\resizebox{\linewidth}{!}{\input{tables/tab_smoothing.tex}}
+\end{table}
+
+\subsection{C3: constraint-aware certified training}\label{sec:ct}
+Figure~\ref{fig:ct} and Table~\ref{tab:ct} show certified malware detection under the constrained $\ell_\infty$ threat. Standard and PGD-trained networks are rarely certifiable at the training budget ($\epsilon=\TrainEps$: \StdCert\% and \PgdAtCert\%), although PGD-AT resists the attack empirically. IBP and CROWN-IBP training raise certified detection to \IbpCert\% and \CrownSymCert\% at no measurable cost in clean accuracy. Bounding over the constrained box instead of the full ball certifies more samples, and the gain grows with the budget: \CrownSymCert\% vs.\ \CrownSymCertUnc\% at $\epsilon=\TrainEps$ and \CrownSymCertTen\% vs.\ \CrownSymCertTenUnc\% at $\epsilon=0.1$. %CHECK
+Asymmetric training does not pay off. At $\epsilon=\TrainEps$ it certifies \CrownAsymCert$\pm$\CrownAsymCertStd\% of malware versus \CrownSymCert$\pm$\CrownSymCertStd\% for symmetric CROWN-IBP, a gain within seed-to-seed variation (though positive \AsymGainSeeds); at $\epsilon=0.1$ it certifies less (\CrownAsymCertTen$\pm$\CrownAsymCertTenStd\% vs.\ \CrownSymCertTen$\pm$\CrownSymCertTenStd\%, lower \AsymLossTenSeeds); and it raises the false-positive rate from \CrownSymFpr\% to \CrownAsymFpr\%: making only malware robust pushes the decision boundary into benign territory. In deployment, where false positives are costly, symmetric CROWN-IBP is the better operating point. %CHECK
+No sample certified by bound propagation was ever evaded by PGD (\CTViolations{} violations).
+
+\begin{figure}[t]\centering
+\includegraphics[width=0.62\linewidth]{figures/fig_certified_training.pdf}
+\caption{Certified malware detection versus $\ell_\infty$ budget (constrained box), for networks with the same 2381--256--256--2 architecture. Dotted: asymmetric CROWN-IBP certified over the unconstrained box.}\label{fig:ct}
+\end{figure}
+
+\begin{table}[t]\centering\small
+\caption{Certified malware detection (\%) under the constrained $\ell_\infty$ threat; last column: certified samples evaded by PGD (must be 0).}\label{tab:ct}
+\resizebox{\linewidth}{!}{\input{tables/tab_certified_training.tex}}
+\end{table}
+
+\subsection{Per-category robustness}
+Figure~\ref{fig:cat} breaks certified detection down by malware category, averaged over the \NSeeds{} seeds' test splits. Large categories (trojan, worm, backdoor) are certified at high rates by every method, trojans being the lowest of the three, while bound-propagation certificates are more uniform across categories than the group certificate. The group certificate is lowest on file-infecting viruses, plausibly because an infected host is mostly benign content so few single-group views vote malware. This observation remains tentative: each test split holds fewer than ten viruses, and even across all seeds the number of distinct viruses tested (shown in the figure) is small. Information stealers and viruses are the two weakest categories for every method. %CHECK
+
+\begin{figure}[t]\centering
+\includegraphics[width=0.72\linewidth]{figures/fig_per_category.pdf}
+\caption{Certified malware detection (\%) per category, averaged over the \NSeeds{} seeds' test splits ($n$ = distinct test files across all seeds). Not shown, for having fewer than three test samples per seed on average: \HiddenCats.}\label{fig:cat}
+\end{figure}
+
+\subsection{Robustness under temporal drift}\label{sec:temporal}
+Following the temporal-split principle of \citet{pendlebury2019tesseract}, in which every training file precedes every test file, we also train on files up to \TmpTrainEnd{} and test on the later window \TmpTestStart{} to \TmpTestEnd{} (Tables~\ref{tab:temporal-clean} and~\ref{tab:temporal-cert}). We measure drift by malware detection (TPR) rather than accuracy: the false-positive rate drops for \TmpFprDropModels{} on the temporal window (standard MLP: \TmpMlpFprRand\% to \TmpMlpFprTemp\%; CROWN-IBP: \TmpCrownFprRand\% to \TmpCrownFprTemp\%), which inflates accuracy, and the temporal test window holds a \TmpMalShareCmp{} share of malware (\TmpMalShareTemp\% vs.\ \TmpMalShareRand\%), which changes accuracy as well. For CROWN-IBP, clean detection falls by \TmpCrownTprDrop$\pm$\TmpCrownTprDropStd{} points and certified detection at $\epsilon=\TmpCertEps$ by \TmpCrownCertDrop$\pm$\TmpCrownCertDropStd{}, roughly \TmpCrownDropRatioInt{} times as much; the gap is \TmpCrownGapRatio{} times their combined standard deviation. For group ablation ($k=1$), clean detection falls by \TmpAblTprDrop$\pm$\TmpAblTprDropStd{} points and certified detection at $r=1$ by \TmpAblCertDrop$\pm$\TmpAblCertDropStd{}; the gap of \TmpAblGap{} points is about one combined standard deviation (\TmpAblDropStd{}), so we do not claim it as significant. Across keep sizes, $k=3$ drifts less than $k=1$ in both clean and certified detection (\TmpAblThreeTprDrop$\pm$\TmpAblThreeTprDropStd{} vs.\ \TmpAblTprDrop$\pm$\TmpAblTprDropStd{} points of clean detection; \TmpAblThreeCertDrop$\pm$\TmpAblThreeCertDropStd{} vs.\ \TmpAblCertDrop$\pm$\TmpAblCertDropStd{} points of certified detection at $r=1$); $k=2$ lies between on average, with high variance in certified detection (\TmpAblTwoCertDrop$\pm$\TmpAblTwoCertDropStd{} points). \TmpCrownVsMlpSentence{} \TmpCrownVsMlpAccSentence{} %CHECK
+
+\begin{table}[t]\centering\small
+\caption{Clean test performance (\%) under the random and the temporal split (mean $\pm$ std over \NSeeds{} \SeedsNoun{}). The temporal split uses one fixed test window (\TmpTestStart{} to \TmpTestEnd{}), so its $\pm$ reflects training randomness only; values without $\pm$ are identical across seeds.}\label{tab:temporal-clean}
+\resizebox{\linewidth}{!}{\input{tables/tab_temporal_clean.tex}}
+\end{table}
+
+\begin{table}[t]\centering\small
+\caption{Certified malware detection (\%) under the random and the temporal split (mean $\pm$ std over \NSeeds{} \SeedsNoun{}), and its drop (random minus temporal), whose $\pm$ combines the standard deviations of both splits. In the text, differences between drops are judged against the combined seed-to-seed standard deviation, which is conservative (assumes independence).}\label{tab:temporal-cert}
+\resizebox{\linewidth}{!}{\input{tables/tab_temporal_cert.tex}}
+\end{table}

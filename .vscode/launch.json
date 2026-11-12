@@ -1,0 +1,49 @@
+{
+  "version": "0.2.0",
+  "configurations": [
+    {
+      "name": "1. Soundness tests (30 s)",
+      "type": "debugpy",
+      "request": "launch",
+      "program": "${workspaceFolder}/tests/test_soundness.py",
+      "cwd": "${workspaceFolder}",
+      "console": "integratedTerminal"
+    },
+    {
+      "name": "2. Quick run (1 seed, ~10 min GPU)",
+      "type": "debugpy",
+      "request": "launch",
+      "program": "${workspaceFolder}/run_all.py",
+      "args": ["--preset", "quick", "--out_dir", "results"],
+      "cwd": "${workspaceFolder}",
+      "console": "integratedTerminal"
+    },
+    {
+      "name": "3. Full run (3 seeds, paper numbers)",
+      "type": "debugpy",
+      "request": "launch",
+      "program": "${workspaceFolder}/run_all.py",
+      "args": ["--preset", "full", "--out_dir", "results_full"],
+      "cwd": "${workspaceFolder}",
+      "console": "integratedTerminal"
+    },
+    {
+      "name": "4. Temporal-split run",
+      "type": "debugpy",
+      "request": "launch",
+      "program": "${workspaceFolder}/run_all.py",
+      "args": ["--preset", "full", "--split", "temporal", "--out_dir", "results_temporal"],
+      "cwd": "${workspaceFolder}",
+      "console": "integratedTerminal"
+    },
+    {
+      "name": "5. Make figures + tables for the paper",
+      "type": "debugpy",
+      "request": "launch",
+      "program": "${workspaceFolder}/make_figures.py",
+      "args": ["--res", "results_full", "--paper", "paper"],
+      "cwd": "${workspaceFolder}",
+      "console": "integratedTerminal"
+    }
+  ]
+}

@@ -1,0 +1,264 @@
+\begin{thebibliography}{28}
+\expandafter\ifx\csname natexlab\endcsname\relax\def\natexlab#1{#1}\fi
+\providecommand{\url}[1]{\texttt{#1}}
+\providecommand{\href}[2]{#2}
+\providecommand{\path}[1]{#1}
+\providecommand{\DOIprefix}{doi:}
+\providecommand{\ArXivprefix}{arXiv:}
+\providecommand{\URLprefix}{URL: }
+\providecommand{\Pubmedprefix}{pmid:}
+\providecommand{\doi}[1]{\href{http://dx.doi.org/#1}{\path{#1}}}
+\providecommand{\Pubmed}[1]{\href{pmid:#1}{\path{#1}}}
+\providecommand{\bibinfo}[2]{#2}
+\ifx\xfnm\relax \def\xfnm[#1]{\unskip,\space#1}\fi
+%Type = Inproceedings
+\bibitem[{Al-Dujaili et~al.(2018)Al-Dujaili, Huang, Hemberg and
+  O'Reilly}]{aldujaili2018adversarial}
+\bibinfo{author}{Al-Dujaili, A.}, \bibinfo{author}{Huang, A.},
+  \bibinfo{author}{Hemberg, E.}, \bibinfo{author}{O'Reilly, U.M.},
+  \bibinfo{year}{2018}.
+\newblock \bibinfo{title}{Adversarial deep learning for robust detection of
+  binary encoded malware}, in: \bibinfo{booktitle}{IEEE Security and Privacy
+  Workshops (SPW)}, pp. \bibinfo{pages}{76--82}.
+%Type = Article
+\bibitem[{Anderson and Roth(2018)}]{anderson2018ember}
+\bibinfo{author}{Anderson, H.S.}, \bibinfo{author}{Roth, P.},
+  \bibinfo{year}{2018}.
+\newblock \bibinfo{title}{{EMBER}: An open dataset for training static {PE}
+  malware machine learning models}.
+\newblock \bibinfo{journal}{arXiv preprint arXiv:1804.04637} .
+%Type = Inproceedings
+\bibitem[{Chen et~al.(2020)Chen, Wang, She and Jana}]{chen2020pdf}
+\bibinfo{author}{Chen, Y.}, \bibinfo{author}{Wang, S.}, \bibinfo{author}{She,
+  D.}, \bibinfo{author}{Jana, S.}, \bibinfo{year}{2020}.
+\newblock \bibinfo{title}{On training robust {PDF} malware classifiers}, in:
+  \bibinfo{booktitle}{USENIX Security Symposium}, pp.
+  \bibinfo{pages}{2343--2360}.
+%Type = Article
+\bibitem[{Clopper and Pearson(1934)}]{clopper1934}
+\bibinfo{author}{Clopper, C.J.}, \bibinfo{author}{Pearson, E.S.},
+  \bibinfo{year}{1934}.
+\newblock \bibinfo{title}{The use of confidence or fiducial limits illustrated
+  in the case of the binomial}.
+\newblock \bibinfo{journal}{Biometrika} \bibinfo{volume}{26},
+  \bibinfo{pages}{404--413}.
+%Type = Inproceedings
+\bibitem[{Cohen et~al.(2019)Cohen, Rosenfeld and Kolter}]{cohen2019certified}
+\bibinfo{author}{Cohen, J.}, \bibinfo{author}{Rosenfeld, E.},
+  \bibinfo{author}{Kolter, Z.}, \bibinfo{year}{2019}.
+\newblock \bibinfo{title}{Certified adversarial robustness via randomized
+  smoothing}, in: \bibinfo{booktitle}{International Conference on Machine
+  Learning (ICML)}, pp. \bibinfo{pages}{1310--1320}.
+%Type = Article
+\bibitem[{Demetrio et~al.(2021)Demetrio, Coull, Biggio, Lagorio, Armando and
+  Roli}]{demetrio2021exemples}
+\bibinfo{author}{Demetrio, L.}, \bibinfo{author}{Coull, S.E.},
+  \bibinfo{author}{Biggio, B.}, \bibinfo{author}{Lagorio, G.},
+  \bibinfo{author}{Armando, A.}, \bibinfo{author}{Roli, F.},
+  \bibinfo{year}{2021}.
+\newblock \bibinfo{title}{Adversarial {EXEmples}: A survey and experimental
+  evaluation of practical attacks on machine learning for {Windows} malware
+  detection}.
+\newblock \bibinfo{journal}{ACM Transactions on Privacy and Security}
+  \bibinfo{volume}{24}.
+%Type = Article
+\bibitem[{Gibert et~al.(2024)Gibert, Demetrio, Zizzo, Le, Planes and
+  Biggio}]{gibert2024certified}
+\bibinfo{author}{Gibert, D.}, \bibinfo{author}{Demetrio, L.},
+  \bibinfo{author}{Zizzo, G.}, \bibinfo{author}{Le, Q.},
+  \bibinfo{author}{Planes, J.}, \bibinfo{author}{Biggio, B.},
+  \bibinfo{year}{2024}.
+\newblock \bibinfo{title}{Certified adversarial robustness of machine
+  learning-based malware detectors via {(De)Randomized} smoothing}.
+\newblock \bibinfo{journal}{arXiv preprint arXiv:2405.00392} .
+%Type = Article
+\bibitem[{Gibert et~al.(2020)Gibert, Mateu and Planes}]{gibert2020rise}
+\bibinfo{author}{Gibert, D.}, \bibinfo{author}{Mateu, C.},
+  \bibinfo{author}{Planes, J.}, \bibinfo{year}{2020}.
+\newblock \bibinfo{title}{The rise of machine learning for detection and
+  classification of malware: Research developments, trends and challenges}.
+\newblock \bibinfo{journal}{Journal of Network and Computer Applications}
+  \bibinfo{volume}{153}, \bibinfo{pages}{102526}.
+%Type = Article
+\bibitem[{Gimenez et~al.(2025)Gimenez, Sivaprasad and
+  Fritz}]{gimenez2025erdalt}
+\bibinfo{author}{Gimenez, P.F.}, \bibinfo{author}{Sivaprasad, S.},
+  \bibinfo{author}{Fritz, M.}, \bibinfo{year}{2025}.
+\newblock \bibinfo{title}{Certifiably robust malware detectors by design}.
+\newblock \bibinfo{journal}{arXiv preprint arXiv:2508.10038} .
+%Type = Inproceedings
+\bibitem[{Goodfellow et~al.(2015)Goodfellow, Shlens and
+  Szegedy}]{goodfellow2015explaining}
+\bibinfo{author}{Goodfellow, I.J.}, \bibinfo{author}{Shlens, J.},
+  \bibinfo{author}{Szegedy, C.}, \bibinfo{year}{2015}.
+\newblock \bibinfo{title}{Explaining and harnessing adversarial examples}, in:
+  \bibinfo{booktitle}{International Conference on Learning Representations
+  (ICLR)}.
+%Type = Article
+\bibitem[{Gowal et~al.(2018)Gowal, Dvijotham, Stanforth, Bunel, Qin, Uesato,
+  Arandjelovic, Mann and Kohli}]{gowal2018ibp}
+\bibinfo{author}{Gowal, S.}, \bibinfo{author}{Dvijotham, K.},
+  \bibinfo{author}{Stanforth, R.}, \bibinfo{author}{Bunel, R.},
+  \bibinfo{author}{Qin, C.}, \bibinfo{author}{Uesato, J.},
+  \bibinfo{author}{Arandjelovic, R.}, \bibinfo{author}{Mann, T.},
+  \bibinfo{author}{Kohli, P.}, \bibinfo{year}{2018}.
+\newblock \bibinfo{title}{On the effectiveness of interval bound propagation
+  for training verifiably robust models}.
+\newblock \bibinfo{journal}{arXiv preprint arXiv:1810.12715} .
+%Type = Inproceedings
+\bibitem[{Grosse et~al.(2017)Grosse, Papernot, Manoharan, Backes and
+  McDaniel}]{grosse2017adversarial}
+\bibinfo{author}{Grosse, K.}, \bibinfo{author}{Papernot, N.},
+  \bibinfo{author}{Manoharan, P.}, \bibinfo{author}{Backes, M.},
+  \bibinfo{author}{McDaniel, P.}, \bibinfo{year}{2017}.
+\newblock \bibinfo{title}{Adversarial examples for malware detection}, in:
+  \bibinfo{booktitle}{European Symposium on Research in Computer Security
+  (ESORICS)}, pp. \bibinfo{pages}{62--79}.
+%Type = Inproceedings
+\bibitem[{Huang et~al.(2023)Huang, Marchant, Lucas, Bauer, Ohrimenko and
+  Rubinstein}]{huang2023rsdel}
+\bibinfo{author}{Huang, Z.}, \bibinfo{author}{Marchant, N.G.},
+  \bibinfo{author}{Lucas, K.}, \bibinfo{author}{Bauer, L.},
+  \bibinfo{author}{Ohrimenko, O.}, \bibinfo{author}{Rubinstein, B.I.P.},
+  \bibinfo{year}{2023}.
+\newblock \bibinfo{title}{{RS-Del}: Edit distance robustness certificates for
+  sequence classifiers via randomized deletion}, in:
+  \bibinfo{booktitle}{Advances in Neural Information Processing Systems
+  (NeurIPS)}.
+%Type = Inproceedings
+\bibitem[{Incer et~al.(2018)Incer, Theodorides, Afroz and
+  Wagner}]{incer2018monotonic}
+\bibinfo{author}{Incer, I.}, \bibinfo{author}{Theodorides, M.},
+  \bibinfo{author}{Afroz, S.}, \bibinfo{author}{Wagner, D.},
+  \bibinfo{year}{2018}.
+\newblock \bibinfo{title}{Adversarially robust malware detection using
+  monotonic classification}, in: \bibinfo{booktitle}{ACM International Workshop
+  on Security and Privacy Analytics (IWSPA)}, pp. \bibinfo{pages}{54--63}.
+%Type = Inproceedings
+\bibitem[{Ke et~al.(2017)Ke, Meng, Finley, Wang, Chen, Ma, Ye and
+  Liu}]{ke2017lightgbm}
+\bibinfo{author}{Ke, G.}, \bibinfo{author}{Meng, Q.}, \bibinfo{author}{Finley,
+  T.}, \bibinfo{author}{Wang, T.}, \bibinfo{author}{Chen, W.},
+  \bibinfo{author}{Ma, W.}, \bibinfo{author}{Ye, Q.}, \bibinfo{author}{Liu,
+  T.Y.}, \bibinfo{year}{2017}.
+\newblock \bibinfo{title}{{LightGBM}: A highly efficient gradient boosting
+  decision tree}, in: \bibinfo{booktitle}{Advances in Neural Information
+  Processing Systems (NeurIPS)}.
+%Type = Inproceedings
+\bibitem[{Kolosnjaji et~al.(2018)Kolosnjaji, Demontis, Biggio, Maiorca,
+  Giacinto, Eckert and Roli}]{kolosnjaji2018adversarial}
+\bibinfo{author}{Kolosnjaji, B.}, \bibinfo{author}{Demontis, A.},
+  \bibinfo{author}{Biggio, B.}, \bibinfo{author}{Maiorca, D.},
+  \bibinfo{author}{Giacinto, G.}, \bibinfo{author}{Eckert, C.},
+  \bibinfo{author}{Roli, F.}, \bibinfo{year}{2018}.
+\newblock \bibinfo{title}{Adversarial malware binaries: Evading deep learning
+  for malware detection in executables}, in: \bibinfo{booktitle}{European
+  Signal Processing Conference (EUSIPCO)}, pp. \bibinfo{pages}{533--537}.
+%Type = Inproceedings
+\bibitem[{Lecuyer et~al.(2019)Lecuyer, Atlidakis, Geambasu, Hsu and
+  Jana}]{lecuyer2019certified}
+\bibinfo{author}{Lecuyer, M.}, \bibinfo{author}{Atlidakis, V.},
+  \bibinfo{author}{Geambasu, R.}, \bibinfo{author}{Hsu, D.},
+  \bibinfo{author}{Jana, S.}, \bibinfo{year}{2019}.
+\newblock \bibinfo{title}{Certified robustness to adversarial examples with
+  differential privacy}, in: \bibinfo{booktitle}{IEEE Symposium on Security and
+  Privacy (S\&P)}, pp. \bibinfo{pages}{656--672}.
+%Type = Inproceedings
+\bibitem[{Levine and Feizi(2020a)}]{levine2020patch}
+\bibinfo{author}{Levine, A.}, \bibinfo{author}{Feizi, S.},
+  \bibinfo{year}{2020}a.
+\newblock \bibinfo{title}{(de)randomized smoothing for certifiable defense
+  against patch attacks}, in: \bibinfo{booktitle}{Advances in Neural
+  Information Processing Systems (NeurIPS)}.
+%Type = Inproceedings
+\bibitem[{Levine and Feizi(2020b)}]{levine2020ablation}
+\bibinfo{author}{Levine, A.}, \bibinfo{author}{Feizi, S.},
+  \bibinfo{year}{2020}b.
+\newblock \bibinfo{title}{Robustness certificates for sparse adversarial
+  attacks by randomized ablation}, in: \bibinfo{booktitle}{AAAI Conference on
+  Artificial Intelligence}.
+%Type = Inproceedings
+\bibitem[{Madry et~al.(2018)Madry, Makelov, Schmidt, Tsipras and
+  Vladu}]{madry2018towards}
+\bibinfo{author}{Madry, A.}, \bibinfo{author}{Makelov, A.},
+  \bibinfo{author}{Schmidt, L.}, \bibinfo{author}{Tsipras, D.},
+  \bibinfo{author}{Vladu, A.}, \bibinfo{year}{2018}.
+\newblock \bibinfo{title}{Towards deep learning models resistant to adversarial
+  attacks}, in: \bibinfo{booktitle}{International Conference on Learning
+  Representations (ICLR)}.
+%Type = Inproceedings
+\bibitem[{Pendlebury et~al.(2019)Pendlebury, Pierazzi, Jordaney, Kinder and
+  Cavallaro}]{pendlebury2019tesseract}
+\bibinfo{author}{Pendlebury, F.}, \bibinfo{author}{Pierazzi, F.},
+  \bibinfo{author}{Jordaney, R.}, \bibinfo{author}{Kinder, J.},
+  \bibinfo{author}{Cavallaro, L.}, \bibinfo{year}{2019}.
+\newblock \bibinfo{title}{{TESSERACT}: Eliminating experimental bias in malware
+  classification across space and time}, in: \bibinfo{booktitle}{USENIX
+  Security Symposium}, pp. \bibinfo{pages}{729--746}.
+%Type = Inproceedings
+\bibitem[{Pierazzi et~al.(2020)Pierazzi, Pendlebury, Cortellazzi and
+  Cavallaro}]{pierazzi2020problemspace}
+\bibinfo{author}{Pierazzi, F.}, \bibinfo{author}{Pendlebury, F.},
+  \bibinfo{author}{Cortellazzi, J.}, \bibinfo{author}{Cavallaro, L.},
+  \bibinfo{year}{2020}.
+\newblock \bibinfo{title}{Intriguing properties of adversarial {ML} attacks in
+  the problem space}, in: \bibinfo{booktitle}{IEEE Symposium on Security and
+  Privacy (S\&P)}, pp. \bibinfo{pages}{1332--1349}.
+%Type = Inproceedings
+\bibitem[{Saha et~al.(2024)Saha, Wang, Kaya, Feizi and Dumitras}]{saha2024drsm}
+\bibinfo{author}{Saha, S.}, \bibinfo{author}{Wang, W.}, \bibinfo{author}{Kaya,
+  Y.}, \bibinfo{author}{Feizi, S.}, \bibinfo{author}{Dumitras, T.},
+  \bibinfo{year}{2024}.
+\newblock \bibinfo{title}{{DRSM}: De-randomized smoothing on malware classifier
+  providing certified robustness}, in: \bibinfo{booktitle}{International
+  Conference on Learning Representations (ICLR)}.
+%Type = Inproceedings
+\bibitem[{Salman et~al.(2019)Salman, Li, Razenshteyn, Zhang, Zhang, Bubeck and
+  Yang}]{salman2019provably}
+\bibinfo{author}{Salman, H.}, \bibinfo{author}{Li, J.},
+  \bibinfo{author}{Razenshteyn, I.}, \bibinfo{author}{Zhang, P.},
+  \bibinfo{author}{Zhang, H.}, \bibinfo{author}{Bubeck, S.},
+  \bibinfo{author}{Yang, G.}, \bibinfo{year}{2019}.
+\newblock \bibinfo{title}{Provably robust deep learning via adversarially
+  trained smoothed classifiers}, in: \bibinfo{booktitle}{Advances in Neural
+  Information Processing Systems (NeurIPS)}.
+%Type = Inproceedings
+\bibitem[{Szegedy et~al.(2014)Szegedy, Zaremba, Sutskever, Bruna, Erhan,
+  Goodfellow and Fergus}]{szegedy2014intriguing}
+\bibinfo{author}{Szegedy, C.}, \bibinfo{author}{Zaremba, W.},
+  \bibinfo{author}{Sutskever, I.}, \bibinfo{author}{Bruna, J.},
+  \bibinfo{author}{Erhan, D.}, \bibinfo{author}{Goodfellow, I.},
+  \bibinfo{author}{Fergus, R.}, \bibinfo{year}{2014}.
+\newblock \bibinfo{title}{Intriguing properties of neural networks}, in:
+  \bibinfo{booktitle}{International Conference on Learning Representations
+  (ICLR)}.
+%Type = Inproceedings
+\bibitem[{Yang et~al.(2021)Yang, Ciptadi, Laziuk, Ahmadzadeh and
+  Wang}]{yang2021bodmas}
+\bibinfo{author}{Yang, L.}, \bibinfo{author}{Ciptadi, A.},
+  \bibinfo{author}{Laziuk, I.}, \bibinfo{author}{Ahmadzadeh, A.},
+  \bibinfo{author}{Wang, G.}, \bibinfo{year}{2021}.
+\newblock \bibinfo{title}{{BODMAS}: An open dataset for learning based temporal
+  analysis of {PE} malware}, in: \bibinfo{booktitle}{IEEE Security and Privacy
+  Workshops (SPW)}, pp. \bibinfo{pages}{78--84}.
+%Type = Inproceedings
+\bibitem[{Zhang et~al.(2020)Zhang, Chen, Xiao, Gowal, Stanforth, Li, Boning and
+  Hsieh}]{zhang2020crownibp}
+\bibinfo{author}{Zhang, H.}, \bibinfo{author}{Chen, H.}, \bibinfo{author}{Xiao,
+  C.}, \bibinfo{author}{Gowal, S.}, \bibinfo{author}{Stanforth, R.},
+  \bibinfo{author}{Li, B.}, \bibinfo{author}{Boning, D.},
+  \bibinfo{author}{Hsieh, C.J.}, \bibinfo{year}{2020}.
+\newblock \bibinfo{title}{Towards stable and efficient training of verifiably
+  robust neural networks}, in: \bibinfo{booktitle}{International Conference on
+  Learning Representations (ICLR)}.
+%Type = Inproceedings
+\bibitem[{Zhang et~al.(2018)Zhang, Weng, Chen, Hsieh and
+  Daniel}]{zhang2018crown}
+\bibinfo{author}{Zhang, H.}, \bibinfo{author}{Weng, T.W.},
+  \bibinfo{author}{Chen, P.Y.}, \bibinfo{author}{Hsieh, C.J.},
+  \bibinfo{author}{Daniel, L.}, \bibinfo{year}{2018}.
+\newblock \bibinfo{title}{Efficient neural network robustness certification
+  with general activation functions}, in: \bibinfo{booktitle}{Advances in
+  Neural Information Processing Systems (NeurIPS)}.
+
+\end{thebibliography}

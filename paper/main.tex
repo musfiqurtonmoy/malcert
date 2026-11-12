@@ -1,0 +1,136 @@
+%% Manuscript for Computers & Security (Elsevier) -- elsarticle class.
+%% Every experimental number comes from tables/numbers.tex, produced by make_figures.py.
+\documentclass[preprint,12pt,authoryear]{elsarticle}
+\usepackage{amsmath,amssymb,amsthm}
+\usepackage{graphicx,booktabs,multirow}
+\usepackage[hidelinks]{hyperref}
+\usepackage{xcolor}
+\newtheorem{theorem}{Theorem}
+\newtheorem{proposition}{Proposition}
+\newtheorem{definition}{Definition}
+\input{tables/numbers.tex}
+\input{tables/numbers_temporal.tex}
+\journal{Computers \& Security}
+
+\begin{document}
+\begin{frontmatter}
+\title{Certified Robustness of Machine-Learning Malware Detectors in Constrained {PE} Feature Space: Group-Ablation Certificates and Constraint-Aware Certified Training}
+
+\author[inst1]{Ababil Hossain Fahad\corref{cor1}}
+\ead{fahad@lamppost.org.bd}
+\cortext[cor1]{Corresponding author}
+\affiliation[inst1]{organization={\textcolor{red}{[Department, Institution]}}, city={Dhaka}, country={Bangladesh}}
+
+\begin{abstract}
+Machine-learning malware detectors are now central to endpoint security pipelines, yet they remain sensitive to gradient-based adversarial perturbations. Existing certified defenses such as randomized smoothing and interval bound propagation were designed for images: they treat every input dimension as equally changeable and describe the attacker by a small norm ball, whereas Portable Executable (PE) features are partly immutable, partly increase-only, and are rewritten group by group by real evasion tools. We make three contributions, evaluated on a stratified 30,000-sample subset of BODMAS (12,773 malware, 17,227 benign; \NCategories{} malware categories and \NFamilies{} families) represented by 2,381-dimensional LIEF/EMBER features. (i) We formalise a constraint-aware feature-space threat model in which only \NMutable{} features are attacker-mutable and \NMonotone{} can only increase, and show that a single transplanted feature group evades a \MlpAcc\%-accurate neural detector on \MlpGroupEvadeOne\% of attacked malware. (ii) We introduce feature-group ablation smoothing, a deterministic certificate against arbitrary modification of up to $r$ semantic feature groups; with single-group views it certifies \AblOneCertR\% of malware against any one-group modification and \AblOneCertRtwo\% against two, with no counter-example found by the attack. (iii) We propose constraint-aware CROWN-IBP training, which propagates bounds only through the reachable region of feature space; at $\epsilon=\TrainEps$ it certifies \CrownSymCert\% of malware (\CrownSymCertUnc\% when bounded over the unconstrained box) at \CrownSymAcc\% clean accuracy, versus \StdCert\% for a standard network. Requiring robustness only for malware does not pay off: its certified-detection gain at $\epsilon=\TrainEps$ (\CrownAsymCert\% vs.\ \CrownSymCert\%) is within seed-to-seed variation, and it raises the false-positive rate from \CrownSymFpr\% to \CrownAsymFpr\%.
+\end{abstract}
+
+\begin{keyword}
+Malware detection \sep Adversarial machine learning \sep Certified robustness \sep Randomized smoothing \sep Interval bound propagation \sep Portable Executable
+\end{keyword}
+\end{frontmatter}
+
+%% ===================================================================================
+\section{Introduction}
+Static machine-learning detectors classify Windows PE files from features extracted without execution, such as byte histograms, string statistics, header fields and hashed import tables \citep{anderson2018ember,gibert2020rise}. They are fast and generalise to unseen variants, but they inherit the adversarial fragility of neural networks \citep{szegedy2014intriguing,goodfellow2015explaining}: small, functionality-preserving edits to a binary can flip the decision \citep{grosse2017adversarial,kolosnjaji2018adversarial,demetrio2021exemples,pierazzi2020problemspace}.
+
+Empirical defenses such as adversarial training \citep{madry2018towards,aldujaili2018adversarial} raise the cost of known attacks but give no guarantee against stronger ones. Certified defenses provide a proof that no perturbation inside a threat set changes the prediction. The two dominant families, randomized smoothing \citep{lecuyer2019certified,cohen2019certified} and bound propagation \citep{gowal2018ibp,zhang2018crown,zhang2020crownibp}, were developed for images, where every pixel is equally mutable and an $\ell_p$ ball is a reasonable proxy for imperceptibility. PE feature vectors violate both assumptions: (a) many features (e.g.\ machine type, subsystem, data-directory sizes) cannot be changed without breaking the executable, (b) many others can only grow under append-only edits, and (c) features come in semantically coherent groups whose scales differ by orders of magnitude. Applying image-style certificates uniformly over all 2,381 dimensions therefore wastes certification budget on impossible perturbations, and a norm ball cannot express the edits that matter most in practice, such as rebuilding an entire import table.
+
+Certified robustness for malware has so far focused on raw-byte models, certifying against byte patches or insertions via (de)randomized smoothing over byte windows \citep{saha2024drsm,gibert2024certified} or randomized deletion \citep{huang2023rsdel}, and on architectures that are robust by construction \citep{incer2018monotonic,gimenez2025erdalt}. Structured feature-space detectors, which remain the industry standard, lack certificates that exploit their structure. This paper fills that gap with three contributions:
+\begin{enumerate}
+\item \textbf{C1 -- Constraint-aware threat model and attacks.} We annotate each EMBER feature as immutable, mutable, or monotone (increase-only), define the reachable region as their intersection with the empirical feature domain, and implement FGSM/PGD and a group-transplant attack inside it. The model over-approximates functionality-preserving problem-space edits, so certificates proved against it are sound for the real attacker.
+\item \textbf{C2 -- Feature-group ablation certificates and subspace smoothing.} We adapt de-randomized ablation \citep{levine2020ablation,levine2020patch} from pixels to the nine semantic EMBER groups, giving a deterministic certificate against \emph{arbitrary} changes to up to $r$ groups, and we restrict Gaussian smoothing to the mutable subspace.
+\item \textbf{C3 -- Constraint-aware certified training.} We propagate IBP/CROWN bounds through the constrained box instead of the full $\ell_\infty$ ball. We also evaluate an asymmetric variant that requires robustness only for the malware class, since benign authors have no incentive to evade; it yields a negative result (Section~\ref{sec:ct}).
+\end{enumerate}
+All experiments use BODMAS \citep{yang2021bodmas}, and every reported number is generated by released scripts.
+
+%% ===================================================================================
+\section{Related work}
+\textbf{Evasion of static detectors.} Feature-space attacks on malware detectors date back at least to \citet{grosse2017adversarial}; problem-space attacks that edit real binaries (header manipulation, section injection, padding) are surveyed by \citet{demetrio2021exemples}, and \citet{pierazzi2020problemspace} formalise the gap between feature-space and problem-space adversaries. Our threat model follows their principle that only realisable transformations should be counted.
+
+\textbf{Empirical defenses.} Adversarial training \citep{madry2018towards} has been applied to binary-encoded malware \citep{aldujaili2018adversarial}. Monotonic classifiers \citep{incer2018monotonic} are robust by construction to addition-only attacks; \citet{chen2020pdf} train PDF classifiers with verified robustness properties.
+
+\textbf{Certified defenses.} Randomized smoothing gives probabilistic $\ell_2$ certificates \citep{cohen2019certified,lecuyer2019certified,salman2019provably}; de-randomized ablation gives deterministic $\ell_0$ and patch certificates \citep{levine2020ablation,levine2020patch}. IBP \citep{gowal2018ibp}, CROWN \citep{zhang2018crown} and CROWN-IBP \citep{zhang2020crownibp} bound network outputs over input boxes and can be used both to verify and to train. For malware, DRSM \citep{saha2024drsm} and \citet{gibert2024certified} certify raw-byte detectors against contiguous patches, RS-Del \citep{huang2023rsdel} certifies against edit-distance perturbations of byte sequences, and ERDALT \citep{gimenez2025erdalt} builds detectors that are robust by design. Concurrent work \citep{giri2026towards} smooths an EMBER-feature detector with Gaussian noise and random group ablation during training and certifies an $\ell_2$ radius, but it does not certify against modification of feature groups or model which features an attacker can change, which is our focus.
+
+%% ===================================================================================
+\section{Threat model}\label{sec:threat}
+Let $x\in\mathbb{R}^{d}$, $d=2381$, be the EMBER feature vector after a per-feature signed-log and z-score transform $\phi$. Because $\phi$ is strictly increasing per coordinate, ``feature $i$ can only increase'' is preserved in the transformed space.
+
+\begin{definition}[Feature annotation]
+Each coordinate $i$ is \emph{immutable} ($i\notin\mathcal{M}$), \emph{mutable} ($i\in\mathcal{M}$) or \emph{monotone} ($i\in\mathcal{N}\subseteq\mathcal{M}$, increase-only). We take as mutable the byte and byte-entropy histograms, string statistics, section, import and export groups, file size and virtual size, the import/export counts in the general block and the COFF timestamp, i.e.\ everything reachable by appending data, adding strings, adding a section or import, or editing the timestamp. Counts and sizes are monotone. Header fields other than the timestamp and the data-directory table are immutable. This yields $|\mathcal{M}|=\NMutable$ and $|\mathcal{N}|=\NMonotone$.
+\end{definition}
+
+\begin{definition}[Constrained $\ell_\infty$ region]
+For budget $\epsilon$ the reachable box is $B_\epsilon(x)=\prod_i[\ell_i,u_i]$ with $\ell_i=u_i=x_i$ for $i\notin\mathcal{M}$, $\ell_i=x_i$, $u_i=x_i+\epsilon$ for $i\in\mathcal{N}$, $[\ell_i,u_i]=[x_i-\epsilon,x_i+\epsilon]$ otherwise, intersected with the training-set range of feature $i$ (extended to contain $x_i$).
+\end{definition}
+
+\begin{definition}[Group threat]
+EMBER features form $G=9$ groups (byte histogram, byte-entropy histogram, strings, general+timestamp, static header, section, imports, exports, data directories). An $r$-group adversary may replace \emph{all} features of any $r$ mutable groups by arbitrary values. This $\ell_0$-over-groups model needs no norm or scale assumption and directly matches edits such as ``add a section'' or ``rebuild the import table''.
+\end{definition}
+
+Only malware is attacked: the adversary wants a malicious file labelled benign. All the above sets contain every realisable edit we consider, so a certificate against them is sound, if conservative, for the real attacker.
+
+%% ===================================================================================
+\section{Methods}
+\subsection{C1: constrained gradient attacks}
+FGSM and PGD \citep{goodfellow2015explaining,madry2018towards} maximise the cross-entropy of the true label with the projection $\Pi_{B_\epsilon(x)}$ applied after every step: clip to $[-\epsilon,\epsilon]$, zero the step on immutable features, clip monotone steps at zero and clip to the feature domain. The \emph{group-transplant} attack greedily copies whole mutable groups from benign donor samples, choosing at each step the group and donor that most reduce the malware score, up to $r$ groups.
+
+\subsection{C2a: feature-group ablation certificate}
+For a keep-size $k$ let $\mathcal{V}_k$ be all $\binom{G}{k}$ subsets of groups. A base network $h(x\odot m_S, \mathbf{1}_S)$ sees the features of the kept groups $S$ (others set to the training mean) and a $G$-bit indicator of which groups are kept; it is trained on random subsets of size $k$. The smoothed classifier votes over all views: $n_c(x)=|\{S\in\mathcal{V}_k: h_S(x)=c\}|$ and $g(x)=\arg\max_c n_c(x)$. Following the argument of \citet{levine2020patch} for de-randomized patch certificates, we bound how many views a modification of $r$ groups can reach.
+\begin{theorem}\label{thm:abl}
+Let $\Delta_r=\binom{G}{k}-\binom{G-r}{k}$. If $n_y(x)-n_{c}(x)>2\Delta_r$ for every $c\neq y$, then $g(x')=y$ for every $x'$ that differs from $x$ only within at most $r$ groups.
+\end{theorem}
+\begin{proof}
+A view $S$ is unaffected unless it keeps at least one modified group. The number of $k$-subsets that avoid a fixed set of $r$ groups is $\binom{G-r}{k}$, so at most $\Delta_r$ views can change their vote. Each changed vote lowers $n_y$ by at most one and raises some $n_c$ by at most one, so $n_y(x')-n_c(x')\ge n_y(x)-n_c(x)-2\Delta_r>0$.
+\end{proof}
+The certificate is deterministic and exact to compute ($\binom{G}{k}\le 84$ forward passes for $k\le3$), and it holds for any values written into the modified groups, not only small ones.
+
+\subsection{C2b: subspace randomized smoothing}
+Isotropic smoothing \citep{cohen2019certified} adds $\mathcal{N}(0,\sigma^2 I)$ to all features. We add noise only on $\mathcal{M}$: $\eta\sim\mathcal{N}(0,\sigma^2 P_\mathcal{M})$, with $P_\mathcal{M}$ the coordinate projection. For perturbations $\delta$ supported on $\mathcal{M}$, the immutable coordinates of $x$ and $x+\delta$ coincide, so Cohen et al.'s theorem applied in $\mathbb{R}^{|\mathcal{M}|}$ gives the radius $R=\sigma\,\Phi^{-1}(\underline{p_A})$, where $\underline{p_A}$ is a one-sided Clopper--Pearson lower bound \citep{clopper1934} on the top-class probability. The base network is trained with the same noise distribution.
+
+\subsection{C3: constraint-aware certified training}
+For a ReLU network with logits $z$, let $m(x)=z_y(x)-z_{1-y}(x)$. IBP \citep{gowal2018ibp} and CROWN \citep{zhang2018crown} give sound lower bounds $\underline{m}$ over any input box. We evaluate them over $B_\epsilon(x)$ rather than the full $\ell_\infty$ ball:
+\begin{proposition}
+For any sound box-bounding method, $B_\epsilon(x)\subseteq\{x':\|x'-x\|_\infty\le\epsilon\}$ implies that every point certified under the unconstrained box is certified under $B_\epsilon(x)$.
+\end{proposition}
+Training minimises $\kappa\,\mathrm{CE}(z(x),y)+(1-\kappa)\,\mathrm{softplus}(-\underline{m}(x))$ with the CROWN-IBP mixture $\underline{m}=\beta\,\underline{m}_{\text{CROWN}}+(1-\beta)\,\underline{m}_{\text{IBP}}$ \citep{zhang2020crownibp}; $\epsilon$ ramps linearly from 0 after a clean warm-up while $\kappa$ goes $1\to0.5$ and $\beta$ goes $1\to0$. We also evaluate an \emph{asymmetric} variant, in which the robust term is applied only to malware samples and benign samples keep the clean loss; Section~\ref{sec:ct} reports it as a negative result. At test time a point is certified if $\max(\underline{m}_{\text{IBP}},\underline{m}_{\text{CROWN}})>0$.
+
+%% ===================================================================================
+\section{Experimental setup}
+\textbf{Data.} From the 134,435 BODMAS samples \citep{yang2021bodmas} we draw 12,773 malware (stratified by category, keeping at least five samples of every category) and 17,227 benign samples, and split them 70/10/20, stratified by category. A temporal split \citep{pendlebury2019tesseract} is evaluated in Section~\ref{sec:temporal}. Features are transformed by signed $\log(1+|x|)$ and z-scored with training statistics.
+
+\textbf{Models.} LightGBM \citep{ke2017lightgbm} serves as the EMBER reference detector. Neural detectors are ReLU MLPs (2381--512--256--2 for attacks, smoothing and ablation; 2381--256--256--2 for certified training), trained with Adam and a cosine schedule. PGD adversarial training uses the constrained region with $\epsilon=0.1$ and 10 steps. All hyperparameters were set before the experiments, except that after a preliminary run we extended the smoothing grid to $\sigma=1.0$ to probe larger noise; all values tried are reported. The validation split was not used for tuning or model selection.
+
+\textbf{Evaluation.} We report accuracy, F1, true-positive rate (TPR, malware detected), false-positive rate and AUC on the test split; under attack we report the malware TPR that survives the attack, and for certificates the \emph{certified TPR}, the fraction of test malware that is correctly classified and certified. Smoothing uses $n_0=100$ selection and $n$ certification samples with $\alpha=10^{-3}$. Results are averaged over \NSeeds{} \SeedsNoun{} (mean $\pm$ std).
+
+%% ===================================================================================
+\section{Results}\label{sec:results}
+\input{results_text.tex}
+
+%% ===================================================================================
+\section{Discussion and limitations}
+\textbf{Feature space versus problem space.} All certificates are stated in feature space. Because our sets over-approximate realisable edits, they are sound for those edits, but they may be loose: a certificate against $r=1$ group covers any change to the import table, including changes that no real linker could produce. Conversely, attacks that alter immutable features by rewriting the binary (e.g.\ repacking) fall outside the model; this is a deliberate scoping choice shared with prior work \citep{pierazzi2020problemspace,demetrio2021exemples}.
+
+\textbf{Choice of norm units.} $\ell_\infty$ and $\ell_2$ budgets are expressed in standardised units, which are not directly interpretable in bytes. The group certificate avoids this issue entirely, which is one reason we regard it as the most practically meaningful of the three. That judgement holds for a fixed data distribution only: under temporal drift the group certificate degrades more than CROWN-IBP, its certified detection at $r=1$ falling by \TmpAblCertDropMin{}--\TmpAblCertDropMax{} points across keep sizes against \TmpCrownCertDrop{} for CROWN-IBP (Section~\ref{sec:temporal}).
+
+\textbf{Concept drift.} Our temporal evaluation (Section~\ref{sec:temporal}) covers a single test window (\TmpTestStart{} to \TmpTestEnd{}) after the training period, and certified detection measured on a random split need not carry over to later samples at the same rate. On that window, CROWN-IBP's certified detection falls by \TmpCrownCertDrop{} points against \TmpCrownTprDrop{} for its clean detection, roughly \TmpCrownDropRatioInt{} times as much, so certificates should be recomputed as malware evolves rather than assumed to persist. Longer horizons and retraining strategies, as studied by \citet{pendlebury2019tesseract}, remain to be evaluated.
+
+%% ===================================================================================
+\section{Conclusion}
+We showed that structure-blind certified defenses are a poor fit for PE feature vectors, and that exploiting three simple facts (some features are immutable, some only grow, and features come in semantic groups) yields certificates that are both meaningful and cheap. Feature-group ablation in particular gives deterministic, norm-free guarantees against modification of whole feature groups, the kind of edit real evasion tools perform. Under temporal drift, however, both certificates lose ground: the group certificate's certified detection at $r=1$ falls by \TmpAblCertDropMin{}--\TmpAblCertDropMax{} points depending on the keep size, and CROWN-IBP's by \TmpCrownCertDrop{} points against \TmpCrownTprDrop{} for its clean detection, roughly \TmpCrownDropRatioInt{} times as much, so certificates should be recomputed as malware evolves.
+
+\section*{CRediT authorship contribution statement}
+\textbf{Ababil Hossain Fahad:} Conceptualization, Methodology, Software, Investigation, Writing -- original draft.
+
+\section*{Declaration of competing interest}
+The author declares no competing financial interests or personal relationships that could have appeared to influence the work reported in this paper.
+
+\section*{Data availability}
+BODMAS is publicly available from its authors. Code to reproduce all experiments, figures and tables will be released upon publication.
+
+\section*{Declaration of generative AI use}
+\textcolor{red}{[Elsevier requires a statement if AI tools were used in writing; describe your use here.]}
+
+\bibliographystyle{elsarticle-harv}
+\bibliography{refs}
+\end{document}
