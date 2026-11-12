@@ -1,0 +1,11 @@
+technique,edit,level,r_needed,certified_detection_k1,source
+Overlay append (padding),E1,(a) or (b): to be measured,4,to be measured,not measured yet
+String padding,E2,(a) or (b): to be measured,4,to be measured,not measured yet
+Section injection,E3,"(b) inside, not certifiable",6,none possible (r>4),not measured yet
+Import addition,E4,"(b) inside, not certifiable",7,none possible (r>4),not measured yet
+Timestamp edit,E5,(a) or (b): to be measured,3,to be measured,not measured yet
+Section renaming,E6,(a) or (b): to be measured,4,to be measured,not measured yet
+Checksum and DOS-header edits,E7,(a) or (b): to be measured,3,to be measured,not measured yet
+Signature and debug stripping,E8,"(b) inside, not certifiable",6,none possible (r>4),not measured yet
+Header version and DLL-characteristics edits,E10,(a) or (b): to be measured,3,to be measured,not measured yet
+Packing (UPX),E9,(c) out of scope,9,--,not measured yet

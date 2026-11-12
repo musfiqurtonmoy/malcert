@@ -4,19 +4,20 @@
 \cmidrule(lr){3-11}\cmidrule(lr){12-13}\cmidrule(lr){14-15}\cmidrule(lr){16-17}
 Edit & Files & BH & BE & Str & Gen & Hdr & Sec & Imp & Exp & DD & med. & max & med. & 90\% & box & groups \\
 \midrule
-E1 Overlay append & 600 & $\bullet$ & $\bullet$ & $\bullet$ & $\bullet$ &  &  &  &  &  & 4 & 4 & 1.7 & 5.9 & 98 & 100 \\
-E2 String padding & 200 & $\bullet$ & $\bullet$ & $\bullet$ & $\bullet$ &  &  &  &  &  & 4 & 4 & 9.8 & 15 & 98 & 100 \\
-E3 Section add & 400 & $\bullet$ & $\bullet$ & $\bullet$ & $\bullet$ & $\circ$ & $\bullet$ &  &  &  & 5 & 6 & 22 & 22 & 47 & 97 \\
+E1 Overlay append & 900 & $\bullet$ & $\bullet$ & $\bullet$ & $\bullet$ &  &  &  &  &  & 4 & 4 & 1.9 & 6.5 & 98 & 100 \\
+E2 String padding & 300 & $\bullet$ & $\bullet$ & $\bullet$ & $\bullet$ &  &  &  &  &  & 4 & 4 & 9.8 & 15 & 99 & 100 \\
+E3 Section add & 600 & $\bullet$ & $\bullet$ & $\bullet$ & $\bullet$ & $\circ$ & $\bullet$ &  &  &  & 5 & 6 & 22 & 22 & 48 & 98 \\
 \quad\emph{of which the edit itself (vs.\ E0)} & & $\bullet$ & $\bullet$ & $\bullet$ & $\bullet$ &  & $\bullet$ &  &  &  & 5 & 5 & & & & \\
-E4 Import add & 192 & $\bullet$ & $\bullet$ & $\bullet$ & $\bullet$ &  & $\bullet$ & $\bullet$ &  & $\bullet$ & 7 & 7 & 17 & 18 & 0 & 0 \\
+E4 Import add & 236 & $\bullet$ & $\bullet$ & $\bullet$ & $\bullet$ &  & $\bullet$ & $\bullet$ &  & $\bullet$ & 7 & 7 & 17 & 18 & 0 & 0 \\
 \quad\emph{of which the edit itself (vs.\ E0)} & & $\bullet$ & $\bullet$ & $\bullet$ & $\bullet$ &  & $\bullet$ & $\bullet$ &  & $\bullet$ & 7 & 7 & & & & \\
-E5 Timestamp edit & 100 & $\bullet$ & $\bullet$ &  & $\bullet$ &  &  &  &  &  & 3 & 3 & 0.21 & 0.42 & 100 & 100 \\
-E6 Section rename & 100 & $\bullet$ & $\bullet$ & $\bullet$ &  &  & $\bullet$ &  &  &  & 4 & 4 & 28 & 57 & 54 & 100 \\
-E7 Checksum, DOS header & 300 & $\bullet$ & $\bullet$ & $\circ$ &  &  &  &  &  &  & 2 & 3 & 0.015 & 0.42 & 67 & 100 \\
-E8 Strip signature, debug & 126 & $\bullet$ & $\bullet$ & $\bullet$ & $\bullet$ &  & $\circ$ &  &  & $\bullet$ & 6 & 6 & 2.4 & 2.6 & 0 & 0 \\
+E5 Timestamp edit & 150 & $\bullet$ & $\bullet$ &  & $\bullet$ &  &  &  &  &  & 3 & 3 & 0.22 & 0.45 & 100 & 100 \\
+E6 Section rename & 150 & $\bullet$ & $\bullet$ & $\bullet$ &  &  & $\bullet$ &  &  &  & 4 & 4 & 25 & 57 & 57 & 100 \\
+E7 Checksum, DOS header & 450 & $\bullet$ & $\bullet$ & $\circ$ &  &  &  &  &  &  & 2 & 3 & 0.019 & 0.48 & 67 & 100 \\
+E8 Strip signature, debug & 181 & $\bullet$ & $\bullet$ & $\bullet$ & $\bullet$ &  & $\circ$ &  &  & $\bullet$ & 6 & 6 & 2.4 & 2.6 & 0 & 0 \\
+E10 Version fields, DLL flags & 1202 & $\bullet$ & $\circ$ &  &  & $\bullet$ &  &  &  &  & 3 & 3 & 2.2 & 18 & 0 & 0 \\
 \midrule
-E9 UPX packing$^\dagger$ & 100 & $\bullet$ & $\bullet$ & $\bullet$ & $\bullet$ & $\bullet$ & $\bullet$ & $\bullet$ & $\circ$ & $\bullet$ & 8 & 9 & 7.9 & 16 & 0 & 0 \\
-E0 LIEF rebuild, no edit (control for E3) & 100 & $\circ$ & $\circ$ & $\circ$ &  & $\circ$ &  &  &  &  & 0 & 3 & 0 & 0 & 96 & 97 \\
-E0 LIEF import rebuild, no edit (control for E4) & 100 & $\bullet$ & $\circ$ & $\circ$ & $\circ$ & $\circ$ & $\circ$ &  &  & $\circ$ & 6 & 6 & 17 & 18 & 0 & 1 \\
+E9 UPX packing$^\dagger$ & 149 & $\bullet$ & $\bullet$ & $\bullet$ & $\bullet$ & $\bullet$ & $\bullet$ & $\bullet$ & $\circ$ & $\bullet$ & 8 & 9 & 7.9 & 14 & 0 & 0 \\
+E0 LIEF rebuild, no edit (control for E3) & 150 & $\circ$ & $\circ$ & $\circ$ &  & $\circ$ &  &  &  &  & 0 & 3 & 0 & 0 & 97 & 98 \\
+E0 LIEF import rebuild, no edit (control for E4) & 122 & $\bullet$ & $\circ$ & $\circ$ & $\circ$ & $\circ$ & $\circ$ &  &  & $\circ$ & 6 & 6 & 17 & 18 & 0 & 1 \\
 \bottomrule
 \end{tabular}

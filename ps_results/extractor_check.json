@@ -1,0 +1,29 @@
+{
+ "n_files": 150,
+ "n_pe32": 50,
+ "n_pe32plus": 100,
+ "bodmas_matches": [
+  {
+   "file": "cliconfg.dll",
+   "bodmas_label": 0,
+   "features_differing": 0,
+   "units_differing": []
+  }
+ ],
+ "files_with_any_feature_outside_bodmas_range": 3,
+ "units_with_a_file_outside_bodmas_range": {
+  "ByteHistogram": 1,
+  "Imports.libraries": 2
+ },
+ "entries_outside_benign_1_99_band": 0.007965840683186336,
+ "lightgbm": {
+  "bodmas_test_acc": 0.9953364423717521,
+  "bodmas_test_fpr": 0.003482298316889147,
+  "corpus_benign_rate": 1.0,
+  "corpus_benign_rate_pe32plus": 1.0,
+  "corpus_benign_rate_pe32": 1.0,
+  "corpus_score_median": 1.0661057117523813e-08,
+  "corpus_score_max": 0.0016247917806513816,
+  "flagged": []
+ }
+}

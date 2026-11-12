@@ -112,6 +112,10 @@ EDIT_SCOPE = {
     # "manipulating debug info" among their functionality-preserving actions, so it is in scope.
     # It is the only edit that REMOVES content, which is what decides monotonicity.
     "E8_strip": "in",
+    # E10 (plan 1i): header fields an attacker can set freely (linker / image versions; OS and subsystem
+    # versions lowered; DYNAMIC_BASE and NX_COMPAT cleared). Plausibly functionality-preserving, not
+    # verified by execution; taken as in scope so that the features they change count as mutable.
+    "E10_hdrfields": "in",
     "E9_upx": "out", "E0_rebuild": "control",
 }
 
@@ -158,7 +162,8 @@ def masks_from_units(mutable_units, monotone_units):
 
 
 # Frozen annotation (REVISION_PLAN 1e). It is the output of the evidence rule in tools/problem_space.py,
-# applied to ps_results/features.npz (100 benign files, in-scope edits E1-E8, 2,018 edited files):
+# applied to ps_results/features.npz (150 benign files: 100 PE32+ from System32, 50 PE32 from SysWOW64;
+# in-scope edits E1-E8 and E10; 4,169 edited files):
 #   mutable   <=> changed by an in-scope edit in at least one file, or already mutable in draft v1
 #   monotone  <=> mutable, a count or size, never decreased under any in-scope edit,
 #                 and not listed in NOT_MONOTONE_BY_REASONING
@@ -170,6 +175,10 @@ MUTABLE_UNITS = [
     "General.size", "General.vsize", "General.has_debug", "General.exports", "General.imports",
     "General.has_relocations", "General.has_signature",
     "Header.timestamp", "Header.sizeof_headers",
+    # E10 only (1i): plausibly functionality-preserving, not verified by execution
+    "Header.dll_characteristics", "Header.major_image_version", "Header.minor_image_version",
+    "Header.major_linker_version", "Header.minor_linker_version", "Header.major_os_version",
+    "Header.major_subsystem_version", "Header.minor_subsystem_version",
     "Section.n_sections", "Section.n_zero_size", "Section.n_empty_name", "Section.n_rx", "Section.n_w",
     "Section.sizes", "Section.entropy", "Section.vsizes", "Section.entry_name", "Section.entry_characteristics",
     "Imports.libraries", "Imports.functions", "Exports.functions",
@@ -272,6 +281,33 @@ def split_indices(data, cfg, seed=0):
     return {"tr": order[:a], "va": order[a:b], "te": order[b:]}
 
 
+def slog1p_(X, chunk=4096):
+    """Signed log1p in place on a float32 array, in row chunks (no full-size temporary)."""
+    for a in range(0, len(X), chunk):
+        v = X[a:a + chunk]
+        np.multiply(np.sign(v), np.log1p(np.abs(v)), out=v)
+    return X
+
+
+def load_full(cfg):
+    """All of BODMAS, loaded once: X stays float32 and is returned as the only full-size array
+    (134,435 x 2,381 float32 = 1.28 GB). Same keys as load_subset; index = all rows."""
+    d = np.load(cfg.data_npz, allow_pickle=False)
+    X = d["X"]
+    if X.dtype != np.float32:
+        X = X.astype(np.float32)
+    X = np.ascontiguousarray(X)
+    y = d["y"].astype(np.int64)
+    meta = pd.read_csv(cfg.meta_csv)
+    cats = pd.read_csv(cfg.cat_csv).rename(columns={"sha256": "sha"})
+    meta = meta.merge(cats, on="sha", how="left")
+    meta["category"] = np.where(y == 1, meta["category"].fillna("unknown"), "benign")
+    assert len(meta) == len(y) == len(X)
+    ts = pd.to_datetime(meta["timestamp"].values, format="mixed", errors="coerce", utc=True)
+    return dict(X=X, y=y, category=meta["category"].values, family=meta["family"].fillna("benign").values,
+                timestamp=ts, index=np.arange(len(y)))
+
+
 class Preprocessor:
     """Signed log1p then z-score. Both steps are monotone increasing per feature, so
     'feature can only increase' in raw space is still 'can only increase' in z-space."""
@@ -286,6 +322,29 @@ class Preprocessor:
     def transform(self, X):
         Z = np.sign(X) * np.log1p(np.abs(X))
         return ((Z - self.mu) / self.sd).astype(np.float32)
+
+    def fit_transform_inplace(self, X, train_idx, chunk=4096):
+        """Memory-lean equivalent of fit(X[train_idx]) followed by transform(X), for the full dataset.
+        X (float32, C-contiguous) is OVERWRITTEN with its standardised values; nothing of X's size is
+        allocated: the work is done in row chunks, and the statistics are accumulated in float64.
+        Use it only where the raw values are no longer needed (LightGBM, which takes raw features, first).
+        Agrees with fit/transform to float32 rounding (tests/test_threat_model.py)."""
+        assert X.dtype == np.float32 and X.flags.c_contiguous and X.flags.writeable
+        slog1p_(X, chunk)
+        train_idx = np.sort(np.asarray(train_idx))
+        s = np.zeros(X.shape[1]); ss = np.zeros(X.shape[1])
+        for a in range(0, len(train_idx), chunk):
+            v = X[train_idx[a:a + chunk]].astype(np.float64)
+            s += v.sum(0); ss += (v * v).sum(0)
+        mu = s / len(train_idx)
+        sd = np.sqrt(np.maximum(ss / len(train_idx) - mu * mu, 0.0))
+        sd[sd < 1e-6] = 1.0
+        self.mu, self.sd = mu.astype(np.float32), sd.astype(np.float32)
+        for a in range(0, len(X), chunk):
+            v = X[a:a + chunk]
+            v -= self.mu
+            v /= self.sd
+        return X
 
     def bounds(self):
         """natural_bounds() mapped to standardised space (+-inf where a feature has no bound).

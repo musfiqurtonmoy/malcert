@@ -77,7 +77,7 @@ def main():
     em = os.path.join(RES, "edit_map.csv")
     if os.path.exists(em):
         M = pd.read_csv(em)
-        M = M[(M.variant == "all") & (M.scope == "in")]
+        M = M[(M.variant == "all") & (M.scope == "in") & (M.get("arch", "all") == "all")]
         T += ["\\midrule", "\\multicolumn{%d}{l}{\\emph{$\\epsilon$ needed by the measured edits (median; 90th percentile)}} \\\\" % (4 + len(EPS))]
         for r in M.itertuples():
             T.append(f"\\multicolumn{{{2 + len(EPS)}}}{{l}}{{\\quad {r.edit.replace('_', ' ')}}} & "

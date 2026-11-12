@@ -48,11 +48,17 @@ EDITS = OrderedDict([
     ("E6_secnames", ("E6 Section rename", "Section renaming", "demetrio2021exemples,anderson2018learning")),
     ("E7_header", ("E7 Checksum, DOS header", "Checksum and DOS-header edits", "demetrio2021exemples,anderson2018learning")),
     ("E8_strip", ("E8 Strip signature, debug", "Signature and debug stripping", "anderson2018learning")),
+    ("E10_hdrfields", ("E10 Version fields, DLL flags", "Header version and DLL-characteristics edits", "")),
     ("E9_upx", ("E9 UPX packing", "Packing (UPX)", "anderson2018learning")),
     ("E0_rebuild", ("E0 LIEF rebuild (control)", "", "")),
 ])
 NUM = {"E0": "Ezero", "E1": "Eone", "E2": "Etwo", "E3": "Ethree", "E4": "Efour", "E5": "Efive", "E6": "Esix",
-       "E7": "Eseven", "E8": "Eeight", "E9": "Enine"}
+       "E7": "Eseven", "E8": "Eeight", "E9": "Enine", "E10": "Eten"}
+ARCHS = ("PE32+", "PE32")                       # System32 copies / SysWOW64 copies (file name prefix w32__)
+
+
+def arch_of(name):
+    return "PE32" if str(name).startswith("w32__") else "PE32+"
 # LIEF-based edits rebuild the whole file. Their control is the same rebuild WITHOUT the edit (E0), so the
 # footprint of the edit itself is the difference between the edited file and the rebuilt-only file (1h).
 REBUILD_CONTROL = {"E3_section": "plain", "E4_imports": "imports"}
@@ -90,6 +96,8 @@ def bodmas_stats():
 def main():
     ap = argparse.ArgumentParser()
     ap.add_argument("--paper", default=os.path.join(ROOT, "paper"))
+    ap.add_argument("--res", default=None,
+                    help="results folder: fills the coverage table with the measured certified detection (k=1)")
     ap.add_argument("--propose", action="store_true",
                     help="print the annotation the rule gives and do not fail if data.py differs (used once, to freeze it)")
     a = ap.parse_args()
@@ -127,6 +135,7 @@ def main():
             gch = np.stack([ch[:, gid == g].any(1) for g in range(G)], 1)
             # footprint of the edit itself: against the rebuilt-only file for LIEF edits, else against the original
             if e in REBUILD_CONTROL:
+                # the control exists for every file whose LIEF edit succeeded (same builder); fail loudly if not
                 Bv = np.stack([rebuilt[(f, REBUILD_CONTROL[e])] for f in f_file[idx]])
                 own = np.stack([(E != Bv)[:, gid == g].any(1) for g in range(G)], 1)
                 reb = np.stack([(Bv != O)[:, gid == g].any(1) for g in range(G)], 1)
@@ -137,7 +146,8 @@ def main():
             rng_ok = ((Ze <= np.maximum(zmax, Zo) + 1e-9) & (Ze >= np.minimum(zmin, Zo) - 1e-9)).all(1)
             for j, i in enumerate(idx):
                 files.append(dict(
-                    file=f_file[i], edit=e, variant=v, scope=EDIT_SCOPE[e], n_groups=int(gch[j].sum()),
+                    file=f_file[i], arch=arch_of(f_file[i]),
+                    edit=e, variant=v, scope=EDIT_SCOPE[e], n_groups=int(gch[j].sum()),
                     groups="+".join(GROUP_NAMES[g] for g in range(G) if gch[j, g]),
                     n_features_changed=int(ch[j].sum()), eps_needed=float(linf[j]),
                     n_groups_edit_only=int(own[j].sum()),
@@ -155,11 +165,16 @@ def main():
                     repaired_outside_natural_bounds=not bool(nat_ok[j]),
                     repaired_group_inside=not bool(gch[j][[g for g in range(G) if g not in att_r]].any()),
                     **{"g_" + GROUP_NAMES[g]: bool(gch[j, g]) for g in range(G)}))
-            for n, s, t, kind in FEATURE_UNITS:
-                c = ch[:, s:t].any(1)
-                unit_rows.append(dict(unit=n, edit=e, variant=v, n=len(idx), changed=int(c.sum()),
-                                      decreased=int((E[:, s:t] < O[:, s:t]).any(1).sum()),
-                                      increased=int((E[:, s:t] > O[:, s:t]).any(1).sum())))
+            arch = np.array([arch_of(f) for f in f_file[idx]])
+            for ar in ARCHS:
+                m = arch == ar
+                if not m.any():
+                    continue
+                for n, s, t, kind in FEATURE_UNITS:
+                    unit_rows.append(dict(unit=n, edit=e, variant=v, arch=ar, n=int(m.sum()),
+                                          changed=int(ch[m, s:t].any(1).sum()),
+                                          decreased=int((E[m, s:t] < O[m, s:t]).any(1).sum()),
+                                          increased=int((E[m, s:t] > O[m, s:t]).any(1).sum())))
     D = pd.DataFrame(files)
     D["draft_box_inside"] = ~(D.draft_immutable_changed | D.draft_monotone_decreased | D.draft_outside_training_range)
     D["repaired_box_inside"] = ~(D.repaired_immutable_changed | D.repaired_monotone_decreased
@@ -168,8 +183,8 @@ def main():
     UR = pd.DataFrame(unit_rows)
 
     # ---------------- edit map ----------------
-    def agg(d, e, v):
-        row = OrderedDict(edit=e, variant=v, scope=EDIT_SCOPE[e], n_files=len(d),
+    def agg(d, e, v, ar="all"):
+        row = OrderedDict(edit=e, variant=v, arch=ar, scope=EDIT_SCOPE[e], n_files=len(d),
                           groups_median=float(d.n_groups.median()), groups_max=int(d.n_groups.max()))
         for g in GROUP_NAMES:
             row["share_" + g] = float(d["g_" + g].mean())
@@ -197,8 +212,16 @@ def main():
         M.append(agg(de, e, "all"))
         for v in sorted(set(de.variant)):
             M.append(agg(de[de.variant == v], e, v))
+        for ar in ARCHS:                                     # 1i: the same per architecture
+            da = de[de.arch == ar]
+            if len(da):
+                M.append(agg(da, e, "all", ar))
+                for v in sorted(set(da.variant)):
+                    M.append(agg(da[da.variant == v], e, v, ar))
     M = pd.DataFrame(M)
     M.to_csv(os.path.join(RES, "edit_map.csv"), index=False)
+    MA = M[M.arch != "all"]                                  # per-architecture rows
+    M = M[M.arch == "all"]
     Mall = M[M.variant == "all"].set_index("edit")
 
     # ---------------- 1h: share of measured edits inside the L-infinity box, as a function of epsilon ----------------
@@ -215,20 +238,28 @@ def main():
 
     # ---------------- unit evidence and the annotation the rule gives ----------------
     in_scope = [e for e in EDITS if EDIT_SCOPE[e] == "in"]
-    ev = []
-    for n, s, t, kind in FEATURE_UNITS:
-        u = UR[UR.unit == n]
+
+    def apply_rule(u, n, kind, draft):
+        """The evidence rule on the rows u of one unit. Returns status, observed edits, decreasing edits, all edits."""
         by = u.groupby("edit")[["n", "changed", "decreased", "increased"]].sum()
         ch_by = [e for e in EDITS if e in by.index and by.changed[e] > 0]
         obs = [e for e in ch_by if e in in_scope]
         dec = [e for e in in_scope if e in by.index and by.decreased[e] > 0]
-        draft = "monotone" if mono_d[s] else ("mutable" if mut_d[s] else "immutable")
         mutable = bool(obs) or draft != "immutable"
-        by_reasoning = n in NOT_MONOTONE_BY_REASONING
-        monotone = mutable and kind == "count" and not dec and not by_reasoning
-        status = "monotone" if monotone else ("mutable" if mutable else "immutable")
+        monotone = mutable and kind == "count" and not dec and n not in NOT_MONOTONE_BY_REASONING
+        return ("monotone" if monotone else ("mutable" if mutable else "immutable")), obs, dec, ch_by, by
+
+    ev = []
+    for n, s, t, kind in FEATURE_UNITS:
+        u = UR[UR.unit == n]
+        draft = "monotone" if mono_d[s] else ("mutable" if mut_d[s] else "immutable")
+        status, obs, dec, ch_by, by = apply_rule(u, n, kind, draft)
+        per_arch = {ar: apply_rule(u[u.arch == ar], n, kind, draft)[0] for ar in ARCHS if (u.arch == ar).any()}
+        mutable, monotone = status != "immutable", status == "monotone"
         if obs:
             rule = "changed by " + ", ".join(x.split("_")[0] for x in obs)
+            if obs == ["E10_hdrfields"]:
+                rule += " only (plausibly functionality-preserving, not verified by execution)"
         elif mutable:
             rule = "conservative, not observed: no in-scope edit changed it; kept mutable as in draft v1"
         else:
@@ -244,6 +275,7 @@ def main():
         frozen = "monotone" if mono_r[s] else ("mutable" if mut_r[s] else "immutable")
         row = OrderedDict(unit=n, start=s, end=t, n_features=t - s, kind=kind, group=uidx[n][3], draft_v1=draft,
                           rule_gives=status, frozen_in_data_py=frozen, rule=rule,
+                          rule_on_pe32plus_only=per_arch.get("PE32+", ""), rule_on_pe32_only=per_arch.get("PE32", ""),
                           changed_by_in_scope=" ".join(obs), decreased_by_in_scope=" ".join(dec),
                           changed_by_out_of_scope=" ".join(e for e in ch_by if EDIT_SCOPE[e] == "out"),
                           changed_by_control=" ".join(e for e in ch_by if EDIT_SCOPE[e] == "control"))
@@ -279,6 +311,15 @@ def main():
     print("\nshare of files in which each group changes:")
     print(M[M.variant == "all"][["edit"] + ["share_" + g for g in GROUP_NAMES]].to_string(
         index=False, float_format=lambda x: f"{x:.2f}"))
+    if len(MA):
+        cmp_ = MA[MA.variant == "all"].pivot(index="edit", columns="arch",
+                                             values=["n_files", "groups_median", "groups_max", "eps_median"])
+        print("\nper architecture (PE32 = SysWOW64 copies, PE32+ = System32 copies):")
+        print(cmp_.reindex([e for e in EDITS if e in cmp_.index]).to_string(float_format=lambda x: f"{x:.3g}"))
+        da = EV[(EV.rule_on_pe32_only != "") & (EV.rule_on_pe32plus_only != EV.rule_on_pe32_only)]
+        print(f"\nunits where the rule gives a different status on PE32 files alone and on PE32+ files alone: {len(da)}")
+        if len(da):
+            print(da[["unit", "rule_on_pe32plus_only", "rule_on_pe32_only", "rule_gives", "rule"]].to_string(index=False))
     ch_ann = EV[EV.draft_v1 != EV.rule_gives]
     print(f"\nunits whose annotation changes: {len(ch_ann)} of {len(EV)}")
     print(ch_ann[["unit", "n_features", "kind", "draft_v1", "rule_gives", "rule"]].to_string(index=False))
@@ -310,7 +351,8 @@ def main():
 
     if a.propose:
         return
-    write_tables(a.paper, corpus, man, D, M, Mall, EV, mut_d, mono_d, mut_r, mono_r, att_d, att_r, F, len(hit), n_same)
+    write_tables(a.paper, corpus, man, D, M, Mall, EV, mut_d, mono_d, mut_r, mono_r, att_d, att_r, F, len(hit), n_same,
+                 MA, a.res)
 
 
 def pct(x, nd=0):
@@ -322,7 +364,8 @@ def fe(x):
     return f"{x:.2g}" if x < 100 else f"{x:.0f}"
 
 
-def write_tables(paper, corpus, man, D, M, Mall, EV, mut_d, mono_d, mut_r, mono_r, att_d, att_r, F, n_bodmas, n_bodmas_same):
+def write_tables(paper, corpus, man, D, M, Mall, EV, mut_d, mono_d, mut_r, mono_r, att_d, att_r, F, n_bodmas, n_bodmas_same,
+                 MA, res):
     tdir = os.path.join(paper, "tables")
     G = len(GROUP_NAMES)
     gid = group_ids()
@@ -361,34 +404,69 @@ def write_tables(paper, corpus, man, D, M, Mall, EV, mut_d, mono_d, mut_r, mono_
     open(os.path.join(tdir, "tab_edit_map.tex"), "w").write("\n".join(T))
 
     # ---- Table: coverage of evasion techniques ----
-    C = ["\\begin{tabular}{lllp{0.38\\linewidth}}", "\\toprule", "Technique & Measured as & Status & Evidence \\\\", "\\midrule"]
+    # Three levels (REVISION_PLAN 1i.4). "A certificate could apply" is NOT coverage:
+    #   (a) inside the threat set AND certified: the measured certified detection at the r the edit needs is > 0
+    #   (b) inside the threat set but not certifiable: the edit changes more groups than a vote-counting
+    #       certificate can reach, or the measured certified detection at the r it needs is 0
+    #   (c) out of scope
+    # r needed = the LARGEST number of groups the edit changed in any measured file (every file must be covered).
+    # Certified detection: group-ablation certificate with k = 1 (the only keep size that reaches r > 2), from --res.
+    # This table is for the 9 EMBER groups; it is filled again after the edit-aligned grouping of Stage 2b.
+    cert, cert_src = None, "not measured yet"
+    if res:
+        import json
+        Rj = json.load(open(os.path.join(res, "results.json")))
+        cert = np.mean([s["ablation"]["1"]["cert_tpr"] for s in Rj["seeds"].values()], 0)
+        cert_src = f"{os.path.basename(os.path.normpath(res))}, {len(Rj['seeds'])} seed(s), {Rj['config']['epochs']} epochs"
+    C = ["\\begin{tabular}{lllrlp{0.30\\linewidth}}", "\\toprule",
+         "Technique & Measured as & Level & $r$ needed & Certified detection at that $r$ & Evidence \\\\", "\\midrule"]
     cov = []
     for e, (lab, tech, _) in EDITS.items():
         if EDIT_SCOPE[e] == "control" or e not in Mall.index:
             continue
         r = Mall.loc[e]
-        d = D[D.edit == e]
-        le = float((d.n_groups <= R_CEIL).mean())
+        rmax = int(r.groups_max)
         if EDIT_SCOPE[e] == "out":
-            status = "out of scope"
-            evid = (f"{int(r.n_files)} files: changes {r.groups_median:.0f} of {G} groups (median), "
+            level, cd = "(c) out of scope", "--"
+            evid = (f"{int(r.n_files)} files: changes {r.groups_median:.0f} of {G} groups (median); "
                     f"{pct(1 - r.repaired_box_inside)}\\% of files change features annotated immutable")
         else:
-            inside = r.repaired_box_inside == 1 and r.repaired_group_inside == 1
-            # covered: inside the threat set and at most R_CEIL groups change in every file, so a group
-            #   certificate can apply (whether a given sample IS certified at that r is an experimental result);
-            # partly covered: inside the threat set, but some or all files change more than R_CEIL groups,
-            #   which no vote-counting certificate over 9 groups can cover; only the box at the listed epsilon does.
-            status = "covered" if inside and le == 1 else ("partly covered" if inside else "NOT INSIDE")
-            evid = (f"{int(r.n_files)} files, all inside the threat set; groups changed: {r.groups_median:.0f} "
-                    f"(max {int(r.groups_max)}), $r\\leq{R_CEIL}$ for {pct(le)}\\%; $\\epsilon$ needed: {fe(r.eps_median)}")
-        cov.append((tech, e.split("_")[0], status))
-        C.append(f"{tech} & {e.split('_')[0]} & {status} & {evid} \\\\")
+            assert r.repaired_box_inside == 1 and r.repaired_group_inside == 1, e
+            evid = f"{int(r.n_files)} files, all inside the threat set; $\\epsilon$ needed: {fe(r.eps_median)}"
+            if rmax > R_CEIL:
+                level, cd = "(b) inside, not certifiable", f"none possible ($r>{R_CEIL}$)"
+            elif cert is None:
+                level, cd = "(a) or (b): to be measured", "to be measured"
+            else:
+                c = float(cert[rmax])
+                level = "(a) inside and certified" if c > 0 else "(b) inside, not certifiable"
+                cd = f"{100 * c:.1f}\\%"
+        cov.append((tech, e.split("_")[0], level, rmax, cd.replace("\\%", "%").replace("$", "")))
+        C.append(f"{tech} & {e.split('_')[0]} & {level} & {rmax} & {cd} & {evid} \\\\")
     C.append("\\midrule")
     for tech, why in NOT_MEASURED:
-        C.append(f"{tech} & not measured & out of scope & {why} \\\\")
-    C += ["\\bottomrule", "\\end{tabular}"]
+        C.append(f"{tech} & not measured & (c) out of scope & -- & -- & {why} \\\\")
+    C += ["\\bottomrule", "\\end{tabular}", f"% certified detection: 9 EMBER groups, k = 1; source: {cert_src}"]
     open(os.path.join(tdir, "tab_coverage.tex"), "w").write("\n".join(C))
+    pd.DataFrame(cov, columns=["technique", "edit", "level", "r_needed", "certified_detection_k1"]).assign(
+        source=cert_src).to_csv(os.path.join(RES, "coverage.csv"), index=False)
+
+    # ---- Table: edit map per architecture (1i.1) ----
+    if len(MA):
+        P = ["\\begin{tabular}{lrrrrrrrr}", "\\toprule",
+             " & \\multicolumn{4}{c}{PE32+ (64-bit)} & \\multicolumn{4}{c}{PE32 (32-bit)} \\\\",
+             "\\cmidrule(lr){2-5}\\cmidrule(lr){6-9}",
+             "Edit & Files & Groups med. & max & $\\epsilon$ med. & Files & Groups med. & max & $\\epsilon$ med. \\\\", "\\midrule"]
+        for e, (lab, _, _) in EDITS.items():
+            cells = []
+            for ar in ARCHS:
+                q = MA[(MA.edit == e) & (MA.variant == "all") & (MA.arch == ar)]
+                cells += ([str(int(q.n_files.iloc[0])), f"{q.groups_median.iloc[0]:.0f}", str(int(q.groups_max.iloc[0])),
+                           fe(q.eps_median.iloc[0])] if len(q) else ["--"] * 4)
+            if e in Mall.index:
+                P.append(f"{lab} & " + " & ".join(cells) + " \\\\")
+        P += ["\\bottomrule", "\\end{tabular}"]
+        open(os.path.join(tdir, "tab_edit_map_arch.tex"), "w").write("\n".join(P))
 
     # ---- Table: annotation summary per group ----
     A = ["\\begin{tabular}{lrrrrrll}", "\\toprule",
@@ -426,6 +504,14 @@ def write_tables(paper, corpus, man, D, M, Mall, EV, mut_d, mono_d, mut_r, mono_
     N["PsSizeMaxMB"] = f"{corpus['size'].max() / 2 ** 20:.1f}"
     N["PsNSigned"] = str(int(corpus.has_signature.sum())); N["PsNDebug"] = str(int(corpus.has_debug.sum()))
     N["PsMachines"] = ", ".join(sorted(set(corpus.machine)))
+    is32 = corpus.file.map(arch_of) == "PE32"
+    N["PsNFilesPeThirtyTwo"] = str(int(is32.sum())); N["PsNFilesPeSixtyFour"] = str(int((~is32).sum()))
+    for ar, k in (("PE32", "PsThirtyTwo"), ("PE32+", "PsSixtyFour")):
+        da = D[(D.scope == "in") & (D.arch == ar)]
+        if len(da):
+            N[k + "NEdited"] = big(len(da))
+            N[k + "GroupsLeCeilPct"] = pct((da.n_groups <= R_CEIL).mean(), 1)
+            N[k + "EpsLeTenthPct"] = pct((da.eps_needed <= 0.1).mean(), 1)
     N["PsLiefVersion"] = str(F["lief_version"]).split("-")[0]
     Din = D[D.scope == "in"]
     N["PsNEditedInScope"] = big(len(Din))
@@ -478,7 +564,7 @@ def write_tables(paper, corpus, man, D, M, Mall, EV, mut_d, mono_d, mut_r, mono_
             f.write(f"\\newcommand{{\\{k}}}{{{v}}}\n")
     print("\ncoverage:")
     for c in cov:
-        print("   %-34s %-4s %s" % c)
+        print("   %-46s %-4s %-30s r=%d  certified: %s" % c)
     print(f"\nwrote 4 tables and {len(N)} macros to {tdir}")
 
 

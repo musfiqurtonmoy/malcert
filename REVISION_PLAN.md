@@ -18,6 +18,17 @@ General rules (in addition to CLAUDE.md):
 - Choices that could be tuned (grouping, LightGBM size, thresholds) are fixed from the validation split or from the Stage-1 edit map, never from test results. Record each choice and its basis in the log.
 - Report negative results as plainly as positive ones.
 
+## Lean scope and working rules (added 2026-11-13)
+
+The plan was trimmed to the least work that still answers every comment. Do not add experiments, controls or variants beyond what is written here; if something extra looks valuable, write one line under "Ideas not done" in the log and move on.
+
+**To save tokens, Claude Code must:**
+- Start each sub-stage in a fresh session: read this file and `REVISION_LOG.md` only; do not re-read source files that are not being changed.
+- Skip explanations and narration. Reports are at most 25 lines: results, decisions, open questions.
+- Never print whole files, long tables or full logs into the chat; write them to disk and quote only the few lines needed.
+- Never wait on a long run. Write the command into `RUN_NEXT.md`; the user starts it from a terminal. Check results in a later session.
+- Run the quick pilot once per stage, not after every edit; run only the unit tests in between.
+
 ## Where each comment is handled
 
 | Comment | Topic | Stage |
@@ -28,7 +39,7 @@ General rules (in addition to CLAUDE.md):
 | A4 | Abstract/text mismatches, runtimes, code release | 2f, 4 |
 | A5, B6 | Seeds, intervals, significance | 3a |
 | A5, B4 | Family leakage and duplicates | 3b |
-| A5, B3 | Subset, second dataset, generalizability | 3e, 3f |
+| A5, B3 | Subset justification, generalizability | 3e, 3f |
 | A5, B7, Am4, Am5 | Temporal windows, drift vs composition, update frequency | 3c |
 | A6, B8 | Reproducibility, editorial placeholders | 4b, 4c |
 | Am1–Am3, Am6, Am7 | Minor items | 1f, 4 |
@@ -122,6 +133,15 @@ One table for the paper, filled from 1d: technique → covered / partly covered 
 - `E0_rebuild` shows that LIEF's rebuild alone changes features. Separate, in the edit map, the footprint of the edit from the footprint of the rebuild.
 - Monotone set: dropping `Strings.registry` and `Section.n_empty_name` on reasoning (they could decrease) is accepted: a larger threat set stays sound. Record each such decision as "conservative, not observed".
 
+### 1i. Stage 1 addendum: do before Stage 2
+The first Stage 1 report (commit 3f53190) is accepted. Close these gaps before freezing the annotation:
+1. **32-bit files.** The corpus is 100 64-bit System32 files, but most BODMAS malware is 32-bit (PE32). Add 50 benign PE32 files from `C:\Windows\SysWOW64` and rerun every edit on them. Report the edit map separately for PE32 and PE32+, and state any difference in the annotation.
+2. **Header fields an attacker can edit freely (new edit E10).** Test each separately: major/minor linker version; major/minor image version; major/minor OS version (lowered only); major/minor subsystem version (lowered only); clearing the DYNAMIC_BASE and NX_COMPAT bits of DllCharacteristics. Treat any EMBER feature these change as mutable ("plausibly functionality-preserving, not verified by execution"). Machine, magic, subsystem and sizeof_code stay immutable unless an in-scope edit changes them.
+3. **Extractor compatibility.** Hash every corpus file (both folders) against the BODMAS metadata to find further exact matches beyond `cliconfg.dll`, and compare their vectors. Also classify all original corpus files with the BODMAS-trained LightGBM and report the benign rate, and any feature block far outside the BODMAS range.
+4. **Coverage table levels.** Replace "covered / partly covered" with three levels, filled in after 2b: (a) inside the threat set and certified, with the measured certified detection; (b) inside the threat set but not certifiable; (c) out of scope. "A certificate could apply" is not coverage.
+5. **Memory.** The PC has 7.9 GB of RAM. Check that full-dataset runs (134,435 × 2,381 float32 ≈ 1.3 GB per copy) fit: load once, keep float32, transform in place, and run heavy jobs one at a time. Report peak memory from a dry run of data loading.
+6. **Backup.** Push the repository to a private GitHub remote now (code, logs, `ps_results/`; not `data/`, not `ps_corpus/`).
+
 **Stop and report:** the edit map, the coverage table, every annotation change with its reason, the new mutable/monotone counts and attackable groups, and how the pilot numbers moved against `results_draft_v1`.
 
 ---
@@ -143,7 +163,7 @@ One table for the paper, filled from 1d: technique → covered / partly covered 
   | 5 or more | 126 or fewer | 0 |
 
   - k = 3, r = 2 is impossible for any vote-counting certificate (35 untouched views cannot outvote 49 touched ones). Add the statement and proof to the paper.
-  - This table also **justifies the keep sizes (B5)**: k ≥ 5 certifies nothing. Add **k = 4** to the experiments (MLP base only), so the full useful range k = 1..4 is covered.
+  - This table also **justifies the keep sizes (B5)**: k ≥ 5 certifies nothing, and k = 4 reaches no larger r than k = 3 at higher cost. State this from the table; no k = 4 experiment is run.
 - **Why k = 1 gives zero at r = 4.** It needs all 9 views to vote malware. Pre-check: the Exports-only view votes malware for 0.6% of test malware, since most PE files export nothing; unanimity occurred for 0.00%. Compute per-view vote rates in `make_figures.py` and report them.
 
 ### 2b. Edit-aligned grouping: now the core method (A1, A3, B2, B5)
@@ -156,26 +176,30 @@ One table for the paper, filled from 1d: technique → covered / partly covered 
   2. Import-related data-directory entries and `General.imports` join Imports. Decide Exports, timestamp and header fields from the co-change data.
   3. Objective: minimise the number of groups each in-scope edit touches, while keeping the number of groups G large enough that the needed r is certifiable (for k = 1, r < G/2; use the ceiling formula in 2a for other k).
   4. If several partitions are reasonable, choose on the **validation split** and record the rule in the log before looking at test results.
+- **Immutable features are an asset.** A view built only from features no in-scope edit changes can never be flipped. The exact certificate (2a) ranges only over attackable groups, so such views are permanent votes.
+  - Move each newly mutable header and data-directory feature into the group of the edit that changes it (e.g. `sizeof_headers` → Section; import-table and IAT entries → Imports; debug and certificate entries and flags → the group E8 touches).
+  - The remaining immutable features may be split into several groups, which adds unflippable votes. But a group with too few informative features votes poorly (the Exports-only view votes malware for 0.6% of malware), and a wrong permanent vote hurts.
+  - Therefore: enumerate a small set of candidate partitions that follow these rules, compute certified detection per in-scope edit on the **validation split**, pick one by a rule written in the log beforehand (e.g. highest worst-case certified detection over the edit types that are certifiable), and only then evaluate on test. Report the candidates considered.
 - **Recompute the ceiling table for the new G**, and choose the keep sizes k from it.
 - **Main result table:** for each in-scope edit type → groups touched under each grouping → certified detection at that r, for EMBER groups and edit-aligned groups side by side. Zeros are reported as zeros.
 - **Soundness test:** every in-scope edited vector must differ from its original only inside the groups the table says it touches.
 - **Imports (E4).** LIEF's import addition rebuilds the file and touches 7 EMBER groups. If it stays uncertifiable under the aligned grouping, say so and list it as partly covered or out of scope in the coverage table.
-- **Sensitivity.** One table of certified detection and clean accuracy against grouping and k.
+- **Sensitivity.** One table of certified detection and clean accuracy against grouping and k, from the validation-split candidates already computed (no extra runs).
 - **Generalization (text only).** The procedure (measure edits, group co-changing features) applies to any feature extractor; discuss EMBER v3 / EMBER2024 and SOREL-20M.
 
 ### 2c. LightGBM as base classifier (A2)
-- One LightGBM per view for k = 1, 2, 3 (9 / 36 / 84 models). Theorem 1 only counts votes, so per-view classifiers keep it valid.
-- Choose `n_estimators` on the validation split; if k = 3 is too slow, reduce it and say so.
-- Report clean metrics, certified TPR and training time.
+- A2 asks why LightGBM is not certified. Answer with one experiment: one LightGBM per view for the **single chosen (grouping, k)** from 2b only. Theorem 1 only counts votes, so per-view classifiers keep it valid.
+- Fixed settings (200 trees); report clean metrics, certified TPR and training time.
 
 ### 2d. Fair certified-training baseline (A2)
 - Add CROWN-IBP trained on the **unconstrained** L-infinity ball.
 - Report a 2 × 2 table: training box × certification box.
 - The contribution claimed is constrained-trained vs unconstrained-trained, both certified on the constrained box. The certification-box effect is attributed to Proposition 1.
+- **Drop the plain-IBP and asymmetric CROWN-IBP models** from the experiments and the paper. Neither reviewer asked for them, and the asymmetric result was negative. Certified training keeps four models: standard, PGD-AT, CROWN-IBP (unconstrained box), CROWN-IBP (constrained box).
 
 ### 2e. Baselines from prior work (A2)
 - **Monotonic classifier (Incer et al. 2018):** LightGBM with `monotone_constraints=+1` on the increase-only features.
-- **Giri et al. (2026):** re-implement their training (Gaussian noise on part of the features plus random group ablation). Certify the L2 radius with our CERTIFY and label it a re-implementation.
+- **Giri et al. (2026):** reuse the existing Gaussian-noise and random-ablation training code, combined as they describe, one sigma. Certify the L2 radius with our CERTIFY and label it a re-implementation.
 - Run the **group-transplant attack against every model**, in one uniform table.
 
 ### 2f. Cost (A4, B5)
@@ -188,48 +212,41 @@ One table for the paper, filled from 1d: technique → covered / partly covered 
 
 ## Stage 3: data and statistics (A5, B3, B4, B6, B7)
 
+All Stage 3 experiments use the 30K subset, which also keeps memory within the PC's 7.9 GB.
+
 ### 3a. Seeds, intervals, tests (A5, B6)
-- 10 seeds for the main splits.
+- **5 seeds** on the main (family-disjoint) split; 3 seeds on the random split, kept only for comparison with earlier work. (A5 asks for "more seeds or confidence intervals"; B6 for "confidence intervals or significance tests". This gives all three.)
 - Report mean ± std and 95% t-intervals.
-- Model-vs-model comparisons use **paired** differences across seeds: 95% t-interval plus a paired t-test, with Holm correction across the main comparisons. List those comparisons in advance in the log.
-- Replace "positive in every seed" and "N combined standard deviations" with interval statements.
-- Note in the paper that the 30K subset is fixed; seeds vary the split and the training.
+- Model-vs-model comparisons use **paired** differences across seeds: 95% t-interval and a paired t-test, Holm-corrected across the main comparisons, which are listed in the log beforehand.
+- Replace "positive in every seed" and "N combined standard deviations" with interval statements. State that 5 seeds give wide intervals and read small differences accordingly.
 
 ### 3b. Leakage audit and family-disjoint split (A5, B4)
 - **Audit (`tools/leakage_audit.py`), reported in the paper.** Pre-check values to reproduce:
   - exact duplicate feature vectors: 14 rows in all of BODMAS, none with conflicting labels, no duplicate hashes; 0 test rows with an exact twin in training;
   - family overlap under the random split: 98.4% of test malware belong to a family also present in training;
-  - near-duplicates: 23.3% of test malware have a training neighbour within L2 distance 0.1 in standardized space (benign: 4.1%); the median nearest-neighbour distance is 0.78 for malware and 9.84 for benign.
-  - Conclusion to state: exact duplication is negligible, but near-variant leakage under the random split is real.
-- **Family-disjoint split = new main split.** Each malware family goes wholly to train, val or test. Benign files have no family label and are split at random.
-  - Families are very uneven (the 5 largest hold 35% of malware; 127 have one sample). Assign families greedily so each seed's test set is close to 20% and keeps both classes; report per-seed sizes and category mix.
-- **Near-duplicate sensitivity.** Also report main metrics on the test set with near-twins removed (nearest training neighbour within L2 0.1), for malware and benign. This covers benign files, which the family split cannot.
-- The random split stays, for comparison with earlier BODMAS/EMBER work.
+  - near-duplicates: 23.3% of test malware have a training neighbour within L2 distance 0.1 in standardized space (benign: 4.1%).
+- **Family-disjoint split = main split.** Each malware family goes wholly to train, val or test; benign files are split at random. Families are uneven (the 5 largest hold 35% of malware; 127 have one sample), so assign them greedily to keep each test set near 20%; report per-seed sizes and category mix.
+- **Near-duplicate sensitivity (no new training).** Recompute the main metrics on the test set with near-twins removed. This covers benign files, which have no family label.
 
 ### 3c. Temporal evaluation (A5, B7, Am4, Am5)
-BODMAS has malware from 2019-08 to 2020-09, with 2,500–5,400 malware and 2,500–8,200 benign per month from 2019-09 on; before 2019-08 there are 10,731 benign files and no malware.
-- **Use the full dataset for this block** (certification is cheap enough without smoothing; use `--blocks`), 3 seeds.
-- **Decay curve.** Train on everything up to a cut-off month; test separately on each later month. Cut-offs: 2019-12, 2020-02, 2020-04, 2020-06. Plot clean and certified detection against months since training.
-- **Update frequency.** From the decay curves, report how many months pass before certified detection falls below a stated level (e.g. 90% of its in-distribution value), and compare "train once" with "retrain every 2 months". This answers how often models and certificates must be refreshed.
-- Report train and test sizes for every window. Require at least 300 malware and 300 benign per test month.
-- **Composition vs drift.** Reweight the in-distribution per-category TPR to each test month's category mix: composition effect = reweighted − in-distribution; drift effect = temporal − reweighted.
-- State the benign-date caveat (benign files date back to 2007) in the paper.
+- **Decay curve.** Two cut-offs (train up to 2019-12 and up to 2020-04), 3 seeds each. Test separately on every later month. Run only the clean, group-certificate and CROWN-IBP blocks (`--blocks`).
+- **Update frequency.** From the two curves: months until certified detection falls below 90% of its first-month value, and what retraining at the second cut-off recovers. This answers how often models and certificates need refreshing.
+- Report train and test sizes per month; require at least 200 malware and 200 benign per test month, otherwise merge months.
+- **Composition vs drift (no new training).** Reweight in-distribution per-category TPR to each test month's category mix.
+- State the benign-date caveat (benign files date back to 2007).
 
-### 3d. Smoothing on the full test set (A5)
-- Time one seed first. Certify every test point if it fits in about 2 h per seed; otherwise all points for 3 seeds, and say so.
-- Smoothing is now a baseline (Am1).
+### 3d. Smoothing baseline on the full test set (A5, Am1)
+- Smoothing is a baseline now: isotropic noise only (the subspace variant is dropped, as Am1 suggests), two sigma values, 3 seeds, every test point.
+- If that exceeds about 3 hours in total, reduce n from 10,000 to 2,000 samples per point and state it.
 
-### 3e. Subset: justification and representativeness (A5, B3)
-- **Representativeness table:** 30K subset vs full BODMAS on class ratio, category shares, number of families covered, and month distribution.
-- **Subset-draw sensitivity:** repeat the main clean and certified metrics on 3 different random 30K draws (1 seed each).
-- **Full-data check:** all 134,435 samples, 3 seeds, family split: clean metrics, group certificates, CROWN-IBP at ε = 0.05. State whether the conclusions match.
-- Justify the 30K subset with the measured certification cost (2f).
+### 3e. Subset justification (A5, B3)
+- **Representativeness table (no training):** 30K subset vs full BODMAS on class ratio, category shares, families covered and month distribution.
+- **Justify the subset** with the measured certification cost (2f) and the PC's memory.
+- **One full-data check:** 1 seed, family split, clean metrics and the chosen group certificate only, using the memory-lean loader. Skip it if the memory dry run shows it does not fit; say so in the paper.
 
-### 3f. Second dataset: optional, decide after timing (A5, B3)
-- EMBER 2018 (feature version 2, LIEF 0.9.0), `https://ember.elastic.co/ember_dataset_2018_2.tar.bz2`. Download and vectorize on D:.
-- 30K stratified sample, 3 seeds, within-dataset only. Never mix it with BODMAS: the BODMAS paper does not state its LIEF version.
-- If disk space or time does not allow, add a generalizability paragraph instead, pointing to 3c and 3e.
-- SOREL-20M is not used: different feature version, terabytes of data.
+### 3f. Generalizability (A5, B3)
+- No second dataset is run. A5 asks for "another window or dataset" and B3 for "an additional dataset or a more detailed discussion": the temporal months (3c), the family split (3b) and a generalizability paragraph answer both.
+- The paragraph states the single-dataset limit plainly and names EMBER 2018 and SOREL-20M as future work.
 
 ---
 
@@ -268,9 +285,10 @@ BODMAS has malware from 2019-08 to 2020-09, with 2,500–5,400 malware and 2,500
 ---
 
 ## Compute estimate (GTX 1050 Ti)
-The draft-v1 runs cost about 14 min per seed per split. With the Stage 2 additions expect 35–40 min; measure after the Stage 2 pilot and revise.
-- 10 seeds × (random + family) ≈ 12–13 h
-- temporal decay curves on full data (4 cut-offs × 3 seeds, no smoothing) ≈ 5–8 h
-- full-data check + subset draws ≈ 5–7 h
-- full-test-set smoothing: time it first
-Plan for 3–4 overnight runs, started one after another with resume support. Keep the PC from sleeping.
+Measure per-seed time after the Stage 2 pilot and revise. Expected:
+- family split, 5 seeds ≈ 3 h
+- random split, 3 seeds ≈ 2 h
+- temporal decay curves (2 cut-offs × 3 seeds, three blocks only) ≈ 2 h
+- smoothing baseline on the full test set ≈ 3 h
+- one full-data check ≈ 1–2 h
+About 11–12 hours in total: one night plus one evening, started by the user from a terminal with resume support on.

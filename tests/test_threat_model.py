@@ -156,6 +156,24 @@ def test_frozen_annotation_equals_evidence_rule():
         assert frozen == r.rule_gives, f"{r.unit}: data.py says {frozen}, the evidence rule gives {r.rule_gives}"
 
 
+def test_inplace_standardisation_matches_fit_transform():
+    """Preprocessor.fit_transform_inplace (memory-lean path for full-data runs) is checked against an exact
+    float64 computation, and must be at least as accurate as fit + transform, which accumulates in float32
+    (its sd is off by up to ~2e-4 relative on features with tiny spread)."""
+    data, sp, pp = _bodmas()
+    Z = np.sign(data["X"].astype(np.float64)) * np.log1p(np.abs(data["X"].astype(np.float64)))
+    mu, sd = Z[sp["tr"]].mean(0), Z[sp["tr"]].std(0)
+    sd[sd < 1e-6] = 1.0
+    ref = (Z - mu) / sd
+    X = np.ascontiguousarray(data["X"].astype(np.float32))
+    p2 = Preprocessor()
+    p2.fit_transform_inplace(X, sp["tr"])                 # returns X; the statistics are kept on p2
+    err_new, err_old = np.abs(p2.sd - sd) / sd, np.abs(pp.sd - sd) / sd
+    assert err_new.max() < 1e-5 and err_new.max() <= err_old.max()
+    assert np.abs(p2.mu - mu).max() < 1e-4
+    assert np.abs(X - ref).max() < 1e-3
+
+
 def test_run_all_block_bookkeeping():
     import run_all
     assert run_all.done_blocks({}) == []

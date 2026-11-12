@@ -1,0 +1,25 @@
+{
+ "runs": [
+  {
+   "mode": "subset",
+   "rows": 30000,
+   "arrays_held_gb": 0.53,
+   "peak_working_set_gb": 1.04,
+   "peak_commit_gb": 2.15,
+   "seconds": 15.3
+  },
+  {
+   "mode": "full_lean",
+   "rows": 134435,
+   "arrays_held_gb": 1.19,
+   "peak_working_set_gb": 1.46,
+   "peak_commit_gb": 1.83,
+   "seconds": 11.5
+  }
+ ],
+ "estimate": {
+  "one_full_copy_gb": 1.19,
+  "naive_full_estimate_gb": 7.2
+ },
+ "ram_total_gb": 7.9
+}

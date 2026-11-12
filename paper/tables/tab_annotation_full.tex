@@ -2,8 +2,8 @@
 \toprule
 Feature unit & Group & Dim. & Kind & Draft & Repaired & Rule and evidence & Ref. \\
 \midrule
-\texttt{ByteHistogram} & ByteHist & 256 & hist & mutable & mutable & changed by E1, E2, E3, E4, E5, E6, E7, E8 & \citep{anderson2018learning,demetrio2021exemples} \\
-\texttt{ByteEntropyHistogram} & ByteEntropy & 256 & hist & mutable & mutable & changed by E1, E2, E3, E4, E5, E6, E7, E8 & \citep{anderson2018learning,demetrio2021exemples} \\
+\texttt{ByteHistogram} & ByteHist & 256 & hist & mutable & mutable & changed by E1, E2, E3, E4, E5, E6, E7, E8, E10 & \citep{anderson2018learning,demetrio2021exemples} \\
+\texttt{ByteEntropyHistogram} & ByteEntropy & 256 & hist & mutable & mutable & changed by E1, E2, E3, E4, E5, E6, E7, E8, E10 & \citep{anderson2018learning,demetrio2021exemples} \\
 \texttt{Strings.numstrings} & Strings & 1 & count & monotone & \textbf{mutable} & changed by E1, E2, E3, E4, E7, E8; decreased under E7, E8 & \citep{anderson2018learning,demetrio2021exemples} \\
 \texttt{Strings.avlength} & Strings & 1 & value & mutable & mutable & changed by E1, E2, E3, E4, E6, E7, E8 & \citep{anderson2018learning,demetrio2021exemples} \\
 \texttt{Strings.printables} & Strings & 1 & count & monotone & \textbf{mutable} & changed by E1, E2, E3, E4, E6, E7, E8; decreased under E3, E7, E8 & \citep{anderson2018learning,demetrio2021exemples} \\
@@ -12,7 +12,7 @@ Feature unit & Group & Dim. & Kind & Draft & Repaired & Rule and evidence & Ref.
 \texttt{Strings.paths} & Strings & 1 & count & monotone & \textbf{mutable} & changed by E1, E2, E3, E8; decreased under E8 & \citep{anderson2018learning,demetrio2021exemples} \\
 \texttt{Strings.urls} & Strings & 1 & count & monotone & \textbf{mutable} & changed by E1, E2, E3, E8; decreased under E8 & \citep{anderson2018learning,demetrio2021exemples} \\
 \texttt{Strings.registry} & Strings & 1 & count & monotone & \textbf{mutable} & changed by E1, E2, E3; not increase-only (conservative, not observed: never decreased, but E8 removes bytes) & \citep{anderson2018learning,demetrio2021exemples} \\
-\texttt{Strings.MZ} & Strings & 1 & count & monotone & \textbf{mutable} & changed by E1, E3, E7, E8; decreased under E8 & \citep{anderson2018learning,demetrio2021exemples} \\
+\texttt{Strings.MZ} & Strings & 1 & count & monotone & \textbf{mutable} & changed by E1, E3, E7, E8; decreased under E7, E8 & \citep{anderson2018learning,demetrio2021exemples} \\
 \texttt{General.size} & General+TS & 1 & count & monotone & \textbf{mutable} & changed by E1, E2, E3, E4, E8; decreased under E8 & \citep{anderson2018learning,demetrio2021exemples} \\
 \texttt{General.vsize} & General+TS & 1 & count & monotone & monotone & changed by E3, E4; never decreased & \citep{anderson2018learning,demetrio2021exemples} \\
 \texttt{General.has\_debug} & General+TS & 1 & flag & immutable & \textbf{mutable} & changed by E8 & \citep{anderson2018learning} \\
@@ -27,16 +27,16 @@ Feature unit & Group & Dim. & Kind & Draft & Repaired & Rule and evidence & Ref.
 \texttt{Header.machine} & Header(static) & 10 & hashed & immutable & immutable & not changed by any in-scope edit & -- \\
 \texttt{Header.characteristics} & Header(static) & 10 & hashed & immutable & immutable & not changed by any in-scope edit & -- \\
 \texttt{Header.subsystem} & Header(static) & 10 & hashed & immutable & immutable & not changed by any in-scope edit & -- \\
-\texttt{Header.dll\_characteristics} & Header(static) & 10 & hashed & immutable & immutable & not changed by any in-scope edit & -- \\
+\texttt{Header.dll\_characteristics} & Header(static) & 10 & hashed & immutable & \textbf{mutable} & changed by E10 only (plausibly functionality-preserving, not verified by execution) & -- \\
 \texttt{Header.magic} & Header(static) & 10 & hashed & immutable & immutable & not changed by any in-scope edit & -- \\
-\texttt{Header.major\_image\_version} & Header(static) & 1 & value & immutable & immutable & not changed by any in-scope edit & -- \\
-\texttt{Header.minor\_image\_version} & Header(static) & 1 & value & immutable & immutable & not changed by any in-scope edit & -- \\
-\texttt{Header.major\_linker\_version} & Header(static) & 1 & value & immutable & immutable & not changed by any in-scope edit & -- \\
-\texttt{Header.minor\_linker\_version} & Header(static) & 1 & value & immutable & immutable & not changed by any in-scope edit & -- \\
-\texttt{Header.major\_os\_version} & Header(static) & 1 & value & immutable & immutable & not changed by any in-scope edit & -- \\
+\texttt{Header.major\_image\_version} & Header(static) & 1 & value & immutable & \textbf{mutable} & changed by E10 only (plausibly functionality-preserving, not verified by execution) & -- \\
+\texttt{Header.minor\_image\_version} & Header(static) & 1 & value & immutable & \textbf{mutable} & changed by E10 only (plausibly functionality-preserving, not verified by execution) & -- \\
+\texttt{Header.major\_linker\_version} & Header(static) & 1 & value & immutable & \textbf{mutable} & changed by E10 only (plausibly functionality-preserving, not verified by execution) & -- \\
+\texttt{Header.minor\_linker\_version} & Header(static) & 1 & value & immutable & \textbf{mutable} & changed by E10 only (plausibly functionality-preserving, not verified by execution) & -- \\
+\texttt{Header.major\_os\_version} & Header(static) & 1 & value & immutable & \textbf{mutable} & changed by E10 only (plausibly functionality-preserving, not verified by execution) & -- \\
 \texttt{Header.minor\_os\_version} & Header(static) & 1 & value & immutable & immutable & not changed by any in-scope edit & -- \\
-\texttt{Header.major\_subsystem\_version} & Header(static) & 1 & value & immutable & immutable & not changed by any in-scope edit & -- \\
-\texttt{Header.minor\_subsystem\_version} & Header(static) & 1 & value & immutable & immutable & not changed by any in-scope edit & -- \\
+\texttt{Header.major\_subsystem\_version} & Header(static) & 1 & value & immutable & \textbf{mutable} & changed by E10 only (plausibly functionality-preserving, not verified by execution) & -- \\
+\texttt{Header.minor\_subsystem\_version} & Header(static) & 1 & value & immutable & \textbf{mutable} & changed by E10 only (plausibly functionality-preserving, not verified by execution) & -- \\
 \texttt{Header.sizeof\_code} & Header(static) & 1 & count & immutable & immutable & not changed by any in-scope edit & -- \\
 \texttt{Header.sizeof\_headers} & Header(static) & 1 & count & immutable & \textbf{monotone} & changed by E3; never decreased & \citep{anderson2018learning,demetrio2021exemples} \\
 \texttt{Header.sizeof\_heap\_commit} & Header(static) & 1 & count & immutable & immutable & not changed by any in-scope edit & -- \\

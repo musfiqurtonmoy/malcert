@@ -22,13 +22,36 @@ RES = os.path.join(ROOT, "ps_results")
 SYS32 = r"C:\Windows\System32"
 UPX = os.path.join(ROOT, "ps_tools", "upx", "upx.exe")
 
+# Corpus sets (REVISION_PLAN 1i): the same file names exist in System32 (PE32+) and SysWOW64 (PE32), so the
+# 32-bit copies carry a prefix. Each set takes its benign donor content from its own set only, which keeps
+# the edits of one set reproducible when another set is added.
+SETS = {"sys32": ("", r"C:\Windows\System32", None), "syswow64": ("w32__", r"C:\Windows\SysWOW64", "I386")}
+
+
+def set_of(name):
+    return "syswow64" if name.startswith("w32__") else "sys32"
+
+
+# E10 (1i): optional-header fields an attacker can edit freely, each tested on its own. Offsets are relative
+# to the optional header and identical for PE32 and PE32+. (offset, struct format, mode)
+#   random: any other value;  lower: a smaller value only (a higher OS/subsystem version can stop loading);
+#   clear:  clear one DllCharacteristics bit (0x0040 DYNAMIC_BASE, 0x0100 NX_COMPAT)
+# Plausibly functionality-preserving; NOT verified by execution.
+HDR_FIELDS = {"linker_major": (2, "<B", "random"), "linker_minor": (3, "<B", "random"),
+              "image_major": (44, "<H", "random"), "image_minor": (46, "<H", "random"),
+              "os_major_lower": (40, "<H", "lower"), "os_minor_lower": (42, "<H", "lower"),
+              "subsys_major_lower": (48, "<H", "lower"), "subsys_minor_lower": (50, "<H", "lower"),
+              "clear_dynamic_base": (70, "<H", 0x0040), "clear_nx_compat": (70, "<H", 0x0100)}
+VERSION_FLOOR = 4      # OS / subsystem major version is never lowered below 4 (NT 4.0)
+
 # (edit code, variant) in the order they are applied. E0 is a control, not an attack: LIEF's builder
 # rewrites the whole file, so E0 shows what E3/E4 change merely by rebuilding.
 BYTE_EDITS = [("E1_overlay", v) for v in ("1k_random", "1k_benign", "64k_random", "64k_benign", "1m_random", "1m_benign")] + \
              [("E2_strings", "50"), ("E2_strings", "500"),
               ("E5_timestamp", "random"), ("E6_secnames", "random"),
               ("E7_header", "checksum"), ("E7_header", "dos_header"), ("E7_header", "dos_stub"),
-              ("E8_strip", "signature"), ("E8_strip", "debug")]
+              ("E8_strip", "signature"), ("E8_strip", "debug")] + \
+             [("E10_hdrfields", v) for v in HDR_FIELDS]
 LIEF_EDITS = [("E0_rebuild", "plain"), ("E0_rebuild", "imports"),
               ("E3_section", "4k_random"), ("E3_section", "4k_benign"),
               ("E3_section", "64k_random"), ("E3_section", "64k_benign"),
@@ -141,6 +164,25 @@ def byte_edit(edit, variant, data, donor, name):
                 return None
             d[0x40:L["e_lfanew"]] = rng.bytes(L["e_lfanew"] - 0x40)
         return bytes(d)
+    if edit == "E10_hdrfields":
+        off, fmt, mode = HDR_FIELDS[variant]
+        pos = L["opt"] + off
+        cur = struct.unpack_from(fmt, d, pos)[0]
+        top = 255 if fmt == "<B" else 65535
+        if mode == "random":
+            new = int(rng.randint(0, top))
+            new = new + 1 if new >= cur else new     # any value except the current one
+        elif mode == "lower":
+            lo = VERSION_FLOOR if "major" in variant else 0
+            if cur <= lo:
+                return None                          # nothing lower to set
+            new = int(rng.randint(lo, cur))          # lo <= new < cur
+        else:
+            if not cur & mode:
+                return None                          # bit already clear
+            new = cur & ~mode
+        struct.pack_into(fmt, d, pos, new)
+        return bytes(d)
     if edit == "E8_strip":
         idx = 4 if variant == "signature" else 6     # data directory: Certificate Table / Debug
         if L["ndd"] <= idx:
@@ -245,12 +287,16 @@ def reparse(path):
 def cmd_corpus(a):
     import lief
     os.makedirs(ORIG, exist_ok=True); os.makedirs(RES, exist_ok=True)
-    if os.listdir(ORIG):
-        raise SystemExit("%s is not empty; the corpus is built once (delete it yourself to rebuild)" % ORIG)
+    prefix, SRC, machine = SETS[a.set]
+    if any(set_of(f) == a.set for f in os.listdir(ORIG)):
+        raise SystemExit("set '%s' already exists in %s; a set is built once (delete it yourself to rebuild)"
+                         % (a.set, ORIG))
+    man_path = os.path.join(RES, "corpus_manifest.csv")
+    old = [dict(r, set=r.get("set") or "sys32") for r in csv.DictReader(open(man_path))] if os.path.exists(man_path) else []
     cands = {"exe": [], "dll": []}
-    for f in sorted(os.listdir(SYS32)):
+    for f in sorted(os.listdir(SRC)):
         ext = f.lower().rsplit(".", 1)[-1]
-        p = os.path.join(SYS32, f)
+        p = os.path.join(SRC, f)
         if ext in cands and os.path.isfile(p):
             try:
                 if a.min_size <= os.path.getsize(p) <= a.max_size:
@@ -258,14 +304,14 @@ def cmd_corpus(a):
             except OSError:
                 pass
     rng = np.random.RandomState(a.seed)
-    rows, skipped = [], 0
+    rows, skipped, wrong_arch = [], 0, 0
     for ext in ("exe", "dll"):
         order = [cands[ext][i] for i in rng.permutation(len(cands[ext]))]
         got = 0
         for f in order:
             if got == a.n // 2:
                 break
-            src = os.path.join(SYS32, f)
+            src = os.path.join(SRC, f)
             try:
                 data = open(src, "rb").read()
                 pe_layout(data)
@@ -275,15 +321,20 @@ def cmd_corpus(a):
             except Exception:                                    # noqa: BLE001: unreadable or unparsable -> skip
                 skipped += 1
                 continue
-            shutil.copyfile(src, os.path.join(ORIG, f))          # copy only; the system file is not touched
-            rows.append(dict(file=f, kind=ext, size=len(data), sha256=hashlib.sha256(data).hexdigest(),
-                             machine=str(b.header.machine).split(".")[-1], n_sections=len(b.sections),
+            mach = str(b.header.machine).split(".")[-1]
+            if machine is not None and mach != machine:          # e.g. only PE32 (I386) from SysWOW64
+                wrong_arch += 1
+                continue
+            shutil.copyfile(src, os.path.join(ORIG, prefix + f))  # copy only; the system file is not touched
+            rows.append(dict(file=prefix + f, kind=ext, size=len(data), sha256=hashlib.sha256(data).hexdigest(),
+                             machine=mach, n_sections=len(b.sections),
                              n_import_funcs=len(b.imported_functions), n_export_funcs=len(b.exported_functions),
                              has_signature=int(b.has_signature), has_debug=int(b.has_debug),
-                             overlay=len(b.overlay)))
+                             overlay=len(b.overlay), set=a.set))
             got += 1
-    with open(os.path.join(RES, "corpus_manifest.csv"), "w", newline="") as f:
-        w = csv.DictWriter(f, fieldnames=list(rows[0])); w.writeheader(); w.writerows(rows)
+    with open(man_path, "w", newline="") as f:
+        w = csv.DictWriter(f, fieldnames=list(rows[0])); w.writeheader(); w.writerows(old + rows)
+    print("set %s from %s; %d candidates skipped for the wrong architecture" % (a.set, SRC, wrong_arch))
     sizes = [r["size"] for r in rows]
     print("corpus: %d files (%d exe, %d dll), %d candidates skipped as unparsable" % (
         len(rows), sum(r["kind"] == "exe" for r in rows), sum(r["kind"] == "dll" for r in rows), skipped))
@@ -295,19 +346,23 @@ def cmd_corpus(a):
 
 
 def cmd_edit(a):
-    names = sorted(os.listdir(ORIG))
+    sets = list(SETS) if a.set == "all" else [a.set]
+    by_set = {s: sorted(f for f in os.listdir(ORIG) if set_of(f) == s) for s in sets}
+    todo_names = [(s, i, n) for s in sets for i, n in enumerate(by_set[s])]
     only = set(a.only.split(",")) if a.only else None             # e.g. --only E9_upx: redo just these edits
     want = lambda edit: only is None or edit in only
     man_path = os.path.join(RES, "edits_manifest.csv")
     rows = []
-    if only is not None and os.path.exists(man_path):             # keep the manifest rows of all other edits
+    if os.path.exists(man_path):                                  # keep every manifest row that is not redone now
         rows = [dict(r, size=int(r["size"]), n_sections=int(r["n_sections"]))
-                for r in csv.DictReader(open(man_path)) if r["edit"] not in only]
+                for r in csv.DictReader(open(man_path))
+                if not (set_of(r["file"]) in sets and want(r["edit"]))]
+    names = [n for _, _, n in todo_names]
     if any(want(e) for e, _ in UPX_EDITS) and not os.path.exists(UPX):
         raise SystemExit("UPX not found at %s" % UPX)
-    for i, name in enumerate(names):
+    for i, (s, j, name) in enumerate(todo_names):
         src = os.path.join(ORIG, name)
-        donor_path = os.path.join(ORIG, names[(i + 1) % len(names)])      # benign content comes from the next file
+        donor_path = os.path.join(ORIG, by_set[s][(j + 1) % len(by_set[s])])   # benign content: next file of the set
         data, donor = open(src, "rb").read(), open(donor_path, "rb").read()
         status = {}
         for edit, variant in [ev for ev in BYTE_EDITS if want(ev[0])]:
@@ -380,9 +435,9 @@ def cmd_edit(a):
     with open(man_path, "w", newline="") as f:
         w = csv.DictWriter(f, fieldnames=["file", "edit", "variant", "status", "size", "n_sections"])
         w.writeheader(); w.writerows(rows)
-    print("\nedit / variant: ok, skipped, failed (of %d files)" % len(names))
-    for edit, variant in BYTE_EDITS + LIEF_EDITS + UPX_EDITS:
-        st = [r["status"] for r in rows if r["edit"] == edit and r["variant"] == variant]
+    print("\nedit / variant: ok, skipped, failed (sets %s, %d files)" % ("+".join(sets), len(names)))
+    for edit, variant in [ev for ev in BYTE_EDITS + LIEF_EDITS + UPX_EDITS if want(ev[0])]:
+        st = [r["status"] for r in rows if r["edit"] == edit and r["variant"] == variant and set_of(r["file"]) in sets]
         if st:
             fails = sorted(set(s for s in st if s.startswith("failed")))
             print("  %-12s %-12s %3d %3d %3d  %s" % (edit, variant, st.count("ok"), sum(s.startswith("skipped") for s in st),
@@ -443,7 +498,9 @@ def main():
     c.add_argument("--seed", type=int, default=0)
     c.add_argument("--min_size", type=int, default=16 << 10)
     c.add_argument("--max_size", type=int, default=4 << 20)
+    c.add_argument("--set", default="sys32", choices=list(SETS), help="sys32: PE32+ from System32; syswow64: PE32")
     ed = sub.add_parser("edit")
+    ed.add_argument("--set", default="all", choices=list(SETS) + ["all"])
     ed.add_argument("--only", default="", help="comma-separated edit codes to (re)do, e.g. E9_upx; default: all")
     e = sub.add_parser("extract")
     e.add_argument("--workers", type=int, default=6)
