@@ -15,7 +15,7 @@ from sklearn.metrics import roc_auc_score, f1_score
 
 from malcert.config import get_config
 from malcert.data import (load_subset, split_indices, Preprocessor, threat_masks, group_ids,
-                          GROUP_NAMES, IMMUTABLE_GROUPS)
+                          GROUP_NAMES, attackable_groups)
 from malcert.models import MLP, AblationNet, ibp, crown, input_box
 from malcert.attacks import Constraints, pgd, group_transplant
 from malcert.certify import ablation_votes, ablation_certify, smooth_certify
@@ -172,6 +172,7 @@ def run_seed(cfg, seed, dev, log, todo, R, S, run_id, legacy_rng=False, save=lam
     d = Xtr.shape[1]
     R["data"] = dict(n_train=len(ytr), n_val=len(yva), n_test=len(yte),
                      n_mutable=int(mutable.sum()), n_monotone=int(monotone.sum()),
+                     attackable_groups=[GROUP_NAMES[g] for g in attackable_groups()],
                      n_malware=int(data["y"].sum()), n_benign=int((data["y"] == 0).sum()),
                      n_categories=int(len(set(data["category"])) - 1),
                      n_families=int(len(set(data["family"])) - 1),
@@ -236,7 +237,7 @@ def run_seed(cfg, seed, dev, log, todo, R, S, run_id, legacy_rng=False, save=lam
         std = get_std()
         reseed("ablation")
         G = len(GROUP_NAMES)
-        mut_groups = [g for g, n in enumerate(GROUP_NAMES) if n not in IMMUTABLE_GROUPS]
+        mut_groups = attackable_groups()            # groups with at least one mutable feature
         R["ablation"] = {}
         gm_idx = torch.where(yte == 1)[0][:cfg.group_attack_points]
         donors_pool = Xtr[ytr == 0]

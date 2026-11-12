@@ -1,0 +1,82 @@
+unit,start,end,n_features,kind,group,draft_v1,rule_gives,frozen_in_data_py,rule,changed_by_in_scope,decreased_by_in_scope,changed_by_out_of_scope,changed_by_control,share_E1_overlay,share_E2_strings,share_E3_section,share_E4_imports,share_E5_timestamp,share_E6_secnames,share_E7_header,share_E8_strip,share_E9_upx,share_E0_rebuild
+ByteHistogram,0,256,256,hist,ByteHist,mutable,mutable,mutable,"changed by E1, E2, E3, E4, E5, E6, E7, E8",E1_overlay E2_strings E3_section E4_imports E5_timestamp E6_secnames E7_header E8_strip,E1_overlay E2_strings E3_section E4_imports E5_timestamp E6_secnames E7_header E8_strip,E9_upx,E0_rebuild,1.0,1.0,1.0,1.0,1.0,1.0,1.0,1.0,1.0,0.52
+ByteEntropyHistogram,256,512,256,hist,ByteEntropy,mutable,mutable,mutable,"changed by E1, E2, E3, E4, E5, E6, E7, E8",E1_overlay E2_strings E3_section E4_imports E5_timestamp E6_secnames E7_header E8_strip,E1_overlay E2_strings E3_section E4_imports E5_timestamp E6_secnames E7_header E8_strip,E9_upx,E0_rebuild,1.0,1.0,1.0,1.0,1.0,1.0,1.0,1.0,1.0,0.49
+Strings.numstrings,512,513,1,count,Strings,monotone,mutable,mutable,"changed by E1, E2, E3, E4, E7, E8; decreased under E7, E8",E1_overlay E2_strings E3_section E4_imports E7_header E8_strip,E7_header E8_strip,E9_upx,E0_rebuild,0.9966666666666667,1.0,1.0,1.0,0.0,0.0,0.31,1.0,1.0,0.49
+Strings.avlength,513,514,1,value,Strings,mutable,mutable,mutable,"changed by E1, E2, E3, E4, E6, E7, E8",E1_overlay E2_strings E3_section E4_imports E6_secnames E7_header E8_strip,E1_overlay E2_strings E3_section E4_imports E7_header E8_strip,E9_upx,E0_rebuild,0.9966666666666667,1.0,1.0,1.0,0.0,1.0,0.4,1.0,1.0,0.49
+Strings.printables,514,515,1,count,Strings,monotone,mutable,mutable,"changed by E1, E2, E3, E4, E6, E7, E8; decreased under E3, E7, E8",E1_overlay E2_strings E3_section E4_imports E6_secnames E7_header E8_strip,E3_section E7_header E8_strip,E9_upx,E0_rebuild,0.9966666666666667,1.0,1.0,1.0,0.0,1.0,0.4,1.0,1.0,0.49
+Strings.printabledist,515,611,96,hist,Strings,mutable,mutable,mutable,"changed by E1, E2, E3, E4, E6, E7, E8",E1_overlay E2_strings E3_section E4_imports E6_secnames E7_header E8_strip,E1_overlay E2_strings E3_section E4_imports E6_secnames E7_header E8_strip,E9_upx,E0_rebuild,0.9966666666666667,1.0,1.0,1.0,0.0,1.0,0.4,1.0,1.0,0.49
+Strings.entropy,611,612,1,value,Strings,mutable,mutable,mutable,"changed by E1, E2, E3, E4, E6, E7, E8",E1_overlay E2_strings E3_section E4_imports E6_secnames E7_header E8_strip,E1_overlay E2_strings E3_section E4_imports E7_header E8_strip,E9_upx,E0_rebuild,0.9966666666666667,1.0,1.0,1.0,0.0,1.0,0.39666666666666667,1.0,1.0,0.49
+Strings.paths,612,613,1,count,Strings,monotone,mutable,mutable,"changed by E1, E2, E3, E8; decreased under E8",E1_overlay E2_strings E3_section E8_strip,E8_strip,E9_upx,,0.03,1.0,0.005,0.0,0.0,0.0,0.0,0.023809523809523808,0.02,0.0
+Strings.urls,613,614,1,count,Strings,monotone,mutable,mutable,"changed by E1, E2, E3, E8; decreased under E8",E1_overlay E2_strings E3_section E8_strip,E8_strip,E9_upx,,0.07666666666666666,1.0,0.0325,0.0,0.0,0.0,0.0,0.21428571428571427,0.02,0.0
+Strings.registry,614,615,1,count,Strings,monotone,mutable,mutable,"changed by E1, E2, E3; never decreased, but not increase-only by reasoning (E8 removes bytes)",E1_overlay E2_strings E3_section,,,,0.006666666666666667,1.0,0.0025,0.0,0.0,0.0,0.0,0.0,0.0,0.0
+Strings.MZ,615,616,1,count,Strings,monotone,mutable,mutable,"changed by E1, E3, E7, E8; decreased under E8",E1_overlay E3_section E7_header E8_strip,E8_strip,E9_upx,,0.7716666666666666,0.0,0.68,0.0,0.0,0.0,0.0033333333333333335,0.007936507936507936,0.75,0.0
+General.size,616,617,1,count,General+TS,monotone,mutable,mutable,"changed by E1, E2, E3, E4, E8; decreased under E8",E1_overlay E2_strings E3_section E4_imports E8_strip,E8_strip,E9_upx,E0_rebuild,1.0,1.0,1.0,1.0,0.0,0.0,0.0,0.21428571428571427,1.0,0.48
+General.vsize,617,618,1,count,General+TS,monotone,monotone,monotone,"changed by E3, E4; never decreased",E3_section E4_imports,,E9_upx,E0_rebuild,0.0,0.0,1.0,1.0,0.0,0.0,0.0,0.0,1.0,0.48
+General.has_debug,618,619,1,flag,General+TS,immutable,mutable,mutable,changed by E8,E8_strip,E8_strip,E9_upx,,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.7857142857142857,0.54,0.0
+General.exports,619,620,1,count,General+TS,monotone,monotone,monotone,not changed by any in-scope edit; kept mutable from draft v1 (conservative); never decreased,,,E9_upx,,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.03,0.0
+General.imports,620,621,1,count,General+TS,monotone,monotone,monotone,changed by E4; never decreased,E4_imports,,E9_upx,,0.0,0.0,0.0,1.0,0.0,0.0,0.0,0.0,1.0,0.0
+General.has_relocations,621,622,1,flag,General+TS,immutable,mutable,mutable,"changed by E1, E2, E3, E4",E1_overlay E2_strings E3_section E4_imports,,E9_upx,E0_rebuild,0.02,0.02,0.02,0.020833333333333332,0.0,0.0,0.0,0.0,0.03,0.01
+General.has_resources,622,623,1,flag,General+TS,immutable,immutable,immutable,not changed by any in-scope edit,,,,,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0
+General.has_signature,623,624,1,flag,General+TS,immutable,mutable,mutable,changed by E8,E8_strip,E8_strip,E9_upx,,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.21428571428571427,0.27,0.0
+General.has_tls,624,625,1,flag,General+TS,immutable,immutable,immutable,not changed by any in-scope edit,,,,,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0
+General.symbols,625,626,1,count,General+TS,immutable,immutable,immutable,not changed by any in-scope edit,,,,,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0
+Header.timestamp,626,627,1,value,General+TS,mutable,mutable,mutable,changed by E5,E5_timestamp,E5_timestamp,,,0.0,0.0,0.0,0.0,1.0,0.0,0.0,0.0,0.0,0.0
+Header.machine,627,637,10,hashed,Header(static),immutable,immutable,immutable,not changed by any in-scope edit,,,,,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0
+Header.characteristics,637,647,10,hashed,Header(static),immutable,immutable,immutable,not changed by any in-scope edit,,,,,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0
+Header.subsystem,647,657,10,hashed,Header(static),immutable,immutable,immutable,not changed by any in-scope edit,,,,,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0
+Header.dll_characteristics,657,667,10,hashed,Header(static),immutable,immutable,immutable,not changed by any in-scope edit,,,E9_upx,,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.94,0.0
+Header.magic,667,677,10,hashed,Header(static),immutable,immutable,immutable,not changed by any in-scope edit,,,,,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0
+Header.major_image_version,677,678,1,value,Header(static),immutable,immutable,immutable,not changed by any in-scope edit,,,,,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0
+Header.minor_image_version,678,679,1,value,Header(static),immutable,immutable,immutable,not changed by any in-scope edit,,,,,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0
+Header.major_linker_version,679,680,1,value,Header(static),immutable,immutable,immutable,not changed by any in-scope edit,,,,,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0
+Header.minor_linker_version,680,681,1,value,Header(static),immutable,immutable,immutable,not changed by any in-scope edit,,,,,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0
+Header.major_os_version,681,682,1,value,Header(static),immutable,immutable,immutable,not changed by any in-scope edit,,,,,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0
+Header.minor_os_version,682,683,1,value,Header(static),immutable,immutable,immutable,not changed by any in-scope edit,,,,,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0
+Header.major_subsystem_version,683,684,1,value,Header(static),immutable,immutable,immutable,not changed by any in-scope edit,,,,,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0
+Header.minor_subsystem_version,684,685,1,value,Header(static),immutable,immutable,immutable,not changed by any in-scope edit,,,,,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0
+Header.sizeof_code,685,686,1,count,Header(static),immutable,immutable,immutable,not changed by any in-scope edit,,,E9_upx,,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.98,0.0
+Header.sizeof_headers,686,687,1,count,Header(static),immutable,monotone,monotone,changed by E3; never decreased,E3_section,,E9_upx,E0_rebuild,0.0,0.0,0.03,0.0,0.0,0.0,0.0,0.0,0.05,0.03
+Header.sizeof_heap_commit,687,688,1,count,Header(static),immutable,immutable,immutable,not changed by any in-scope edit,,,,,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0
+Section.n_sections,688,689,1,count,Section,monotone,monotone,monotone,"changed by E3, E4; never decreased",E3_section E4_imports,,E9_upx,E0_rebuild,0.0,0.0,1.0,1.0,0.0,0.0,0.0,0.0,1.0,0.48
+Section.n_zero_size,689,690,1,count,Section,monotone,monotone,monotone,not changed by any in-scope edit; kept mutable from draft v1 (conservative); never decreased,,,E9_upx,,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.93,0.0
+Section.n_empty_name,690,691,1,count,Section,monotone,mutable,mutable,"not changed by any in-scope edit; kept mutable from draft v1 (conservative); never decreased, but not increase-only by reasoning (E6 renames sections)",,,,,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0
+Section.n_rx,691,692,1,count,Section,monotone,monotone,monotone,changed by E4; never decreased,E4_imports,,E9_upx,E0_rebuild,0.0,0.0,0.0,1.0,0.0,0.0,0.0,0.0,0.96,0.48
+Section.n_w,692,693,1,count,Section,monotone,monotone,monotone,"changed by E3, E4; never decreased",E3_section E4_imports,,E9_upx,E0_rebuild,0.0,0.0,1.0,1.0,0.0,0.0,0.0,0.0,0.95,0.48
+Section.sizes,693,743,50,hashed,Section,mutable,mutable,mutable,"changed by E3, E4, E6",E3_section E4_imports E6_secnames,E3_section E4_imports E6_secnames,E9_upx,E0_rebuild,0.0,0.0,1.0,1.0,0.0,1.0,0.0,0.0,1.0,0.48
+Section.entropy,743,793,50,hashed,Section,mutable,mutable,mutable,"changed by E3, E4, E6, E8",E3_section E4_imports E6_secnames E8_strip,E3_section E4_imports E6_secnames E8_strip,E9_upx,E0_rebuild,0.0,0.0,1.0,1.0,0.0,1.0,0.0,0.7857142857142857,1.0,0.48
+Section.vsizes,793,843,50,hashed,Section,mutable,mutable,mutable,"changed by E3, E4, E6",E3_section E4_imports E6_secnames,E3_section E4_imports E6_secnames,E9_upx,E0_rebuild,0.0,0.0,1.0,1.0,0.0,1.0,0.0,0.0,1.0,0.48
+Section.entry_name,843,893,50,hashed,Section,mutable,mutable,mutable,changed by E6,E6_secnames,E6_secnames,E9_upx,,0.0,0.0,0.0,0.0,0.0,0.97,0.0,0.0,1.0,0.0
+Section.entry_characteristics,893,943,50,hashed,Section,mutable,mutable,mutable,not changed by any in-scope edit; kept mutable from draft v1 (conservative),,,E9_upx,,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,1.0,0.0
+Imports.libraries,943,1199,256,hashed,Imports,mutable,mutable,mutable,changed by E4,E4_imports,,E9_upx,,0.0,0.0,0.0,0.6041666666666666,0.0,0.0,0.0,0.0,0.61,0.0
+Imports.functions,1199,2223,1024,hashed,Imports,mutable,mutable,mutable,changed by E4,E4_imports,E4_imports,E9_upx,,0.0,0.0,0.0,1.0,0.0,0.0,0.0,0.0,1.0,0.0
+Exports.functions,2223,2351,128,hashed,Exports,mutable,mutable,mutable,not changed by any in-scope edit; kept mutable from draft v1 (conservative),,,E9_upx,,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.03,0.0
+DataDir.EXPORT_TABLE.size,2351,2352,1,count,DataDir,immutable,immutable,immutable,not changed by any in-scope edit,,,E9_upx,,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.02,0.0
+DataDir.EXPORT_TABLE.address,2352,2353,1,value,DataDir,immutable,immutable,immutable,not changed by any in-scope edit,,,E9_upx,,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.47,0.0
+DataDir.IMPORT_TABLE.size,2353,2354,1,count,DataDir,immutable,monotone,monotone,changed by E4; never decreased,E4_imports,,E9_upx,E0_rebuild,0.0,0.0,0.0,1.0,0.0,0.0,0.0,0.0,1.0,0.48
+DataDir.IMPORT_TABLE.address,2354,2355,1,value,DataDir,immutable,mutable,mutable,changed by E4,E4_imports,,E9_upx,E0_rebuild,0.0,0.0,0.0,1.0,0.0,0.0,0.0,0.0,1.0,0.48
+DataDir.RESOURCE_TABLE.size,2355,2356,1,count,DataDir,immutable,immutable,immutable,not changed by any in-scope edit,,,E9_upx,,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.96,0.0
+DataDir.RESOURCE_TABLE.address,2356,2357,1,value,DataDir,immutable,immutable,immutable,not changed by any in-scope edit,,,E9_upx,,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.99,0.0
+DataDir.EXCEPTION_TABLE.size,2357,2358,1,count,DataDir,immutable,immutable,immutable,not changed by any in-scope edit,,,,,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0
+DataDir.EXCEPTION_TABLE.address,2358,2359,1,value,DataDir,immutable,immutable,immutable,not changed by any in-scope edit,,,,,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0
+DataDir.CERTIFICATE_TABLE.size,2359,2360,1,count,DataDir,immutable,mutable,mutable,changed by E8; decreased under E8,E8_strip,E8_strip,E9_upx,,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.21428571428571427,0.27,0.0
+DataDir.CERTIFICATE_TABLE.address,2360,2361,1,value,DataDir,immutable,mutable,mutable,changed by E8,E8_strip,E8_strip,E9_upx,,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.21428571428571427,0.27,0.0
+DataDir.BASE_RELOCATION_TABLE.size,2361,2362,1,count,DataDir,immutable,immutable,immutable,not changed by any in-scope edit,,,E9_upx,,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.95,0.0
+DataDir.BASE_RELOCATION_TABLE.address,2362,2363,1,value,DataDir,immutable,immutable,immutable,not changed by any in-scope edit,,,E9_upx,,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.95,0.0
+DataDir.DEBUG.size,2363,2364,1,count,DataDir,immutable,mutable,mutable,changed by E8; decreased under E8,E8_strip,E8_strip,E9_upx,,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.7857142857142857,0.98,0.0
+DataDir.DEBUG.address,2364,2365,1,value,DataDir,immutable,mutable,mutable,changed by E8,E8_strip,E8_strip,E9_upx,,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.7857142857142857,0.98,0.0
+DataDir.ARCHITECTURE.size,2365,2366,1,count,DataDir,immutable,immutable,immutable,not changed by any in-scope edit,,,,,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0
+DataDir.ARCHITECTURE.address,2366,2367,1,value,DataDir,immutable,immutable,immutable,not changed by any in-scope edit,,,,,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0
+DataDir.GLOBAL_PTR.size,2367,2368,1,count,DataDir,immutable,immutable,immutable,not changed by any in-scope edit,,,,,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0
+DataDir.GLOBAL_PTR.address,2368,2369,1,value,DataDir,immutable,immutable,immutable,not changed by any in-scope edit,,,,,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0
+DataDir.TLS_TABLE.size,2369,2370,1,count,DataDir,immutable,immutable,immutable,not changed by any in-scope edit,,,,,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0
+DataDir.TLS_TABLE.address,2370,2371,1,value,DataDir,immutable,immutable,immutable,not changed by any in-scope edit,,,E9_upx,,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.26,0.0
+DataDir.LOAD_CONFIG_TABLE.size,2371,2372,1,count,DataDir,immutable,immutable,immutable,not changed by any in-scope edit,,,,,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0
+DataDir.LOAD_CONFIG_TABLE.address,2372,2373,1,value,DataDir,immutable,immutable,immutable,not changed by any in-scope edit,,,E9_upx,,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.95,0.0
+DataDir.BOUND_IMPORT.size,2373,2374,1,count,DataDir,immutable,immutable,immutable,not changed by any in-scope edit,,,,,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0
+DataDir.BOUND_IMPORT.address,2374,2375,1,value,DataDir,immutable,immutable,immutable,not changed by any in-scope edit,,,,,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0
+DataDir.IAT.size,2375,2376,1,count,DataDir,immutable,mutable,mutable,changed by E4; decreased under E4,E4_imports,E4_imports,E9_upx,E0_rebuild,0.0,0.0,0.0,1.0,0.0,0.0,0.0,0.0,0.95,0.48
+DataDir.IAT.address,2376,2377,1,value,DataDir,immutable,mutable,mutable,changed by E4,E4_imports,,E9_upx,E0_rebuild,0.0,0.0,0.0,1.0,0.0,0.0,0.0,0.0,0.95,0.48
+DataDir.DELAY_IMPORT_DESCRIPTOR.size,2377,2378,1,count,DataDir,immutable,immutable,immutable,not changed by any in-scope edit,,,,,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0
+DataDir.DELAY_IMPORT_DESCRIPTOR.address,2378,2379,1,value,DataDir,immutable,immutable,immutable,not changed by any in-scope edit,,,,,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0
+DataDir.CLR_RUNTIME_HEADER.size,2379,2380,1,count,DataDir,immutable,immutable,immutable,not changed by any in-scope edit,,,,,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0
+DataDir.CLR_RUNTIME_HEADER.address,2380,2381,1,value,DataDir,immutable,immutable,immutable,not changed by any in-scope edit,,,,,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0

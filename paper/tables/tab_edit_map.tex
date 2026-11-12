@@ -1,0 +1,19 @@
+\begin{tabular}{lrcccccccccrrrrrr}
+\toprule
+ & & \multicolumn{9}{c}{Feature groups changed} & \multicolumn{2}{c}{Groups} & \multicolumn{2}{c}{$\epsilon$ needed} & \multicolumn{2}{c}{Inside draft set (\%)} \\
+\cmidrule(lr){3-11}\cmidrule(lr){12-13}\cmidrule(lr){14-15}\cmidrule(lr){16-17}
+Edit & Files & BH & BE & Str & Gen & Hdr & Sec & Imp & Exp & DD & med. & max & med. & 90\% & box & groups \\
+\midrule
+E1 Overlay append & 600 & $\bullet$ & $\bullet$ & $\bullet$ & $\bullet$ &  &  &  &  &  & 4 & 4 & 1.7 & 5.9 & 98 & 100 \\
+E2 String padding & 200 & $\bullet$ & $\bullet$ & $\bullet$ & $\bullet$ &  &  &  &  &  & 4 & 4 & 9.8 & 15 & 98 & 100 \\
+E3 Section add & 400 & $\bullet$ & $\bullet$ & $\bullet$ & $\bullet$ & $\circ$ & $\bullet$ &  &  &  & 5 & 6 & 22 & 22 & 47 & 97 \\
+E4 Import add & 192 & $\bullet$ & $\bullet$ & $\bullet$ & $\bullet$ &  & $\bullet$ & $\bullet$ &  & $\bullet$ & 7 & 7 & 17 & 18 & 0 & 0 \\
+E5 Timestamp edit & 100 & $\bullet$ & $\bullet$ &  & $\bullet$ &  &  &  &  &  & 3 & 3 & 0.21 & 0.42 & 100 & 100 \\
+E6 Section rename & 100 & $\bullet$ & $\bullet$ & $\bullet$ &  &  & $\bullet$ &  &  &  & 4 & 4 & 28 & 57 & 54 & 100 \\
+E7 Checksum, DOS header & 300 & $\bullet$ & $\bullet$ & $\circ$ &  &  &  &  &  &  & 2 & 3 & 0.015 & 0.42 & 67 & 100 \\
+E8 Strip signature, debug & 126 & $\bullet$ & $\bullet$ & $\bullet$ & $\bullet$ &  & $\circ$ &  &  & $\bullet$ & 6 & 6 & 2.4 & 2.6 & 0 & 0 \\
+\midrule
+E9 UPX packing$^\dagger$ & 100 & $\bullet$ & $\bullet$ & $\bullet$ & $\bullet$ & $\bullet$ & $\bullet$ & $\bullet$ & $\circ$ & $\bullet$ & 8 & 9 & 7.9 & 16 & 0 & 0 \\
+E0 LIEF rebuild (control) & 200 & $\circ$ & $\circ$ & $\circ$ & $\circ$ & $\circ$ & $\circ$ &  &  & $\circ$ & 2 & 6 & 1 & 18 & 48 & 49 \\
+\bottomrule
+\end{tabular}

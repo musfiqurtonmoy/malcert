@@ -411,10 +411,21 @@ def cmd_extract(a):
     X = np.stack(X).astype(np.float32)
     same = all(np.array_equal(x, y) for x, y in zip(X[:len(names)], X2))
     print("rows %d, dim %d; originals extracted twice give identical vectors: %s" % (X.shape[0], X.shape[1], same))
-    if not same or X.shape[1] != 2381 or not np.isfinite(X).all():
+    bad = ~np.isfinite(X)
+    if bad.any():                                                # say exactly where, then stop
+        from collections import Counter
+        rows = np.where(bad.any(1))[0]
+        print("NON-FINITE values in %d rows, %d distinct features" % (len(rows), int(bad.any(0).sum())))
+        print("  by edit/variant:", dict(Counter("%s/%s" % (items[i][1], items[i][2]) for i in rows)))
+        print("  feature indices:", np.where(bad.any(0))[0].tolist()[:40])
+        for i in rows[:5]:
+            j = np.where(bad[i])[0]
+            print("  e.g. %s %s/%s: features %s = %s" % (items[i][0], items[i][1], items[i][2], j.tolist()[:6],
+                                                           X[i, j][:6].tolist()))
+    if not same or X.shape[1] != 2381 or bad.any():
         raise SystemExit("feature extraction is not deterministic / not 2381-dimensional / not finite")
-    np.savez_compressed(os.path.join(RES, "features.npz"), X=X,
-                        file=np.array([it[0] for it in items]), edit=np.array([it[1] for it in items]),
+    np.savez_compressed(os.path.join(RES, "features.npz"), X=X,     # ("file" is savez's own argument name)
+                        fname=np.array([it[0] for it in items]), edit=np.array([it[1] for it in items]),
                         variant=np.array([it[2] for it in items]),
                         lief_version=np.array(lief.__version__), numpy_version=np.array(np.__version__))
     print("saved", os.path.join(RES, "features.npz"))

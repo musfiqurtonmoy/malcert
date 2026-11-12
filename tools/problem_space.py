@@ -29,9 +29,9 @@ import pandas as pd
 ROOT = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
 sys.path.insert(0, ROOT)
 from malcert.config import get_config                                             # noqa: E402
-from malcert.data import (FEATURE_UNITS, GROUP_NAMES, EDIT_SCOPE, DRAFT_V1_IMMUTABLE_GROUPS, Preprocessor,   # noqa: E402
-                          attackable_groups, group_ids, load_subset, natural_bounds, split_indices,
-                          threat_masks, threat_masks_draft_v1, unit_index)
+from malcert.data import (FEATURE_UNITS, GROUP_NAMES, EDIT_SCOPE, DRAFT_V1_IMMUTABLE_GROUPS,                 # noqa: E402
+                          NOT_MONOTONE_BY_REASONING, Preprocessor, attackable_groups, group_ids, load_subset,
+                          natural_bounds, split_indices, threat_masks, threat_masks_draft_v1, unit_index)
 
 RES = os.path.join(ROOT, "ps_results")
 R_CEIL = 4       # largest r any vote-counting certificate can cover with 9 groups (k = 1): 9 - r > r
@@ -89,7 +89,7 @@ def main():
     a = ap.parse_args()
     os.chdir(ROOT)
     F = np.load(os.path.join(RES, "features.npz"))
-    X, f_file, f_edit, f_var = F["X"].astype(np.float64), F["file"], F["edit"], F["variant"]
+    X, f_file, f_edit, f_var = F["X"].astype(np.float64), F["fname"], F["edit"], F["variant"]
     corpus = pd.read_csv(os.path.join(RES, "corpus_manifest.csv"))
     man = pd.read_csv(os.path.join(RES, "edits_manifest.csv"))
     assert X.shape[1] == 2381 and np.isfinite(X).all()
@@ -189,16 +189,22 @@ def main():
         dec = [e for e in in_scope if e in by.index and by.decreased[e] > 0]
         draft = "monotone" if mono_d[s] else ("mutable" if mut_d[s] else "immutable")
         mutable = bool(obs) or draft != "immutable"
-        monotone = mutable and kind == "count" and not dec
+        by_reasoning = n in NOT_MONOTONE_BY_REASONING
+        monotone = mutable and kind == "count" and not dec and not by_reasoning
         status = "monotone" if monotone else ("mutable" if mutable else "immutable")
         if obs:
             rule = "changed by " + ", ".join(x.split("_")[0] for x in obs)
         elif mutable:
-            rule = "not changed by any measured edit; kept mutable from draft v1 (conservative)"
+            rule = "not changed by any in-scope edit; kept mutable from draft v1 (conservative)"
         else:
             rule = "not changed by any in-scope edit"
         if mutable and kind == "count":
-            rule += "; never decreased" if monotone else "; decreased under " + ", ".join(x.split("_")[0] for x in dec)
+            if monotone:
+                rule += "; never decreased"
+            elif dec:
+                rule += "; decreased under " + ", ".join(x.split("_")[0] for x in dec)
+            else:
+                rule += "; never decreased, but not increase-only by reasoning (" + NOT_MONOTONE_BY_REASONING[n].split(",")[0].split(";")[0] + ")"
         frozen = "monotone" if mono_r[s] else ("mutable" if mut_r[s] else "immutable")
         row = OrderedDict(unit=n, start=s, end=t, n_features=t - s, kind=kind, group=uidx[n][3], draft_v1=draft,
                           rule_gives=status, frozen_in_data_py=frozen, rule=rule,
@@ -323,8 +329,11 @@ def write_tables(paper, corpus, man, D, M, Mall, EV, mut_d, mono_d, mut_r, mono_
                     f"{pct(1 - r.repaired_box_inside)}\\% of files change features annotated immutable")
         else:
             inside = r.repaired_box_inside == 1 and r.repaired_group_inside == 1
-            status = "covered" if inside and le == 1 else ("partly covered" if inside and le > 0 else
-                                                           ("not certifiable" if inside else "NOT INSIDE"))
+            # covered: inside the threat set and at most R_CEIL groups change in every file, so a group
+            #   certificate can apply (whether a given sample IS certified at that r is an experimental result);
+            # partly covered: inside the threat set, but some or all files change more than R_CEIL groups,
+            #   which no vote-counting certificate over 9 groups can cover; only the box at the listed epsilon does.
+            status = "covered" if inside and le == 1 else ("partly covered" if inside else "NOT INSIDE")
             evid = (f"{int(r.n_files)} files, all inside the threat set; groups changed: {r.groups_median:.0f} "
                     f"(max {int(r.groups_max)}), $r\\leq{R_CEIL}$ for {pct(le)}\\%; $\\epsilon$ needed: {fe(r.eps_median)}")
         cov.append((tech, e.split("_")[0], status))

@@ -1,0 +1,87 @@
+\begin{tabular}{llrlllp{0.30\linewidth}l}
+\toprule
+Feature unit & Group & Dim. & Kind & Draft & Repaired & Rule and evidence & Ref. \\
+\midrule
+\texttt{ByteHistogram} & ByteHist & 256 & hist & mutable & mutable & changed by E1, E2, E3, E4, E5, E6, E7, E8 & \citep{anderson2018learning,demetrio2021exemples} \\
+\texttt{ByteEntropyHistogram} & ByteEntropy & 256 & hist & mutable & mutable & changed by E1, E2, E3, E4, E5, E6, E7, E8 & \citep{anderson2018learning,demetrio2021exemples} \\
+\texttt{Strings.numstrings} & Strings & 1 & count & monotone & \textbf{mutable} & changed by E1, E2, E3, E4, E7, E8; decreased under E7, E8 & \citep{anderson2018learning,demetrio2021exemples} \\
+\texttt{Strings.avlength} & Strings & 1 & value & mutable & mutable & changed by E1, E2, E3, E4, E6, E7, E8 & \citep{anderson2018learning,demetrio2021exemples} \\
+\texttt{Strings.printables} & Strings & 1 & count & monotone & \textbf{mutable} & changed by E1, E2, E3, E4, E6, E7, E8; decreased under E3, E7, E8 & \citep{anderson2018learning,demetrio2021exemples} \\
+\texttt{Strings.printabledist} & Strings & 96 & hist & mutable & mutable & changed by E1, E2, E3, E4, E6, E7, E8 & \citep{anderson2018learning,demetrio2021exemples} \\
+\texttt{Strings.entropy} & Strings & 1 & value & mutable & mutable & changed by E1, E2, E3, E4, E6, E7, E8 & \citep{anderson2018learning,demetrio2021exemples} \\
+\texttt{Strings.paths} & Strings & 1 & count & monotone & \textbf{mutable} & changed by E1, E2, E3, E8; decreased under E8 & \citep{anderson2018learning,demetrio2021exemples} \\
+\texttt{Strings.urls} & Strings & 1 & count & monotone & \textbf{mutable} & changed by E1, E2, E3, E8; decreased under E8 & \citep{anderson2018learning,demetrio2021exemples} \\
+\texttt{Strings.registry} & Strings & 1 & count & monotone & \textbf{mutable} & changed by E1, E2, E3; never decreased, but not increase-only by reasoning (E8 removes bytes) & \citep{anderson2018learning,demetrio2021exemples} \\
+\texttt{Strings.MZ} & Strings & 1 & count & monotone & \textbf{mutable} & changed by E1, E3, E7, E8; decreased under E8 & \citep{anderson2018learning,demetrio2021exemples} \\
+\texttt{General.size} & General+TS & 1 & count & monotone & \textbf{mutable} & changed by E1, E2, E3, E4, E8; decreased under E8 & \citep{anderson2018learning,demetrio2021exemples} \\
+\texttt{General.vsize} & General+TS & 1 & count & monotone & monotone & changed by E3, E4; never decreased & \citep{anderson2018learning,demetrio2021exemples} \\
+\texttt{General.has\_debug} & General+TS & 1 & flag & immutable & \textbf{mutable} & changed by E8 & \citep{anderson2018learning} \\
+\texttt{General.exports} & General+TS & 1 & count & monotone & monotone & not changed by any in-scope edit; kept mutable from draft v1 (conservative); never decreased & -- \\
+\texttt{General.imports} & General+TS & 1 & count & monotone & monotone & changed by E4; never decreased & \citep{anderson2018learning} \\
+\texttt{General.has\_relocations} & General+TS & 1 & flag & immutable & \textbf{mutable} & changed by E1, E2, E3, E4 & \citep{anderson2018learning,demetrio2021exemples} \\
+\texttt{General.has\_resources} & General+TS & 1 & flag & immutable & immutable & not changed by any in-scope edit & -- \\
+\texttt{General.has\_signature} & General+TS & 1 & flag & immutable & \textbf{mutable} & changed by E8 & \citep{anderson2018learning} \\
+\texttt{General.has\_tls} & General+TS & 1 & flag & immutable & immutable & not changed by any in-scope edit & -- \\
+\texttt{General.symbols} & General+TS & 1 & count & immutable & immutable & not changed by any in-scope edit & -- \\
+\texttt{Header.timestamp} & General+TS & 1 & value & mutable & mutable & changed by E5 & \citep{demetrio2021exemples} \\
+\texttt{Header.machine} & Header(static) & 10 & hashed & immutable & immutable & not changed by any in-scope edit & -- \\
+\texttt{Header.characteristics} & Header(static) & 10 & hashed & immutable & immutable & not changed by any in-scope edit & -- \\
+\texttt{Header.subsystem} & Header(static) & 10 & hashed & immutable & immutable & not changed by any in-scope edit & -- \\
+\texttt{Header.dll\_characteristics} & Header(static) & 10 & hashed & immutable & immutable & not changed by any in-scope edit & -- \\
+\texttt{Header.magic} & Header(static) & 10 & hashed & immutable & immutable & not changed by any in-scope edit & -- \\
+\texttt{Header.major\_image\_version} & Header(static) & 1 & value & immutable & immutable & not changed by any in-scope edit & -- \\
+\texttt{Header.minor\_image\_version} & Header(static) & 1 & value & immutable & immutable & not changed by any in-scope edit & -- \\
+\texttt{Header.major\_linker\_version} & Header(static) & 1 & value & immutable & immutable & not changed by any in-scope edit & -- \\
+\texttt{Header.minor\_linker\_version} & Header(static) & 1 & value & immutable & immutable & not changed by any in-scope edit & -- \\
+\texttt{Header.major\_os\_version} & Header(static) & 1 & value & immutable & immutable & not changed by any in-scope edit & -- \\
+\texttt{Header.minor\_os\_version} & Header(static) & 1 & value & immutable & immutable & not changed by any in-scope edit & -- \\
+\texttt{Header.major\_subsystem\_version} & Header(static) & 1 & value & immutable & immutable & not changed by any in-scope edit & -- \\
+\texttt{Header.minor\_subsystem\_version} & Header(static) & 1 & value & immutable & immutable & not changed by any in-scope edit & -- \\
+\texttt{Header.sizeof\_code} & Header(static) & 1 & count & immutable & immutable & not changed by any in-scope edit & -- \\
+\texttt{Header.sizeof\_headers} & Header(static) & 1 & count & immutable & \textbf{monotone} & changed by E3; never decreased & \citep{anderson2018learning,demetrio2021exemples} \\
+\texttt{Header.sizeof\_heap\_commit} & Header(static) & 1 & count & immutable & immutable & not changed by any in-scope edit & -- \\
+\texttt{Section.n\_sections} & Section & 1 & count & monotone & monotone & changed by E3, E4; never decreased & \citep{anderson2018learning,demetrio2021exemples} \\
+\texttt{Section.n\_zero\_size} & Section & 1 & count & monotone & monotone & not changed by any in-scope edit; kept mutable from draft v1 (conservative); never decreased & -- \\
+\texttt{Section.n\_empty\_name} & Section & 1 & count & monotone & \textbf{mutable} & not changed by any in-scope edit; kept mutable from draft v1 (conservative); never decreased, but not increase-only by reasoning (E6 renames sections) & -- \\
+\texttt{Section.n\_rx} & Section & 1 & count & monotone & monotone & changed by E4; never decreased & \citep{anderson2018learning} \\
+\texttt{Section.n\_w} & Section & 1 & count & monotone & monotone & changed by E3, E4; never decreased & \citep{anderson2018learning,demetrio2021exemples} \\
+\texttt{Section.sizes} & Section & 50 & hashed & mutable & mutable & changed by E3, E4, E6 & \citep{anderson2018learning,demetrio2021exemples} \\
+\texttt{Section.entropy} & Section & 50 & hashed & mutable & mutable & changed by E3, E4, E6, E8 & \citep{anderson2018learning,demetrio2021exemples} \\
+\texttt{Section.vsizes} & Section & 50 & hashed & mutable & mutable & changed by E3, E4, E6 & \citep{anderson2018learning,demetrio2021exemples} \\
+\texttt{Section.entry\_name} & Section & 50 & hashed & mutable & mutable & changed by E6 & \citep{anderson2018learning,demetrio2021exemples} \\
+\texttt{Section.entry\_characteristics} & Section & 50 & hashed & mutable & mutable & not changed by any in-scope edit; kept mutable from draft v1 (conservative) & -- \\
+\texttt{Imports.libraries} & Imports & 256 & hashed & mutable & mutable & changed by E4 & \citep{anderson2018learning} \\
+\texttt{Imports.functions} & Imports & 1024 & hashed & mutable & mutable & changed by E4 & \citep{anderson2018learning} \\
+\texttt{Exports.functions} & Exports & 128 & hashed & mutable & mutable & not changed by any in-scope edit; kept mutable from draft v1 (conservative) & -- \\
+\texttt{DataDir.EXPORT\_TABLE.size} & DataDir & 1 & count & immutable & immutable & not changed by any in-scope edit & -- \\
+\texttt{DataDir.EXPORT\_TABLE.address} & DataDir & 1 & value & immutable & immutable & not changed by any in-scope edit & -- \\
+\texttt{DataDir.IMPORT\_TABLE.size} & DataDir & 1 & count & immutable & \textbf{monotone} & changed by E4; never decreased & \citep{anderson2018learning} \\
+\texttt{DataDir.IMPORT\_TABLE.address} & DataDir & 1 & value & immutable & \textbf{mutable} & changed by E4 & \citep{anderson2018learning} \\
+\texttt{DataDir.RESOURCE\_TABLE.size} & DataDir & 1 & count & immutable & immutable & not changed by any in-scope edit & -- \\
+\texttt{DataDir.RESOURCE\_TABLE.address} & DataDir & 1 & value & immutable & immutable & not changed by any in-scope edit & -- \\
+\texttt{DataDir.EXCEPTION\_TABLE.size} & DataDir & 1 & count & immutable & immutable & not changed by any in-scope edit & -- \\
+\texttt{DataDir.EXCEPTION\_TABLE.address} & DataDir & 1 & value & immutable & immutable & not changed by any in-scope edit & -- \\
+\texttt{DataDir.CERTIFICATE\_TABLE.size} & DataDir & 1 & count & immutable & \textbf{mutable} & changed by E8; decreased under E8 & \citep{anderson2018learning} \\
+\texttt{DataDir.CERTIFICATE\_TABLE.address} & DataDir & 1 & value & immutable & \textbf{mutable} & changed by E8 & \citep{anderson2018learning} \\
+\texttt{DataDir.BASE\_RELOCATION\_TABLE.size} & DataDir & 1 & count & immutable & immutable & not changed by any in-scope edit & -- \\
+\texttt{DataDir.BASE\_RELOCATION\_TABLE.address} & DataDir & 1 & value & immutable & immutable & not changed by any in-scope edit & -- \\
+\texttt{DataDir.DEBUG.size} & DataDir & 1 & count & immutable & \textbf{mutable} & changed by E8; decreased under E8 & \citep{anderson2018learning} \\
+\texttt{DataDir.DEBUG.address} & DataDir & 1 & value & immutable & \textbf{mutable} & changed by E8 & \citep{anderson2018learning} \\
+\texttt{DataDir.ARCHITECTURE.size} & DataDir & 1 & count & immutable & immutable & not changed by any in-scope edit & -- \\
+\texttt{DataDir.ARCHITECTURE.address} & DataDir & 1 & value & immutable & immutable & not changed by any in-scope edit & -- \\
+\texttt{DataDir.GLOBAL\_PTR.size} & DataDir & 1 & count & immutable & immutable & not changed by any in-scope edit & -- \\
+\texttt{DataDir.GLOBAL\_PTR.address} & DataDir & 1 & value & immutable & immutable & not changed by any in-scope edit & -- \\
+\texttt{DataDir.TLS\_TABLE.size} & DataDir & 1 & count & immutable & immutable & not changed by any in-scope edit & -- \\
+\texttt{DataDir.TLS\_TABLE.address} & DataDir & 1 & value & immutable & immutable & not changed by any in-scope edit & -- \\
+\texttt{DataDir.LOAD\_CONFIG\_TABLE.size} & DataDir & 1 & count & immutable & immutable & not changed by any in-scope edit & -- \\
+\texttt{DataDir.LOAD\_CONFIG\_TABLE.address} & DataDir & 1 & value & immutable & immutable & not changed by any in-scope edit & -- \\
+\texttt{DataDir.BOUND\_IMPORT.size} & DataDir & 1 & count & immutable & immutable & not changed by any in-scope edit & -- \\
+\texttt{DataDir.BOUND\_IMPORT.address} & DataDir & 1 & value & immutable & immutable & not changed by any in-scope edit & -- \\
+\texttt{DataDir.IAT.size} & DataDir & 1 & count & immutable & \textbf{mutable} & changed by E4; decreased under E4 & \citep{anderson2018learning} \\
+\texttt{DataDir.IAT.address} & DataDir & 1 & value & immutable & \textbf{mutable} & changed by E4 & \citep{anderson2018learning} \\
+\texttt{DataDir.DELAY\_IMPORT\_DESCRIPTOR.size} & DataDir & 1 & count & immutable & immutable & not changed by any in-scope edit & -- \\
+\texttt{DataDir.DELAY\_IMPORT\_DESCRIPTOR.address} & DataDir & 1 & value & immutable & immutable & not changed by any in-scope edit & -- \\
+\texttt{DataDir.CLR\_RUNTIME\_HEADER.size} & DataDir & 1 & count & immutable & immutable & not changed by any in-scope edit & -- \\
+\texttt{DataDir.CLR\_RUNTIME\_HEADER.address} & DataDir & 1 & value & immutable & immutable & not changed by any in-scope edit & -- \\
+\bottomrule
+\end{tabular}

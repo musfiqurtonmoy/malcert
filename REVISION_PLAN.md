@@ -24,7 +24,7 @@ General rules (in addition to CLAUDE.md):
 |---|---|---|
 | A1, B1, B2 | Threat-model validity, real edits, scope of soundness | 1, 4a |
 | A2 | Baselines and fair comparison | 2c–2e |
-| A3, B5 | Group certificate: tightness, grouping, keep sizes, cost | 2a, 2b, 2f |
+| A3, B5 | Group certificate: tightness, edit-aligned grouping, keep sizes, cost | 2a, 2b, 2f |
 | A4 | Abstract/text mismatches, runtimes, code release | 2f, 4 |
 | A5, B6 | Seeds, intervals, significance | 3a |
 | A5, B4 | Family leakage and duplicates | 3b |
@@ -115,6 +115,13 @@ One table for the paper, filled from 1d: technique → covered / partly covered 
 - Expected covered: overlay append, string padding, section injection, import addition, timestamp and section-name edits.
 - Expected out of scope: packing (E9), repacking, code obfuscation and metamorphism, dropper wrapping. State these explicitly.
 
+### 1h. Coverage of the L-infinity certificate, and loose ends
+- **Finding:** only 12.0% of in-scope edited files need epsilon ≤ 0.05 (14.6% need ≤ 0.1): checksum and DOS-header edits, 1 KB appends, some timestamp edits. Strings need about 8, sections about 20.
+- Report the share of measured edits covered as a function of epsilon (a curve), next to certified detection at the same epsilon. State plainly that the L-infinity certificate covers only header-level and very small edits; the paper's emphasis moves to the group certificate.
+- Investigate the 2 files where `General.has_relocations` changes under append-only edits: extractor/LIEF artefact or real? Document the answer.
+- `E0_rebuild` shows that LIEF's rebuild alone changes features. Separate, in the edit map, the footprint of the edit from the footprint of the rebuild.
+- Monotone set: dropping `Strings.registry` and `Section.n_empty_name` on reasoning (they could decrease) is accepted: a larger threat set stays sound. Record each such decision as "conservative, not observed".
+
 **Stop and report:** the edit map, the coverage table, every annotation change with its reason, the new mutable/monotone counts and attackable groups, and how the pilot numbers moved against `results_draft_v1`.
 
 ---
@@ -139,12 +146,22 @@ One table for the paper, filled from 1d: technique → covered / partly covered 
   - This table also **justifies the keep sizes (B5)**: k ≥ 5 certifies nothing. Add **k = 4** to the experiments (MLP base only), so the full useful range k = 1..4 is covered.
 - **Why k = 1 gives zero at r = 4.** It needs all 9 views to vote malware. Pre-check: the Exports-only view votes malware for 0.6% of test malware, since most PE files export nothing; unanimity occurred for 0.00%. Compute per-view vote rates in `make_figures.py` and report them.
 
-### 2b. Grouping: justification and edit-aligned variant (A3, B5)
-- **State where the 9 groups come from:** they are the feature blocks defined by the EMBER extractor itself, not chosen by us; the only change is moving the timestamp. Say so in Section 3.
-- **Edit-aligned grouping.** Using only the Stage-1 edit map, define groups so each in-scope edit touches as few groups as possible. Candidates: merge byte histogram + byte entropy + strings + size fields into "content"; merge import-related data-directory entries into Imports; fold Exports into another group.
-- Report both groupings, and a table: real edit → groups touched → certified detection at that r.
-- **Sensitivity.** Report how certified detection and clean accuracy change with grouping and k (one table), so the effect of these choices is visible.
-- **Generalization (text only).** The method needs only a partition of features into blocks tied to file components. Discuss EMBER v3 / EMBER2024 and SOREL-20M, whose extractors expose the same block structure.
+### 2b. Edit-aligned grouping: now the core method (A1, A3, B2, B5)
+
+**Stage-1 finding (2026-11-12, 2,018 in-scope edited files).** With the 9 EMBER groups, no real edit touches one group: 2 groups 8.9%, 3 groups 11.0%, 4 groups 44.5%, 5 or more 35.6%. Appending bytes touches 4 groups, adding a section 5–6, adding imports 7. The draft's headline certificate (r = 1) therefore covers 0% of measured edits. Every edit changes bytes, so byte histogram, byte entropy and strings always move together.
+
+- **State where the 9 groups come from:** they are the EMBER extractor's feature blocks, not chosen by us. Report the finding above as a result: extractor-defined groups certify nothing real.
+- **Build the edit-aligned partition from `ps_results/` only** (never from certificate or test results):
+  1. Features that co-change under the same in-scope edits go into the same group. Start from a "content" group: byte histogram, byte entropy, strings, and the size fields that appending changes.
+  2. Import-related data-directory entries and `General.imports` join Imports. Decide Exports, timestamp and header fields from the co-change data.
+  3. Objective: minimise the number of groups each in-scope edit touches, while keeping the number of groups G large enough that the needed r is certifiable (for k = 1, r < G/2; use the ceiling formula in 2a for other k).
+  4. If several partitions are reasonable, choose on the **validation split** and record the rule in the log before looking at test results.
+- **Recompute the ceiling table for the new G**, and choose the keep sizes k from it.
+- **Main result table:** for each in-scope edit type → groups touched under each grouping → certified detection at that r, for EMBER groups and edit-aligned groups side by side. Zeros are reported as zeros.
+- **Soundness test:** every in-scope edited vector must differ from its original only inside the groups the table says it touches.
+- **Imports (E4).** LIEF's import addition rebuilds the file and touches 7 EMBER groups. If it stays uncertifiable under the aligned grouping, say so and list it as partly covered or out of scope in the coverage table.
+- **Sensitivity.** One table of certified detection and clean accuracy against grouping and k.
+- **Generalization (text only).** The procedure (measure edits, group co-changing features) applies to any feature extractor; discuss EMBER v3 / EMBER2024 and SOREL-20M.
 
 ### 2c. LightGBM as base classifier (A2)
 - One LightGBM per view for k = 1, 2, 3 (9 / 36 / 84 models). Theorem 1 only counts votes, so per-view classifiers keep it valid.
@@ -220,7 +237,7 @@ BODMAS has malware from 2019-08 to 2020-09, with 2,500–5,400 malware and 2,500
 
 ### 4a. Text and figures
 1. **Soundness wording (A1, B1, B2).** Replace every "sound for the real attacker" with the exact scope: the in-scope edits measured on N benign files. Explain "over-approximation" precisely: the threat set contains every feature vector those edits produced, plus many they cannot. Make the Introduction and Section 7 agree; use the coverage table from 1g.
-2. **Contributions.** C1 becomes "a problem-space-validated threat model". Smoothing is demoted to a baseline (Am1). Adjust the title only if it no longer matches.
+2. **Contributions.** C1 becomes "a problem-space-validated threat model". C2 becomes "edit-aligned group certificates", with the negative result for extractor-defined groups stated up front. Certified training is reframed around what its epsilon actually covers (1h). Smoothing is demoted to a baseline (Am1). Adjust the title only if it no longer matches.
 3. **The 93.9% (A4).** Separate macros for the standard-MLP evasion rate under the group attack (stated in §6.2) and the ablation detector's empirical detection (§6.3). The abstract cites the MLP one.
 4. **Table 1 (A4).** Add the standard 2381–256–256–2 network row.
 5. **Figure 5 (Am3, B6).** Wilson 95% intervals per cell; merge categories with fewer than 30 distinct test files into "other".

@@ -157,9 +157,49 @@ def masks_from_units(mutable_units, monotone_units):
     return mutable, monotone
 
 
+# Frozen annotation (REVISION_PLAN 1e). It is the output of the evidence rule in tools/problem_space.py,
+# applied to ps_results/features.npz (100 benign files, in-scope edits E1-E8, 2,018 edited files):
+#   mutable   <=> changed by an in-scope edit in at least one file, or already mutable in draft v1
+#   monotone  <=> mutable, a count or size, never decreased under any in-scope edit,
+#                 and not listed in NOT_MONOTONE_BY_REASONING
+# tools/problem_space.py and tests/test_threat_model.py fail if these lists and the evidence disagree.
+MUTABLE_UNITS = [
+    "ByteHistogram", "ByteEntropyHistogram",
+    "Strings.numstrings", "Strings.avlength", "Strings.printables", "Strings.printabledist", "Strings.entropy",
+    "Strings.paths", "Strings.urls", "Strings.registry", "Strings.MZ",
+    "General.size", "General.vsize", "General.has_debug", "General.exports", "General.imports",
+    "General.has_relocations", "General.has_signature",
+    "Header.timestamp", "Header.sizeof_headers",
+    "Section.n_sections", "Section.n_zero_size", "Section.n_empty_name", "Section.n_rx", "Section.n_w",
+    "Section.sizes", "Section.entropy", "Section.vsizes", "Section.entry_name", "Section.entry_characteristics",
+    "Imports.libraries", "Imports.functions", "Exports.functions",
+    "DataDir.IMPORT_TABLE.size", "DataDir.IMPORT_TABLE.address",
+    "DataDir.CERTIFICATE_TABLE.size", "DataDir.CERTIFICATE_TABLE.address",
+    "DataDir.DEBUG.size", "DataDir.DEBUG.address", "DataDir.IAT.size", "DataDir.IAT.address",
+]
+MONOTONE_UNITS = [
+    "General.vsize", "General.exports", "General.imports", "Header.sizeof_headers",
+    "Section.n_sections", "Section.n_zero_size", "Section.n_rx", "Section.n_w", "DataDir.IMPORT_TABLE.size",
+]
+# Counts that never decreased in the measurements but are NOT treated as increase-only, because an in-scope
+# edit can lower them by construction. Dropping an increase-only constraint only enlarges the threat set,
+# so these exceptions cannot make a certificate unsound.
+NOT_MONOTONE_BY_REASONING = {
+    "Strings.registry": "E8 removes bytes, and every other string count decreased under it; "
+                        "no stripped record in the corpus happened to contain a registry string",
+    "Section.n_empty_name": "E6 renames sections, which removes an empty name; no corpus file has one",
+}
+
+
 def threat_masks():
-    """PLACEHOLDER until the evidence-based annotation is frozen (REVISION_PLAN 1e)."""
-    return threat_masks_draft_v1()
+    """Feature-level threat model (C1): (mutable, monotone) boolean masks over the 2,381 features.
+
+    mutable[i]  : some in-scope edit (EDIT_SCOPE) changes feature i.
+    monotone[i] : feature i is a count or size that the in-scope edits only increase.
+    Scope of the claim: the threat set contains every feature vector that the in-scope edits produced
+    on the measured files (checked by tests/test_threat_model.py), plus many vectors no edit produces.
+    It is NOT a statement about edits outside EDIT_SCOPE (packing, repacking, obfuscation)."""
+    return masks_from_units(MUTABLE_UNITS, MONOTONE_UNITS)
 
 
 def attackable_groups():

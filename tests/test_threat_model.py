@@ -115,7 +115,7 @@ def _edits():
     F = np.load(f)
     st = np.load(os.path.join(RES, "bodmas_train_stats_seed0.npz"))
     pp = Preprocessor(); pp.mu, pp.sd = st["mu"], st["sd"]
-    X, file, edit = F["X"], F["file"], F["edit"]
+    X, file, edit = F["X"], F["fname"], F["edit"]
     orig = {n: X[i] for i, n in enumerate(file) if edit[i] == "orig"}
     return pp, X, file, edit, F["variant"], orig
 

@@ -1,0 +1,19 @@
+\begin{tabular}{lllp{0.38\linewidth}}
+\toprule
+Technique & Measured as & Status & Evidence \\
+\midrule
+Overlay append (padding) & E1 & covered & 600 files, all inside the threat set; groups changed: 4 (max 4), $r\leq4$ for 100\%; $\epsilon$ needed: 1.7 \\
+String padding & E2 & covered & 200 files, all inside the threat set; groups changed: 4 (max 4), $r\leq4$ for 100\%; $\epsilon$ needed: 9.8 \\
+Section injection & E3 & partly covered & 400 files, all inside the threat set; groups changed: 5 (max 6), $r\leq4$ for 0\%; $\epsilon$ needed: 22 \\
+Import addition & E4 & partly covered & 192 files, all inside the threat set; groups changed: 7 (max 7), $r\leq4$ for 0\%; $\epsilon$ needed: 17 \\
+Timestamp edit & E5 & covered & 100 files, all inside the threat set; groups changed: 3 (max 3), $r\leq4$ for 100\%; $\epsilon$ needed: 0.21 \\
+Section renaming & E6 & covered & 100 files, all inside the threat set; groups changed: 4 (max 4), $r\leq4$ for 100\%; $\epsilon$ needed: 28 \\
+Checksum and DOS-header edits & E7 & covered & 300 files, all inside the threat set; groups changed: 2 (max 3), $r\leq4$ for 100\%; $\epsilon$ needed: 0.015 \\
+Signature and debug stripping & E8 & partly covered & 126 files, all inside the threat set; groups changed: 6 (max 6), $r\leq4$ for 0\%; $\epsilon$ needed: 2.4 \\
+Packing (UPX) & E9 & out of scope & 100 files: changes 8 of 9 groups (median), 100\% of files change features annotated immutable \\
+\midrule
+Repacking, crypters & not measured & out of scope & replace the file by a stub that unpacks the original at run time \\
+Code obfuscation, metamorphism & not measured & out of scope & rewrite the instructions, so every content-derived feature changes \\
+Dropper wrapping & not measured & out of scope & embed the file in a different host program \\
+\bottomrule
+\end{tabular}
