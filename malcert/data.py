@@ -330,6 +330,12 @@ class Preprocessor:
         Z = np.sign(X) * np.log1p(np.abs(X))
         return ((Z - self.mu) / self.sd).astype(np.float32)
 
+    def inverse(self, Z):
+        """Raw feature values from standardised ones (exact inverse of transform, up to float rounding).
+        Used to score attacked vectors with models trained on raw features (LightGBM)."""
+        S = np.asarray(Z, dtype=np.float64) * self.sd + self.mu
+        return (np.sign(S) * np.expm1(np.abs(S))).astype(np.float32)
+
     def fit_transform_inplace(self, X, train_idx, chunk=4096):
         """Memory-lean equivalent of fit(X[train_idx]) followed by transform(X), for the full dataset.
         X (float32, C-contiguous) is OVERWRITTEN with its standardised values; nothing of X's size is

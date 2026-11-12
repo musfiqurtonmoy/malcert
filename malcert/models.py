@@ -40,6 +40,28 @@ class AblationNet(nn.Module):
         return list(itertools.combinations(range(self.n_groups), k))
 
 
+class RandomAblationMLP(nn.Module):
+    """Re-implementation of the base classifier of Giri et al. (2026): every forward pass removes each feature
+    group independently with probability `drop` (set to 0 = training mean), then applies an MLP. It is a
+    randomized classifier; with Gaussian noise added to the input, CERTIFY (Cohen et al.) gives an L2 radius,
+    because the ablation randomness does not depend on the input."""
+
+    def __init__(self, d_in, gid, drop, hidden=(512, 256)):
+        super().__init__()
+        self.register_buffer("gid", torch.as_tensor(gid))
+        self.n_groups, self.drop = int(gid.max()) + 1, drop
+        self.linears = MLP(d_in, hidden).linears          # same layers as MLP
+
+    def forward(self, x):
+        keep = (torch.rand(len(x), self.n_groups, device=x.device) >= self.drop).float()
+        x = x * keep[:, self.gid]
+        for i, lin in enumerate(self.linears):
+            x = lin(x)
+            if i < len(self.linears) - 1:
+                x = F.relu(x)
+        return x
+
+
 # --------------------------------------------------------------------------------------
 #  Bound propagation. Input region = box [xl, xu] (already contains mask / monotone /
 #  domain constraints). Specification: margin  m(x) = logit_y - logit_{1-y}.

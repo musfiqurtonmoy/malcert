@@ -177,7 +177,7 @@ def test_inplace_standardisation_matches_fit_transform():
 def test_run_all_block_bookkeeping():
     import run_all
     assert run_all.done_blocks({}) == []
-    assert run_all.done_blocks({"lightgbm": 1, "mlp": 1, "smoothing": {}}) == ["clean", "smoothing"]
+    assert run_all.done_blocks({"lightgbm": 1, "lightgbm_mono": 1, "mlp": 1, "smoothing": {}}) == ["clean", "smoothing"]
     assert run_all.done_blocks({"lightgbm": 1}) == []                      # a half-written block is not done
     seeds = {run_all.block_seed(s, b) for s in range(50) for b in run_all.BLOCKS}
     assert len(seeds) == 50 * len(run_all.BLOCKS)                          # no two (seed, block) share a stream

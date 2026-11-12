@@ -7,7 +7,7 @@
 Resume: results are saved after every block. Re-running the same command continues where an
 interrupted run stopped; seeds and blocks already in <out_dir>/results.json are skipped.
 """
-import argparse, glob, hashlib, json, os, platform, shutil, subprocess, sys, time
+import argparse, glob, hashlib, itertools, json, os, platform, shutil, subprocess, sys, time
 import numpy as np
 import torch
 import torch.nn.functional as F
@@ -16,7 +16,7 @@ from sklearn.metrics import roc_auc_score, f1_score
 from malcert.config import get_config
 from malcert.data import (load_subset, split_indices, Preprocessor, threat_masks, group_ids,
                           GROUP_NAMES, attackable_groups)
-from malcert.models import MLP, AblationNet, ibp, crown, input_box
+from malcert.models import MLP, AblationNet, RandomAblationMLP, ibp, crown, input_box
 from malcert.attacks import Constraints, pgd, group_transplant
 from malcert.certify import (ablation_votes, ablation_certify, ablation_certify_exact, ablation_view_votes,
                              ceiling_r, smooth_certify, votes_from_views)
@@ -28,8 +28,8 @@ ROOT = os.path.dirname(os.path.abspath(__file__))
 # Experiment blocks, in execution order, and the results.json keys each one writes.
 # A block counts as done for a seed when all of its keys are present.
 BLOCKS = ("clean", "attacks", "ablation", "smoothing", "certified")
-BLOCK_KEYS = {"clean": ("lightgbm", "mlp"), "attacks": ("pgd_at", "attacks"),
-              "ablation": ("group_attack_mlp", "ablation"), "smoothing": ("smoothing",),
+BLOCK_KEYS = {"clean": ("lightgbm", "lightgbm_mono", "mlp"), "attacks": ("pgd_at", "attacks"),
+              "ablation": ("ablation",), "smoothing": ("smoothing",),
               "certified": ("certified_training",)}
 
 
@@ -160,6 +160,8 @@ def run_seed(cfg, seed, dev, log, todo, R, S, run_id, legacy_rng=False, save=lam
     torch.manual_seed(seed); np.random.seed(seed)
     data = load_subset(cfg, seed=0)                # same 30K subset for every seed
     sp = split_indices(data, cfg, seed=seed)
+    if cfg.eval_split == "val":                    # pilots before Stage 3: evaluate on validation, never on test
+        sp = dict(tr=sp["tr"], va=sp["va"], te=sp["va"])
     pp = Preprocessor().fit(data["X"][sp["tr"]])
     T = lambda a, dt=torch.float32: torch.as_tensor(a, dtype=dt, device=dev)
     Xtr, Xva, Xte = (T(pp.transform(data["X"][sp[k]])) for k in ("tr", "va", "te"))
@@ -172,7 +174,7 @@ def run_seed(cfg, seed, dev, log, todo, R, S, run_id, legacy_rng=False, save=lam
     Ccon = Constraints(mutable, monotone, zlo, zhi, dev, constrained=True)
     Cunc = Constraints(mutable, monotone, zlo, zhi, dev, constrained=False)
     d = Xtr.shape[1]
-    R["data"] = dict(n_train=len(ytr), n_val=len(yva), n_test=len(yte),
+    R["data"] = dict(n_train=len(ytr), n_val=len(yva), n_test=len(yte), eval_split=cfg.eval_split,
                      n_mutable=int(mutable.sum()), n_monotone=int(monotone.sum()),
                      attackable_groups=[GROUP_NAMES[g] for g in attackable_groups()],
                      n_malware=int(data["y"].sum()), n_benign=int((data["y"] == 0).sum()),
@@ -204,19 +206,64 @@ def run_seed(cfg, seed, dev, log, todo, R, S, run_id, legacy_rng=False, save=lam
         log(f"  [block {block} done in {R['timing'][block]:.0f}s]")
         save()
 
+    # ---- shared by all blocks: the uniform group-transplant attack (2e) and cost records (2f) ----
+    R.setdefault("group_attack", {}); R.setdefault("cost", {})
+    ugid, unames = partition(cfg.grouping)                  # threat-model groups of the uniform attack table
+    ugroups = attackable(ugid)
+    gm_idx = torch.where(yte == 1)[0][:cfg.group_attack_points]
+    donors_pool = Xtr[ytr == 0]
+    gen = torch.Generator().manual_seed(seed)
+    donor_sets = [donors_pool[torch.randperm(len(donors_pool), generator=gen)[:cfg.group_attack_donors].to(dev)]
+                  for _ in range(len(gm_idx))]
+    max_r = lambda groups: min(cfg.group_attack_max_r, len(groups))
+
+    def emp_curve(score_fn, g_ids=None, groups=None):
+        """Detection (bool) per attacked malware sample and r = 0..max_r under the greedy group transplant."""
+        g_ids, groups = (ugid, ugroups) if g_ids is None else (g_ids, groups)
+        rows = []
+        for j, i in enumerate(gm_idx):
+            det = group_transplant(score_fn, Xte[i], donor_sets[j], g_ids, groups, max_r(groups))
+            rows.append(np.cumprod(det).astype(bool))       # budget r allows any r' <= r
+        return np.array(rows)
+
+    def attack_all(name, score_fn):
+        R["group_attack"][name] = emp_curve(score_fn).mean(0).tolist()
+        log(f"  group-transplant ({cfg.grouping} groups) on {name}: {R['group_attack'][name]}")
+
+    def raw_score(model_proba):
+        """score_fn for models trained on raw features (LightGBM): attacked vectors are standardised."""
+        return lambda Z: torch.as_tensor(model_proba(pp.inverse(Z.detach().cpu().numpy())))
+
+    def cost(name, train_s, cert_s=None, n=None, passes=None):
+        R["cost"][name] = dict(train_seconds=round(train_s, 1),
+                               cert_ms_per_sample=None if cert_s is None else round(1000 * cert_s / n, 3),
+                               forward_passes_per_sample=passes)
+
     # ---------------- baselines ----------------
     if "clean" in todo:
         t0 = time.time()
         reseed("clean")
         import lightgbm as lgb
-        gbm = lgb.LGBMClassifier(n_estimators=500, num_leaves=64, learning_rate=0.05,
-                                 random_state=seed, verbose=-1)
-        gbm.fit(data["X"][sp["tr"]], data["y"][sp["tr"]])
-        s = gbm.predict_proba(data["X"][sp["te"]])[:, 1]
-        R["lightgbm"] = metrics(yte_np, s >= 0.5, s)
-        log(f"  LightGBM {R['lightgbm']}  ({time.time() - t0:.0f}s)")
-        s = predict(get_std(), Xte); R["mlp"] = metrics(yte_np, s >= 0.5, s); log(f"  MLP {R['mlp']}")
+        x0 = data["X"][sp["tr"]][:64]
+        assert np.allclose(pp.inverse(pp.transform(x0)), x0, rtol=1e-3, atol=1e-3)
+        for name, extra in (("lightgbm", {}),
+                            # Incer et al. (2018): increase-only features may only raise the malware score
+                            ("lightgbm_mono", dict(monotone_constraints=[int(v) for v in monotone],
+                                                   monotone_constraints_method="basic"))):
+            t1 = time.time()
+            gbm = lgb.LGBMClassifier(n_estimators=500, num_leaves=64, learning_rate=0.05,
+                                     random_state=seed, verbose=-1, **extra)
+            gbm.fit(data["X"][sp["tr"]], data["y"][sp["tr"]])
+            tr_s = time.time() - t1
+            s = gbm.predict_proba(data["X"][sp["te"]])[:, 1]
+            R[name] = metrics(yte_np, s >= 0.5, s)
+            cost(name, tr_s)
+            log(f"  {name} {R[name]}  ({tr_s:.0f}s)")
+            attack_all(name, raw_score(lambda A, g=gbm: g.predict_proba(A)[:, 1]))
+        std = get_std()
+        s = predict(std, Xte); R["mlp"] = metrics(yte_np, s >= 0.5, s); log(f"  MLP {R['mlp']}")
         S["p_mlp"] = s
+        attack_all("mlp", lambda Z: torch.as_tensor(predict(std, Z)))
         finish("clean", t0)
 
     # ---------------- C1: attacks ----------------
@@ -231,61 +278,92 @@ def run_seed(cfg, seed, dev, log, todo, R, S, run_id, legacy_rng=False, save=lam
             R["attacks"][mname] = {"constrained": attack_curve(m, Xm, ym, cfg, Ccon),
                                    "unconstrained": attack_curve(m, Xm, ym, cfg, Cunc)}
             log(f"  attacks on {mname}: {R['attacks'][mname]}")
+        attack_all("pgd_at", lambda Z: torch.as_tensor(predict(at, Z)))
         finish("attacks", t0)
 
     # ---------------- C2a: group-ablation certificates ----------------
     if "ablation" in todo:
         t0 = time.time()
-        std = get_std()
         reseed("ablation")
-        agid, anames = partition(cfg.grouping)      # feature partition used by the group certificate and attack
-        G = len(anames)
-        mut_groups = attackable(agid)               # groups with at least one mutable feature
-        R["ablation"] = {"_grouping": dict(name=cfg.grouping, groups=anames,
-                                           attackable=[anames[g] for g in mut_groups])}
-        gm_idx = torch.where(yte == 1)[0][:cfg.group_attack_points]
-        donors_pool = Xtr[ytr == 0]
-        gen = torch.Generator().manual_seed(seed)
-        donor_sets = [donors_pool[torch.randperm(len(donors_pool), generator=gen)[:cfg.group_attack_donors].to(dev)]
-                      for _ in range(len(gm_idx))]
+        R["ablation"] = {}
+        import pandas as pd
+        fp = pd.read_csv(os.path.join(ROOT, "ps_results", "grouping_footprint.csv"))
+        mal_np = yte_np == 1
 
-        def emp_curve(score_fn):
-            rows = []
-            for j, i in enumerate(gm_idx):
-                det = group_transplant(score_fn, Xte[i], donor_sets[j], agid, mut_groups, cfg.group_attack_max_r)
-                rows.append(np.cumprod(det).astype(bool))   # budget r allows any r' <= r
-            return np.array(rows)
-
-        std_emp = emp_curve(lambda Z: torch.as_tensor(predict(std, Z)))
-        R["group_attack_mlp"] = std_emp.mean(0).tolist()
-        log(f"  group-transplant on MLP, detection vs r: {R['group_attack_mlp']}")
-        for k in cfg.keep_list:
-            if ceiling_r(G, k) < 1:
-                log(f"  ablation k={k}: skipped, certifies nothing with G={G} (ceiling r=0)")
-                continue
-            net = fit(AblationNet(d, G, agid, cfg.hidden).to(dev), Xtr, ytr, cfg, "ablation", k=k, seed=seed, log=log)
-            vm = ablation_view_votes(net, Xte, k)
+        def record(name, part, k, vm, views, cert_ex, cert_bd, emp, extra):
+            """Results of one group-ablation detector: clean metrics, certificates (exact and 2*Delta bound),
+            certified detection per in-scope edit type at the r it needs, per-view vote rates, violations."""
+            G = int(views and max(max(s) for s in views) + 1)
             votes = votes_from_views(vm)
             pred = (votes[:, 1] >= votes[:, 0]).long().cpu().numpy()      # ties -> malware
-            cert = ablation_certify(votes, yte, G, k, len(mut_groups))      # 2*Delta bound
-            cert_ex = ablation_certify_exact(vm, yte, net.subsets(k), mut_groups, len(mut_groups))   # exact (2a)
+            by_edit = {}
+            for row in fp[fp.partition == part].itertuples():
+                ok = row.r_needed <= min(ceiling_r(G, k), cert_ex.shape[1] - 1)
+                by_edit[row.edit] = dict(r_needed=int(row.r_needed), certifiable=bool(ok),
+                                         cert_tpr=float(cert_ex[mal_np, row.r_needed].mean()) if ok else 0.0)
+            cert_sub = cert_ex[gm_idx.cpu().numpy()][:, :emp.shape[1]]
+            vmn = vm.cpu().numpy()
+            R["ablation"][name] = dict(partition=part, k=k, n_subsets=len(views), ceiling_r=ceiling_r(G, k),
+                                       clean=metrics(yte_np, pred, (votes[:, 1] / len(views)).cpu().numpy()),
+                                       cert_tpr_exact=cert_ex[mal_np].mean(0).tolist(),
+                                       cert_acc_exact=cert_ex.mean(0).tolist(),
+                                       cert_tpr=cert_bd[mal_np].mean(0).tolist(), cert_by_edit=by_edit,
+                                       view_vote_rate_malware=vmn[mal_np].mean(0).tolist(),
+                                       view_vote_rate_benign=(1 - vmn[~mal_np]).mean(0).tolist(),
+                                       empirical_tpr=emp.mean(0).tolist(),
+                                       violations=int((cert_sub & ~emp).sum()), **extra)   # must stay 0
+            S[f"abl_{name}_cert_exact"] = cert_ex
+            log(f"  ablation {name} ({part}, k={k}): acc {R['ablation'][name]['clean']['acc']:.4f} "
+                f"cert_exact {[round(v, 4) for v in R['ablation'][name]['cert_tpr_exact']]} "
+                f"violations {R['ablation'][name]['violations']}")
+
+        for name, part, k in cfg.ablation_configs:
+            gid_p, names_p = partition(part)
+            G, att = len(names_p), attackable(gid_p)
+            t1 = time.time()
+            net = fit(AblationNet(d, G, gid_p, cfg.hidden).to(dev), Xtr, ytr, cfg, "ablation", k=k, seed=seed, log=log)
+            tr_s, t2 = time.time() - t1, time.time()
+            vm = ablation_view_votes(net, Xte, k)
+            cert_ex = ablation_certify_exact(vm, yte, net.subsets(k), att, len(att))      # exact (2a)
+            cert_s = time.time() - t2
+            cert_bd = ablation_certify(votes_from_views(vm), yte, G, k, len(att))         # 2*Delta bound
             n_sub = len(net.subsets(k))
-            emp = emp_curve(lambda Z: (ablation_votes(net, Z, k)[:, 1] / n_sub).cpu())
-            cert_sub = cert_ex[gm_idx.cpu().numpy()][:, :cfg.group_attack_max_r + 1]
-            viol = int((cert_sub & ~emp).sum())                             # exact contains the bound
-            vmn, mal_np = vm.cpu().numpy(), yte_np == 1
-            R["ablation"][str(k)] = dict(clean=metrics(yte_np, pred, (votes[:, 1] / n_sub).cpu().numpy()),
-                                         cert_tpr=cert[mal_np].mean(0).tolist(),
-                                         cert_acc=cert.mean(0).tolist(),
-                                         cert_tpr_exact=cert_ex[mal_np].mean(0).tolist(),
-                                         cert_acc_exact=cert_ex.mean(0).tolist(), ceiling_r=ceiling_r(G, k),
-                                         view_vote_rate_malware=vmn[mal_np].mean(0).tolist(),
-                                         view_vote_rate_benign=(1 - vmn[~mal_np]).mean(0).tolist(),
-                                         views=["+".join(anames[g] for g in s) for s in net.subsets(k)],
-                                         empirical_tpr=emp.mean(0).tolist(), violations=viol, n_subsets=n_sub)
-            S[f"abl{k}_cert"] = cert
-            S[f"abl{k}_cert_exact"] = cert_ex
-            log(f"  ablation k={k}: {R['ablation'][str(k)]}")
+            score = lambda Z, net=net, k=k, n_sub=n_sub: (ablation_votes(net, Z, k)[:, 1] / n_sub).cpu()
+            emp = emp_curve(score, gid_p, att)                   # soundness check in the detector's own groups
+            record(name, part, k, vm, net.subsets(k), cert_ex, cert_bd, emp,
+                   dict(views=["+".join(names_p[g] for g in s) for s in net.subsets(k)]))
+            cost("ablation_" + name, tr_s, cert_s, len(Xte), n_sub)
+            attack_all("ablation_" + name, score)
+
+        # ---- 2c: one LightGBM per view, main configuration only (Theorem 1 only counts votes) ----
+        import lightgbm as lgb
+        name, part, k = cfg.ablation_configs[0]
+        gid_p, names_p = partition(part)
+        att = attackable(gid_p)
+        subsets = [tuple(s) for s in itertools.combinations(range(len(names_p)), k)]
+        Xtr_raw, Xte_raw = data["X"][sp["tr"]], data["X"][sp["te"]]
+        t1 = time.time()
+        views = []
+        for s in subsets:
+            cols = np.where(np.isin(gid_p, s))[0]
+            g = lgb.LGBMClassifier(n_estimators=cfg.lgbm_view_trees, num_leaves=64, learning_rate=0.05,
+                                   random_state=seed, verbose=-1)
+            g.fit(Xtr_raw[:, cols], data["y"][sp["tr"]])
+            views.append((cols, g))
+        tr_s, t2 = time.time() - t1, time.time()
+
+        def lgbm_view_votes(A):
+            return torch.as_tensor(np.stack([g.predict_proba(A[:, c])[:, 1] >= 0.5 for c, g in views], 1))
+
+        vm = lgbm_view_votes(Xte_raw)
+        cert_ex = ablation_certify_exact(vm, torch.as_tensor(yte_np), subsets, att, len(att))
+        cert_s = time.time() - t2
+        cert_bd = ablation_certify(votes_from_views(vm), torch.as_tensor(yte_np), len(names_p), k, len(att))
+        score = raw_score(lambda A: lgbm_view_votes(A).float().mean(1).numpy())
+        emp = emp_curve(score, gid_p, att)
+        record("lgbm_" + name, part, k, vm, subsets, cert_ex, cert_bd, emp, dict(trees_per_view=cfg.lgbm_view_trees))
+        cost("ablation_lgbm_" + name, tr_s, cert_s, len(Xte), len(subsets))
+        attack_all("ablation_lgbm_" + name, score)
         finish("ablation", t0)
 
     # ---------------- C2b: randomized smoothing ----------------
@@ -310,6 +388,32 @@ def run_seed(cfg, seed, dev, log, todo, R, S, run_id, legacy_rng=False, save=lam
                 S[f"rs_{key}_pred"], S[f"rs_{key}_rad"] = pr, rad
                 log(f"  smoothing {key}: {R['smoothing'][key]}")
         S["rs_y"] = yte_np[:len(pts)]
+
+        # ---- 2e: re-implementation of Giri et al. (2026): random group ablation (EMBER groups, each removed
+        # with probability giri_drop) + Gaussian noise, both in training and in CERTIFY; L2 radius ----
+        t1 = time.time()
+        gm = fit(RandomAblationMLP(d, group_ids(), cfg.giri_drop, cfg.hidden).to(dev), Xtr, ytr, cfg, "gauss",
+                 sigma=cfg.giri_sigma, noise_mask=torch.ones(d, device=dev), seed=seed, log=log)
+        tr_s, t2 = time.time() - t1, time.time()
+        pr, rad = smooth_certify(gm, Xte[pts], yte[pts], cfg.giri_sigma, torch.ones(d, device=dev),
+                                 cfg.n0, cfg.n_cert, cfg.alpha)
+        cert_s = time.time() - t2
+        yp = yte_np[:len(pts)]
+        R["smoothing"]["giri_reimpl"] = dict(sigma=cfg.giri_sigma, drop=cfg.giri_drop, variant="giri_reimpl",
+                                             clean_acc=float((pr == yp).mean()), abstain=float((pr == -1).mean()),
+                                             tpr=float((pr[yp == 1] == 1).mean()))
+        S["rs_giri_reimpl_pred"], S["rs_giri_reimpl_rad"] = pr, rad
+        cost("giri_reimpl", tr_s, cert_s, len(pts), cfg.n0 + cfg.n_cert)
+        log(f"  giri_reimpl: {R['smoothing']['giri_reimpl']}")
+
+        @torch.no_grad()
+        def giri_score(Z, n=100):                         # smoothed malware vote share, n noisy samples per row
+            out = []
+            for z in Z:
+                zz = z[None] + cfg.giri_sigma * torch.randn(n, d, device=dev)
+                out.append(gm(zz).argmax(1).float().mean())
+            return torch.stack(out).cpu()
+        attack_all("giri_reimpl", giri_score)
         finish("smoothing", t0)
 
     # ---------------- C3: certified training ----------------
@@ -317,20 +421,28 @@ def run_seed(cfg, seed, dev, log, todo, R, S, run_id, legacy_rng=False, save=lam
         t0 = time.time()
         reseed("certified")
         R["certified_training"] = {}
-        ctab = dict(eps=cfg.ibp_train_eps, mask=Ccon.mask, mono=Ccon.mono, zlo=Ccon.zlo, zhi=Ccon.zhi)
+        box = lambda C: dict(eps=cfg.ibp_train_eps, mask=C.mask, mono=C.mono, zlo=C.zlo, zhi=C.zhi, asym=False)
+        # 2d: four models. Plain IBP and asymmetric CROWN-IBP were dropped (plan 2d). CROWN-IBP is trained on the
+        # constrained box ("crownibp") and on the unconstrained L-inf ball ("crownibp_unc"); both are certified on
+        # both boxes (cert_tpr: constrained, cert_tpr_unconstrained), which gives the 2 x 2 table.
         variants = {
             "standard": dict(mode="clean"),
             "pgd_at": dict(mode="pgd", C=Ccon),
-            "ibp": dict(mode="ibp", cert=dict(ctab, asym=False)),
-            "crownibp": dict(mode="crownibp", cert=dict(ctab, asym=False)),
-            "crownibp_asym": dict(mode="crownibp", cert=dict(ctab, asym=True)),
+            "crownibp": dict(mode="crownibp", cert=box(Ccon)),
+            "crownibp_unc": dict(mode="crownibp", cert=box(Cunc)),
         }
         for vname, kw in variants.items():
             ep = cfg.ibp_epochs if "ibp" in vname else cfg.epochs
+            t1 = time.time()
             m = fit(MLP(d, cfg.ibp_hidden).to(dev), Xtr, ytr, cfg, epochs=ep, seed=seed, log=log, **kw)
+            tr_s = time.time() - t1
             s = predict(m, Xte)
             row = dict(clean=metrics(yte_np, s >= 0.5, s), cert_tpr=[], cert_acc=[], cert_tpr_unconstrained=[],
                        pgd_tpr=[], violations=0)
+            t2 = time.time()
+            verify(m, Xte, yte, cfg.ibp_train_eps, Ccon)
+            cost("ct_" + vname, tr_s, time.time() - t2, len(Xte), None)
+            attack_all("ct_" + vname, lambda Z, m=m: torch.as_tensor(predict(m, Z)))
             for eps in cfg.cert_eps_list:
                 c = verify(m, Xte, yte, eps, Ccon)
                 cu = verify(m, Xte, yte, eps, Cunc)
@@ -364,6 +476,8 @@ def main():
     ap.add_argument("--data_dir", default="data")
     ap.add_argument("--out_dir", default="results")
     ap.add_argument("--split", default="random", choices=["random", "temporal"])
+    ap.add_argument("--eval_split", default="test", choices=["test", "val"],
+                    help="val: evaluate on the validation split (pilots before Stage 3)")
     ap.add_argument("--blocks", default="all",
                     help="comma-separated experiment blocks to run: " + ",".join(BLOCKS) + " (default: all)")
     ap.add_argument("--legacy_rng", action="store_true",
@@ -378,7 +492,7 @@ def main():
     blocks = [b for b in BLOCKS if b in blocks]                 # execution order
     if a.legacy_rng and blocks != list(BLOCKS):
         ap.error("--legacy_rng reproduces the draft-v1 random stream only when all blocks run")
-    cfg = get_config(a.preset, out_dir=a.out_dir, split=a.split,
+    cfg = get_config(a.preset, out_dir=a.out_dir, split=a.split, eval_split=a.eval_split,
                      data_npz=os.path.join(a.data_dir, "bodmas.npz"),
                      meta_csv=os.path.join(a.data_dir, "bodmas_metadata.csv"),
                      cat_csv=os.path.join(a.data_dir, "bodmas_malware_category.csv"))

@@ -17,6 +17,7 @@ class Config:
     n_malware: int = 12773          # size of the 30K subset (abstract)
     n_benign: int = 17227
     split: str = "random"           # "random" (stratified 70/10/20) or "temporal"
+    eval_split: str = "test"        # "val": evaluate on the validation split (pilots before Stage 3)
     seeds: tuple = (0, 1, 2)
     device: str = "auto"
 
@@ -38,8 +39,13 @@ class Config:
     at_steps: int = 10
 
     # ---- C2a: feature-group ablation certificates -------------------------
-    keep_list: tuple = (1, 2, 3)    # number of groups each ablated view keeps
-    grouping: str = "ember"         # feature partition (malcert/partitions.py); chosen on validation (log 2-3)
+    # (name, partition, k). "main" was chosen on validation by the pre-registered rule (log 2-3, 2-5);
+    # "second" is the declared coverage/accuracy operating point; "ember" is the negative baseline.
+    ablation_configs: tuple = (("main", "aligned5", 2), ("second", "aligned7", 1), ("ember", "ember", 1))
+    grouping: str = "aligned5"      # partition of the threat model's group attack (uniform attack table)
+    lgbm_view_trees: int = 200      # LightGBM per view (2c), fixed
+    giri_sigma: float = 0.3         # Giri et al. (2026) re-implementation: their sigma (Sec. 4.2, 4.3)
+    giri_drop: float = 0.2          # share of groups removed per sample (their Sec. 3)
     group_attack_points: int = 500
     group_attack_donors: int = 10
     group_attack_max_r: int = 3
