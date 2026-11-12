@@ -34,7 +34,7 @@ Feature unit & Group & Dim. & Kind & Draft & Repaired & Rule and evidence & Ref.
 \texttt{Header.major\_linker\_version} & Header(static) & 1 & value & immutable & \textbf{mutable} & changed by E10 only (plausibly functionality-preserving, not verified by execution) & -- \\
 \texttt{Header.minor\_linker\_version} & Header(static) & 1 & value & immutable & \textbf{mutable} & changed by E10 only (plausibly functionality-preserving, not verified by execution) & -- \\
 \texttt{Header.major\_os\_version} & Header(static) & 1 & value & immutable & \textbf{mutable} & changed by E10 only (plausibly functionality-preserving, not verified by execution) & -- \\
-\texttt{Header.minor\_os\_version} & Header(static) & 1 & value & immutable & immutable & not changed by any in-scope edit & -- \\
+\texttt{Header.minor\_os\_version} & Header(static) & 1 & value & immutable & \textbf{mutable} & conservative, not observed: E10 lowers OS versions & -- \\
 \texttt{Header.major\_subsystem\_version} & Header(static) & 1 & value & immutable & \textbf{mutable} & changed by E10 only (plausibly functionality-preserving, not verified by execution) & -- \\
 \texttt{Header.minor\_subsystem\_version} & Header(static) & 1 & value & immutable & \textbf{mutable} & changed by E10 only (plausibly functionality-preserving, not verified by execution) & -- \\
 \texttt{Header.sizeof\_code} & Header(static) & 1 & count & immutable & immutable & not changed by any in-scope edit & -- \\

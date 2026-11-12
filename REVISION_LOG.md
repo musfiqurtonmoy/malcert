@@ -324,6 +324,48 @@ carry a **Basis:** line saying what they were fixed from.
   PGD against PGD-AT at ε = 0.2 is stronger (64.7 → 59.8% detected). At ε = 0.05 CROWN-IBP is 97.1%
   (draft v1, full: 97.9%).
 
+- **1-27** `[A1, B1]` **Decisions on 1i (author, 2026-11-13).** E10 stays in scope. The reported ε coverage is
+  over all in-scope edits including E10: **8.1% of measured edits fit at ε ≤ 0.05** (`\PsEpsLeTrainPct`);
+  the 12.0% of 1h was E1–E8 on PE32+ only. `Header.minor_os_version` is mutable, "conservative, not observed"
+  (`MUTABLE_BY_REASONING` in `malcert/data.py`, honoured by the evidence rule). Mutable features 2,313 → **2,314**;
+  increase-only 9; attackable groups 9 of 9. Unit tests pass (10).
+
+---
+
+## Stage 2: method changes
+
+### 2a. Exact certificate and ceiling
+- **2-1** `[A3]` `malcert/certify.py`: `ablation_view_votes` (per-view votes), `ablation_certify_exact`
+  (worst case over every set A of r **attackable** groups: certified iff correct untouched votes > wrong
+  untouched votes + touched views; strict, ties not certified), `ceiling_r(G, k)` (largest r with
+  2·C(G−r,k) > C(G,k)). Ceiling for G = 9 reproduces the plan's table (k = 1..5: 4, 2, 1, 1, 0).
+  Keep sizes: k ≥ 5 certifies nothing; k = 4 reaches no larger r than k = 3; no k = 4 experiment (plan).
+
+### 2b. Edit-aligned grouping
+- **2-2** `[A1, A3, B2, B5]` **Candidates** (`malcert/partitions.py`), built from `ps_results/unit_evidence.csv`
+  co-change data only. Blocks: CONTENT (byte and byte-entropy histograms, all strings, size,
+  has_relocations, timestamp: changed by every in-scope edit), HDRMUT (E10 fields), SIGDBG (E8 flags and
+  data-directory entries), SECTION (sizeof_headers, vsize, all section features), IMPORTS (import/export
+  counts and hashes, import-table and IAT entries), IMMHDR and IMMDD (features no in-scope edit changes).
+  `aligned4` = {CONTENT+HDRMUT+SIGDBG, SECTION, IMPORTS, IMMHDR+IMMDD} (G 4, 3 attackable);
+  `aligned5` = aligned4 with IMMHDR and IMMDD separate (G 5, 3 attackable);
+  `aligned7` = {CONTENT, HDRMUT, SIGDBG, SECTION, IMPORTS, IMMHDR, IMMDD} (G 7, 5 attackable);
+  `ember` = the 9 EMBER blocks (all attackable). r needed per edit (max over files, `tools/grouping_footprint.py`
+  → `ps_results/grouping_footprint.csv`): ember 3–7; aligned4/5: E1, E2, E5, E7, E10 = 1, E3, E6, E8 = 2, E4 = 3;
+  aligned7: same but E8 = 3, E10 = 2.
+- **2-3** `[A3, B5]` **Selection rule, fixed before any evaluation** (validation split only; test not used):
+  - Configurations: ember k = 1, 2, 3; aligned4 k = 1; aligned5 k = 1, 2; aligned7 k = 1, 2, 3
+    (k values whose ceiling is ≥ 1).
+  - Data and training: 30K subset, random split seed 0, quick-preset budgets (15 epochs, MLP 512-256),
+    torch seed fixed per configuration. Evaluated on the 3,001-sample validation split.
+  - For each configuration and in-scope edit type e (E1–E8, E10): r_e = max groups touched over the
+    measured files; c_e = share of validation malware certified by the **exact** certificate at r_e
+    (0 if r_e exceeds the ceiling).
+  - Score = mean of c_e over the 9 edit types. Eligible: validation clean accuracy at least the best
+    validation clean accuracy among all configurations minus 1.0 point.
+  - Select the eligible configuration with the highest score; within 0.5 points, prefer fewer views,
+    then higher clean accuracy.
+
 ### Ideas not done
 - Execution check of edited binaries in a sandboxed VM (would turn "plausibly functionality-preserving" into
   "verified"); out of the lean scope.

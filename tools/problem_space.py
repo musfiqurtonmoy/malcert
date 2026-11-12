@@ -32,7 +32,7 @@ ROOT = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
 sys.path.insert(0, ROOT)
 from malcert.config import get_config                                             # noqa: E402
 from malcert.data import (FEATURE_UNITS, GROUP_NAMES, EDIT_SCOPE, DRAFT_V1_IMMUTABLE_GROUPS,                 # noqa: E402
-                          NOT_MONOTONE_BY_REASONING, Preprocessor, attackable_groups, group_ids, load_subset,
+                          MUTABLE_BY_REASONING, NOT_MONOTONE_BY_REASONING, Preprocessor, attackable_groups, group_ids, load_subset,
                           natural_bounds, split_indices, threat_masks, threat_masks_draft_v1, unit_index)
 
 RES = os.path.join(ROOT, "ps_results")
@@ -245,7 +245,7 @@ def main():
         ch_by = [e for e in EDITS if e in by.index and by.changed[e] > 0]
         obs = [e for e in ch_by if e in in_scope]
         dec = [e for e in in_scope if e in by.index and by.decreased[e] > 0]
-        mutable = bool(obs) or draft != "immutable"
+        mutable = bool(obs) or draft != "immutable" or n in MUTABLE_BY_REASONING
         monotone = mutable and kind == "count" and not dec and n not in NOT_MONOTONE_BY_REASONING
         return ("monotone" if monotone else ("mutable" if mutable else "immutable")), obs, dec, ch_by, by
 
@@ -260,6 +260,8 @@ def main():
             rule = "changed by " + ", ".join(x.split("_")[0] for x in obs)
             if obs == ["E10_hdrfields"]:
                 rule += " only (plausibly functionality-preserving, not verified by execution)"
+        elif n in MUTABLE_BY_REASONING:
+            rule = "conservative, not observed: " + MUTABLE_BY_REASONING[n].split(",")[0]
         elif mutable:
             rule = "conservative, not observed: no in-scope edit changed it; kept mutable as in draft v1"
         else:

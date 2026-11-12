@@ -179,6 +179,7 @@ MUTABLE_UNITS = [
     "Header.dll_characteristics", "Header.major_image_version", "Header.minor_image_version",
     "Header.major_linker_version", "Header.minor_linker_version", "Header.major_os_version",
     "Header.major_subsystem_version", "Header.minor_subsystem_version",
+    "Header.minor_os_version",            # MUTABLE_BY_REASONING: conservative, not observed
     "Section.n_sections", "Section.n_zero_size", "Section.n_empty_name", "Section.n_rx", "Section.n_w",
     "Section.sizes", "Section.entropy", "Section.vsizes", "Section.entry_name", "Section.entry_characteristics",
     "Imports.libraries", "Imports.functions", "Exports.functions",
@@ -193,6 +194,12 @@ MONOTONE_UNITS = [
 # Counts that never decreased in the measurements but are NOT treated as increase-only, because an in-scope
 # edit can lower them by construction. Dropping an increase-only constraint only enlarges the threat set,
 # so these exceptions cannot make a certificate unsound.
+# Units made mutable although no in-scope edit changed them (author decision 2026-11-13). Enlarging the
+# mutable set only enlarges the threat set, so this cannot make a certificate unsound.
+MUTABLE_BY_REASONING = {
+    "Header.minor_os_version": "E10 lowers OS versions, but every corpus file has minor version 0, "
+                               "so the edit never applied; a file with a non-zero minor version can lower it",
+}
 NOT_MONOTONE_BY_REASONING = {
     "Strings.registry": "E8 removes bytes, and every other string count decreased under it; "
                         "no stripped record in the corpus happened to contain a registry string",
