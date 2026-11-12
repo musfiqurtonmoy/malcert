@@ -91,13 +91,19 @@ def crown(model, xl, xu, y, pre=None):
     return (Lam * c).sum(1) - (Lam.abs() * r).sum(1) + const
 
 
-def input_box(x, eps, mask, mono, zmin, zmax):
-    """Constraint-aware L_inf box: immutable dims fixed, monotone dims only go up,
-    everything stays inside the feature domain seen in training (or the sample's own value)."""
+def input_box(x, eps, mask, mono, zlo, zhi):
+    """Constraint-aware L_inf box: immutable dims fixed, monotone dims only go up, and every dim
+    stays inside its NATURAL bound [zlo, zhi] (data.natural_bounds: e.g. a histogram bin lies in
+    [0, 1], a count is >= 0; +-inf where the feature has no such bound).
+
+    Soundness: a natural bound holds for the feature vector of every PE file, so intersecting the
+    box with it removes no point an attacker can reach. Draft v1 clipped to the training-set range
+    instead, which is NOT sound: an edited file can exceed the largest value seen in training.
+    The min/max with x keeps x itself inside the box in all cases."""
     lo = torch.where(mono, x, x - eps)
     hi = x + eps
     lo = torch.where(mask, lo, x)
     hi = torch.where(mask, hi, x)
-    lo = torch.maximum(lo, torch.minimum(zmin, x))
-    hi = torch.minimum(hi, torch.maximum(zmax, x))
+    lo = torch.maximum(lo, torch.minimum(zlo, x))
+    hi = torch.minimum(hi, torch.maximum(zhi, x))
     return lo, hi

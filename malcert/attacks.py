@@ -6,26 +6,30 @@ import torch.nn.functional as F
 
 class Constraints:
     """Holds the threat-model tensors. constrained=False gives the classic unconstrained
-    attacker used in most image-style papers (all 2,381 features, both directions, no domain)."""
+    attacker used in most image-style papers (all 2,381 features, both directions, no domain).
 
-    def __init__(self, mutable, monotone, zmin, zmax, device, constrained=True):
+    zlo / zhi are the NATURAL bounds of each feature in standardised space (Preprocessor.bounds();
+    +-inf where there is none), not the training-set range used in draft v1."""
+
+    def __init__(self, mutable, monotone, zlo, zhi, device, constrained=True):
         n = len(mutable)
         t = lambda a, dt: torch.as_tensor(a, dtype=dt, device=device)
         if constrained:
             self.mask, self.mono = t(mutable, torch.bool), t(monotone, torch.bool)
-            self.zmin, self.zmax = t(zmin, torch.float32), t(zmax, torch.float32)
+            self.zlo, self.zhi = t(zlo, torch.float32), t(zhi, torch.float32)
         else:
             self.mask = torch.ones(n, dtype=torch.bool, device=device)
             self.mono = torch.zeros(n, dtype=torch.bool, device=device)
-            self.zmin = torch.full((n,), -1e9, device=device)
-            self.zmax = torch.full((n,), 1e9, device=device)
+            self.zlo = torch.full((n,), -float("inf"), device=device)
+            self.zhi = torch.full((n,), float("inf"), device=device)
 
     def project(self, x0, x, eps):
+        """Projection onto the same set as models.input_box, so attack and certificate agree."""
         d = (x - x0).clamp(-eps, eps)
         d = torch.where(self.mono, d.clamp(min=0), d)
         d = torch.where(self.mask, d, torch.zeros_like(d))
         x = x0 + d
-        return torch.maximum(torch.minimum(x, torch.maximum(self.zmax, x0)), torch.minimum(self.zmin, x0))
+        return torch.maximum(torch.minimum(x, torch.maximum(self.zhi, x0)), torch.minimum(self.zlo, x0))
 
 
 def pgd(model, x, y, eps, C, steps=50, restarts=1, alpha=None):

@@ -16,7 +16,7 @@ def _batches(n, bs, device, gen):
 def fit(model, Xtr, ytr, cfg, mode="clean", sigma=0.0, noise_mask=None, C=None, k=None,
         cert=None, epochs=None, lr=None, seed=0, log=print):
     """mode in {clean, gauss, pgd, ablation, ibp, crownibp}.
-    cert = dict(eps, mask, mono, zmin, zmax, asym) for ibp/crownibp."""
+    cert = dict(eps, mask, mono, zlo, zhi, asym) for ibp/crownibp (zlo/zhi: natural bounds)."""
     epochs = epochs or cfg.epochs
     lr = lr or cfg.lr
     opt = torch.optim.Adam(model.parameters(), lr=lr, weight_decay=cfg.weight_decay)
@@ -52,7 +52,7 @@ def fit(model, Xtr, ytr, cfg, mode="clean", sigma=0.0, noise_mask=None, C=None, 
                 kappa = 1.0 - 0.5 * prog
                 clean = F.cross_entropy(model(x), y, reduction="none")
                 if eps > 0:
-                    lo, hi = input_box(x, eps, cert["mask"], cert["mono"], cert["zmin"], cert["zmax"])
+                    lo, hi = input_box(x, eps, cert["mask"], cert["mono"], cert["zlo"], cert["zhi"])
                     lb_ibp, pre = ibp(model, lo, hi, y)
                     if mode == "crownibp":
                         beta = 1.0 - prog

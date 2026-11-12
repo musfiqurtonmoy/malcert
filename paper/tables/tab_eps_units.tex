@@ -1,0 +1,13 @@
+\begin{tabular}{lrrrrlr}
+\toprule
+ & Median & \multicolumn{3}{c}{Largest increase allowed by $\epsilon$} & \multicolumn{2}{c}{$\epsilon$ needed for} \\
+\cmidrule(lr){3-5}\cmidrule(lr){6-7}
+Feature & value & $\epsilon$=0.01 & $\epsilon$=0.05 & $\epsilon$=0.1 & one more & $\epsilon$ \\
+\midrule
+File size (bytes) & 473{,}064 & 10{,}853 & 56{,}812 & 120{,}448 & 1 KB & 0.00095 \\
+Printable strings & 1{,}022 & 23.9 & 125 & 266 & 1 string & 0.00042 \\
+Imported functions & 13.0 & 0.28 & 1.4 & 3.0 & 1 import & 0.035 \\
+Sections & 4.0 & 0.02 & 0.1 & 0.21 & 1 section & 0.45 \\
+Byte-histogram bin 0x00 (share of bytes) & 0.073 & 0.0016 & 0.0079 & 0.016 & 0.01 of all bytes & 0.063 \\
+\bottomrule
+\end{tabular}

@@ -31,16 +31,97 @@ def group_ids() -> np.ndarray:
     return gid
 
 
-def threat_masks():
-    """Feature-level threat model (C1).
+# --------------------------------------------------------------------------------------
+#  Feature units: the named pieces of the EMBER v2 vector, read from ember/features.py
+#  (github.com/elastic/ember, commit d97a0b5). The threat-model annotation, the natural
+#  bounds and the annotation table in the paper are all defined per unit.
+#  kind:  hist   normalised histogram, every bin in [0, 1]
+#         count  non-negative count or size
+#         flag   0/1 indicator
+#         value  other non-negative number (mean length, entropy, version field, timestamp, address)
+#         hashed FeatureHasher output: signed and unbounded
+# --------------------------------------------------------------------------------------
+def _units():
+    U = [("ByteHistogram", 0, 256, "hist"), ("ByteEntropyHistogram", 256, 512, "hist"),
+         ("Strings.numstrings", 512, 513, "count"), ("Strings.avlength", 513, 514, "value"),
+         ("Strings.printables", 514, 515, "count"), ("Strings.printabledist", 515, 611, "hist"),
+         ("Strings.entropy", 611, 612, "value"), ("Strings.paths", 612, 613, "count"),
+         ("Strings.urls", 613, 614, "count"), ("Strings.registry", 614, 615, "count"),
+         ("Strings.MZ", 615, 616, "count")]
+    for i, (n, k) in enumerate([("size", "count"), ("vsize", "count"), ("has_debug", "flag"), ("exports", "count"),
+                                ("imports", "count"), ("has_relocations", "flag"), ("has_resources", "flag"),
+                                ("has_signature", "flag"), ("has_tls", "flag"), ("symbols", "count")]):
+        U.append(("General." + n, 616 + i, 617 + i, k))
+    U.append(("Header.timestamp", 626, 627, "value"))
+    for j, n in enumerate(["machine", "characteristics", "subsystem", "dll_characteristics", "magic"]):
+        U.append(("Header." + n, 627 + 10 * j, 637 + 10 * j, "hashed"))
+    for i, n in enumerate(["major_image_version", "minor_image_version", "major_linker_version",
+                           "minor_linker_version", "major_os_version", "minor_os_version",
+                           "major_subsystem_version", "minor_subsystem_version"]):
+        U.append(("Header." + n, 677 + i, 678 + i, "value"))
+    for i, n in enumerate(["sizeof_code", "sizeof_headers", "sizeof_heap_commit"]):
+        U.append(("Header." + n, 685 + i, 686 + i, "count"))
+    for i, n in enumerate(["n_sections", "n_zero_size", "n_empty_name", "n_rx", "n_w"]):
+        U.append(("Section." + n, 688 + i, 689 + i, "count"))
+    for j, n in enumerate(["sizes", "entropy", "vsizes", "entry_name", "entry_characteristics"]):
+        U.append(("Section." + n, 693 + 50 * j, 743 + 50 * j, "hashed"))
+    U += [("Imports.libraries", 943, 1199, "hashed"), ("Imports.functions", 1199, 2223, "hashed"),
+          ("Exports.functions", 2223, 2351, "hashed")]
+    for i, n in enumerate(["EXPORT_TABLE", "IMPORT_TABLE", "RESOURCE_TABLE", "EXCEPTION_TABLE", "CERTIFICATE_TABLE",
+                           "BASE_RELOCATION_TABLE", "DEBUG", "ARCHITECTURE", "GLOBAL_PTR", "TLS_TABLE",
+                           "LOAD_CONFIG_TABLE", "BOUND_IMPORT", "IAT", "DELAY_IMPORT_DESCRIPTOR",
+                           "CLR_RUNTIME_HEADER"]):
+        U.append(("DataDir.%s.size" % n, 2351 + 2 * i, 2352 + 2 * i, "count"))
+        U.append(("DataDir.%s.address" % n, 2352 + 2 * i, 2353 + 2 * i, "value"))
+    assert [u[1] for u in U] == [0] + [u[2] for u in U[:-1]] and U[-1][2] == N_FEAT   # units tile the vector
+    return U
 
-    mutable[i]  : attacker may change feature i with functionality-preserving edits
-                  (append bytes/overlay, add strings, add a section, add imports/exports,
-                  edit the timestamp).
-    monotone[i] : feature i can only increase under append-only edits (counts and sizes).
-    The model is an over-approximation of real problem-space edits, so certificates
-    proved against it are sound for the real attacker too.
-    """
+
+FEATURE_UNITS = _units()
+
+
+def natural_bounds():
+    """Raw-space bounds that hold for EVERY PE file because of how the extractor computes the
+    feature, not because of what the training set happens to contain:
+        hist, flag            -> [0, 1]
+        count, value          -> [0, +inf)
+        hashed                -> (-inf, +inf)
+    Verified on all 134,435 BODMAS rows and on the problem-space corpus (tests/test_threat_model.py)."""
+    lo = np.full(N_FEAT, -np.inf, dtype=np.float64)
+    hi = np.full(N_FEAT, np.inf, dtype=np.float64)
+    for _, a, b, kind in FEATURE_UNITS:
+        if kind != "hashed":
+            lo[a:b] = 0.0
+        if kind in ("hist", "flag"):
+            hi[a:b] = 1.0
+    return lo, hi
+
+
+# --------------------------------------------------------------------------------------
+#  Threat model (C1). Scope: the PE edits below, measured on benign files by the problem-space
+#  check (tools/ps_build.py, tools/problem_space.py; results in ps_results/).
+#    "in"      the threat model must contain every feature vector the edit produced
+#    "out"     deliberately outside the threat model; measured to document why
+#    "control" not an attack: LIEF rebuilding a file without changing it
+# --------------------------------------------------------------------------------------
+EDIT_SCOPE = {
+    "E1_overlay": "in", "E2_strings": "in", "E3_section": "in", "E4_imports": "in", "E5_timestamp": "in",
+    "E6_secnames": "in", "E7_header": "in",
+    # E8 (strip the embedded signature / the debug directory) was "decide from evidence": every stripped
+    # file still parses, and Anderson et al. (2018, Sec. 3.4) list "removing signer information" and
+    # "manipulating debug info" among their functionality-preserving actions, so it is in scope.
+    # It is the only edit that REMOVES content, which is what decides monotonicity.
+    "E8_strip": "in",
+    "E9_upx": "out", "E0_rebuild": "control",
+}
+
+DRAFT_V1_IMMUTABLE_GROUPS = {"Header(static)", "DataDir"}
+
+
+def threat_masks_draft_v1():
+    """The annotation of draft v1, kept ONLY so the problem-space check can report how many real
+    edits fall outside it. It was set by reasoning, not by measurement, and is not used by any
+    experiment any more (see threat_masks)."""
     mutable = np.zeros(N_FEAT, bool)
     monotone = np.zeros(N_FEAT, bool)
     for name, a, b in EMBER_BLOCKS:
@@ -56,6 +137,37 @@ def threat_masks():
     # Section summary counts: #sections, #zero-size, #empty-name, #RX, #W
     monotone[688:693] = True
     return mutable, monotone
+
+
+def unit_index():
+    """Unit name -> (start, end, kind, group name)."""
+    gid = group_ids()
+    return {n: (a, b, k, GROUP_NAMES[gid[a]]) for n, a, b, k in FEATURE_UNITS}
+
+
+def masks_from_units(mutable_units, monotone_units):
+    idx = unit_index()
+    mutable = np.zeros(N_FEAT, bool)
+    monotone = np.zeros(N_FEAT, bool)
+    for n in mutable_units:
+        mutable[idx[n][0]:idx[n][1]] = True
+    for n in monotone_units:
+        assert n in mutable_units and idx[n][2] == "count", n     # only mutable counts/sizes can be monotone
+        monotone[idx[n][0]:idx[n][1]] = True
+    return mutable, monotone
+
+
+def threat_masks():
+    """PLACEHOLDER until the evidence-based annotation is frozen (REVISION_PLAN 1e)."""
+    return threat_masks_draft_v1()
+
+
+def attackable_groups():
+    """Indices of the groups that contain at least one mutable feature. A group with no mutable
+    feature cannot be changed by the attacker and does not count toward r."""
+    mutable, _ = threat_masks()
+    gid = group_ids()
+    return [g for g in range(len(GROUP_NAMES)) if mutable[gid == g].any()]
 
 
 def load_subset(cfg, seed=0):
@@ -129,10 +241,19 @@ class Preprocessor:
         self.mu = Z.mean(0)
         self.sd = Z.std(0)
         self.sd[self.sd < 1e-6] = 1.0
-        Zs = (Z - self.mu) / self.sd
-        self.zmin, self.zmax = Zs.min(0), Zs.max(0)
         return self
 
     def transform(self, X):
         Z = np.sign(X) * np.log1p(np.abs(X))
         return ((Z - self.mu) / self.sd).astype(np.float32)
+
+    def bounds(self):
+        """natural_bounds() mapped to standardised space (+-inf where a feature has no bound).
+        The transform is increasing per feature, so a raw bound maps to a bound.
+        These replace the training-set range used in draft v1, which was not a sound limit:
+        an attacker can exceed any value that happens to be the largest in the training set."""
+        lo, hi = natural_bounds()
+        with np.errstate(invalid="ignore"):
+            zlo = (np.sign(lo) * np.log1p(np.abs(lo)) - self.mu) / self.sd
+            zhi = (np.sign(hi) * np.log1p(np.abs(hi)) - self.mu) / self.sd
+        return zlo.astype(np.float32), zhi.astype(np.float32)

@@ -43,19 +43,28 @@ def block_seed(seed, block):
 
 # ------------------------------------ provenance --------------------------------------
 def git_commit(root=ROOT):
-    """Current commit hash, read from .git directly so it works without git on PATH."""
+    """Current commit hash, read from .git directly so it works without git on PATH.
+    In a linked worktree .git is a file pointing to the real git directory."""
     try:
-        head = open(os.path.join(root, ".git", "HEAD")).read().strip()
+        gd = os.path.join(root, ".git")
+        common = gd
+        if os.path.isfile(gd):
+            gd = open(gd).read().strip().split("gitdir: ", 1)[1]
+            gd = gd if os.path.isabs(gd) else os.path.join(root, gd)
+            cd = os.path.join(gd, "commondir")
+            common = os.path.normpath(os.path.join(gd, open(cd).read().strip())) if os.path.exists(cd) else gd
+        head = open(os.path.join(gd, "HEAD")).read().strip()
         if not head.startswith("ref: "):
             return head
         ref = head[5:]
-        p = os.path.join(root, ".git", *ref.split("/"))
-        if os.path.exists(p):
-            return open(p).read().strip()
-        for line in open(os.path.join(root, ".git", "packed-refs")):
+        for base in (gd, common):
+            p = os.path.join(base, *ref.split("/"))
+            if os.path.exists(p):
+                return open(p).read().strip()
+        for line in open(os.path.join(common, "packed-refs")):
             if line.strip().endswith(" " + ref):
                 return line.split()[0]
-    except OSError:
+    except (OSError, IndexError):
         pass
     return None
 
@@ -135,7 +144,7 @@ def verify(model, X, y, eps, C, bs=1024):
     for a in range(0, len(X), bs):
         x, t = X[a:a + bs], y[a:a + bs]
         with torch.no_grad():
-            lo, hi = input_box(x, eps, C.mask, C.mono, C.zmin, C.zmax)
+            lo, hi = input_box(x, eps, C.mask, C.mono, C.zlo, C.zhi)
             lb_i, pre = ibp(model, lo, hi, t)
             lb_c = crown(model, lo, hi, t, pre)
         res.append((torch.maximum(lb_i, lb_c) > 0).cpu().numpy())
@@ -157,8 +166,9 @@ def run_seed(cfg, seed, dev, log, todo, R, S, run_id, legacy_rng=False, save=lam
     S["y"], S["category"] = yte_np, np.asarray(data["category"][sp["te"]], dtype=str)
     mutable, monotone = threat_masks()
     gid = group_ids()
-    Ccon = Constraints(mutable, monotone, pp.zmin, pp.zmax, dev, constrained=True)
-    Cunc = Constraints(mutable, monotone, pp.zmin, pp.zmax, dev, constrained=False)
+    zlo, zhi = pp.bounds()                         # natural bounds per feature, not the training range
+    Ccon = Constraints(mutable, monotone, zlo, zhi, dev, constrained=True)
+    Cunc = Constraints(mutable, monotone, zlo, zhi, dev, constrained=False)
     d = Xtr.shape[1]
     R["data"] = dict(n_train=len(ytr), n_val=len(yva), n_test=len(yte),
                      n_mutable=int(mutable.sum()), n_monotone=int(monotone.sum()),
@@ -290,7 +300,7 @@ def run_seed(cfg, seed, dev, log, todo, R, S, run_id, legacy_rng=False, save=lam
         t0 = time.time()
         reseed("certified")
         R["certified_training"] = {}
-        ctab = dict(eps=cfg.ibp_train_eps, mask=Ccon.mask, mono=Ccon.mono, zmin=Ccon.zmin, zmax=Ccon.zmax)
+        ctab = dict(eps=cfg.ibp_train_eps, mask=Ccon.mask, mono=Ccon.mono, zlo=Ccon.zlo, zhi=Ccon.zhi)
         variants = {
             "standard": dict(mode="clean"),
             "pgd_at": dict(mode="pgd", C=Ccon),
