@@ -187,6 +187,13 @@ The first Stage 1 report (commit 3f53190) is accepted. Close these gaps before f
 - **Sensitivity.** One table of certified detection and clean accuracy against grouping and k, from the validation-split candidates already computed (no extra runs).
 - **Generalization (text only).** The procedure (measure edits, group co-changing features) applies to any feature extractor; discuss EMBER v3 / EMBER2024 and SOREL-20M.
 
+### 2b result and decision (2026-11-13, validation split only)
+- **Main configuration: aligned5, k = 2**, selected by the pre-registered rule (commit 4e6ed27). Validation: 99.0% accuracy; certifies E1, E2, E5, E7, E10 at 82.5% of malware; E3, E4, E6, E8 not certifiable (ceiling r = 1).
+- **Second operating point, declared now, before any test evaluation: aligned7, k = 1.** Validation: 95.4% accuracy, FPR 3.4%; certifies all nine in-scope edit types at 61–90%. It is reported as the coverage/accuracy trade-off (B5), not as the recommended detector.
+- Both are evaluated in Stage 3 (all splits and seeds) and in the paper. LightGBM (2c) uses the main configuration only.
+- The EMBER-groups result (0% for appends at k = 1; 0% everywhere at k = 2, 3) is reported as the negative baseline.
+- Name the weakest view (fixed header + fixed data-directory: 88.6% / 94.5% on validation) and explain that unflippable views carry permanent errors as well as permanent protection.
+
 ### 2c. LightGBM as base classifier (A2)
 - A2 asks why LightGBM is not certified. Answer with one experiment: one LightGBM per view for the **single chosen (grouping, k)** from 2b only. Theorem 1 only counts votes, so per-view classifiers keep it valid.
 - Fixed settings (200 trees); report clean metrics, certified TPR and training time.

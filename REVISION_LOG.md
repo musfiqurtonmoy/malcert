@@ -380,6 +380,13 @@ carry a **Basis:** line saying what they were fixed from.
   `run_all.py` ablation block now records the exact certificate, the ceiling, per-view vote rates and uses
   the exact certificate for the violation check. Unit tests: 15 pass.
 
+- **2-5** `[A3, B5]` **Decision (author, 2026-11-13), declared before any test evaluation**
+  (REVISION_PLAN "2b result and decision"): main configuration **aligned5, k = 2** (the rule's choice);
+  second operating point **aligned7, k = 1**, reported as the coverage/accuracy trade-off, not as the
+  recommended detector. Both are evaluated in Stage 3 on all splits and seeds. LightGBM per-view (2c) uses
+  the main configuration only. EMBER groups are the negative baseline. No test-split result of any edit-aligned
+  grouping exists at the time of this entry.
+
 ### Ideas not done
 - Execution check of edited binaries in a sandboxed VM (would turn "plausibly functionality-preserving" into
   "verified"); out of the lean scope.
