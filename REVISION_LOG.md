@@ -74,9 +74,17 @@ carry a **Basis:** line saying what they were fixed from.
   - numpy < 1.24 and scikit-learn 1.0.2 are needed by the EMBER extractor as published (`np.int`;
     `FeatureHasher` on a bare string).
 - **1-2** `[A1, B1]` **EMBER feature extractor**: `github.com/elastic/ember`, commit
-  `d97a0b523de02f3fe5ea6089d080abacab6ee931` (2022-08-23), installed with `--no-deps`.
-  `ember/features.py` at that commit was read in full before use (feature extraction only).
+  `d97a0b523de02f3fe5ea6089d080abacab6ee931` (2022-08-23), installed with `--no-deps` from the commit's
+  zip archive (by the author, in a terminal: the assistant's own install was blocked by its permission layer).
+  `ember/features.py` and `ember/__init__.py` at that commit were read in full before use; the installed
+  `features.py` equals the reviewed copy (line endings aside).
   EMBER's source is AGPL-v3, so it is installed in the env and **not** copied into this repository.
+  Pinned in `environment-ps.yml`.
+  - **Sanity check (plan 1a):** the 100 originals extracted twice give identical vectors; all 2,418 vectors
+    are finite and 2,381-dimensional.
+  - **Check against BODMAS:** one corpus file (`cliconfg.dll`) is also in BODMAS (same SHA-256); the vector
+    extracted here equals the BODMAS vector in all 2,381 features. One file: supporting evidence that this
+    extractor and LIEF version match BODMAS, not proof.
 
 ### 1b. Corpus
 - **1-3** `[A1, B1, B2]` `tools/ps_build.py corpus`: **100 benign PE files** (50 `.exe`, 50 `.dll`) copied
@@ -143,6 +151,86 @@ carry a **Basis:** line saying what they were fixed from.
   standardisation: the raw increase that ε = 0.01, 0.05, 0.1 allows on file size, strings, imports, sections
   and one byte-histogram bin, and the ε one more unit needs. When the edit map exists, the table also lists
   the ε each real edit needed.
+
+### 1d. Measurement
+- **1-11** `[A1, B1, B2, A3]` `tools/ps_build.py extract` → `ps_results/features.npz` (2,418 EMBER v2
+  vectors: 100 originals, 2,318 edited files). `tools/problem_space.py` → `ps_results/edit_map.csv` (per edit
+  and variant), `edit_files.csv` (per file), `unit_evidence.csv` (per feature unit), and
+  `paper/tables/tab_edit_map.tex`, `numbers_ps.tex` (macros `\Ps...`). Standardisation: BODMAS training
+  statistics, seed 0 (`ps_results/bodmas_train_stats_seed0.npz`). Findings over the 2,018 in-scope files:
+  - **Groups.** No edit changes fewer than 2 of the 9 groups: any byte change moves the byte histogram and
+    the byte-entropy histogram. Median groups changed: E7 2, E5 3, E1/E2/E6 4, E3 5, E8 6, E4 7 (E9: 8).
+    Files needing r ≤ 1: 0%; r ≤ 2: 8.9%; r ≤ 3: 19.9%; r ≤ 4: 64.4%.
+  - **Epsilon.** Median ε needed: E7 0.015, E5 0.21, E1 1.7, E8 2.4, E2 9.8, E4 17, E3 22, E6 28.
+    Only 14.6% of the files need ε ≤ 0.1 (checksum, DOS-header edits, some 1 KB overlays and timestamps).
+  - **Draft-v1 threat set.** 65.6% of the in-scope files lie inside its box and 83.6% inside its group set.
+    Reasons for falling outside the box: a feature annotated immutable changed (17.5% of files), an
+    "increase-only" feature decreased (11.3%), the vector left the training range (12.4%).
+  - E4 through LIEF changes 7 groups, of which 6 come from LIEF rebuilding the import table (control E0
+    with import rebuild: 6 groups); a plain LIEF rebuild leaves the vector unchanged in 96 of 100 files.
+  - `General.has_relocations` flips in 2 of the 100 files under every append-type edit (E1–E4): an effect
+    of how LIEF parses those files, observed, not designed.
+
+### 1e. Threat-model repair (evidence-based part)
+- **1-12** `[A1, B1]` **Annotation re-derived from the measurements** and frozen in `malcert/data.py`
+  (`MUTABLE_UNITS`, `MONOTONE_UNITS`); `threat_masks()` builds the masks from them.
+  Rule, per feature unit, over the in-scope edits E1–E8: *mutable* iff an in-scope edit changed it in at
+  least one file or draft v1 already treated it as mutable; *increase-only* iff mutable, a count or size,
+  and never decreased. 20 of 81 units change status:
+  - lose increase-only (decreased under E8, some also under E3/E7): `Strings.numstrings`, `.printables`,
+    `.paths`, `.urls`, `.MZ`, `General.size`;
+  - immutable → mutable: `General.has_debug`, `.has_signature` (E8), `.has_relocations` (E1–E4),
+    `DataDir.IMPORT_TABLE.address`, `DataDir.IAT.size/.address` (E4),
+    `DataDir.CERTIFICATE_TABLE.size/.address`, `DataDir.DEBUG.size/.address` (E8);
+  - immutable → increase-only: `Header.sizeof_headers` (E3), `DataDir.IMPORT_TABLE.size` (E4).
+  - **Two exceptions, by reasoning, both enlarging the threat set** (`NOT_MONOTONE_BY_REASONING`):
+    `Strings.registry` and `Section.n_empty_name` never decreased in the corpus but are not increase-only,
+    because E8 (removes bytes) and E6 (renames sections) can lower them by construction.
+  - **Kept mutable without observation (conservative):** `Exports.functions`, `General.exports`,
+    `Section.n_zero_size`, `Section.n_empty_name`, `Section.entry_characteristics`. No in-scope edit
+    changed them; draft v1 treated them as mutable, and removing attacker power needs evidence.
+    (`General.exports` and `Section.n_zero_size` therefore also stay increase-only, never having decreased.)
+  - Result: **mutable 2,284 → 2,296; increase-only 15 → 9; attackable groups 7 → 9**
+    (`Header(static)` through one feature, `DataDir` through 8). `IMMUTABLE_GROUPS` is gone;
+    `attackable_groups()` derives the groups from the masks; `run_all.py` uses it for the certificate's
+    maximum r and for the group-transplant attack, which may now also transplant Header and DataDir.
+  - **Why certificates stay sound:** every change enlarges the threat set (more mutable features, fewer
+    one-sided constraints, more attackable groups), and the group certificate's bound
+    Δ_r = C(9,k) − C(9−r,k) never assumed any group to be immutable.
+  - **Scope of the claim:** the threat set contains every vector the in-scope edits produced on the 100
+    measured files (0 of 2,018 outside), plus many they cannot. It says nothing about edits out of scope.
+  - **Basis** for every annotation: `ps_results/unit_evidence.csv`; nothing was tuned on test results.
+- **1-13** `[B1]` **Annotation tables**: `paper/tables/tab_annotation.tex` (per group, for Section 3) and
+  `tab_annotation_full.tex` (per unit: kind, draft and repaired status, rule and observed edits, reference;
+  for Appendix C). Not yet referenced from `main.tex`: the manuscript text is Stage 4.
+
+### 1g. Coverage
+- **1-14** `[B2]` `paper/tables/tab_coverage.tex`. Status definitions (to go in the caption):
+  *covered* = every measured file is inside the threat set and changes at most 4 groups, the largest r a
+  vote-counting certificate over 9 groups can reach; *partly covered* = inside the threat set, but files
+  change more than 4 groups, so only the box at the listed ε contains them; *out of scope* = outside by design.
+  Covered: overlay append, string padding, timestamp edit, section renaming, checksum and DOS-header edits.
+  **Partly covered, against the plan's expectation: section injection (5–6 groups), import addition (7),
+  signature and debug stripping (6).** Out of scope: UPX packing (measured: 8–9 groups, every file changes
+  features annotated immutable), repacking, obfuscation and metamorphism, dropper wrapping (not measured).
+  "Covered" means a certificate can apply, not that samples are certified at that r: in draft v1 the
+  certified detection at r = 4 was 0.
+
+### Pilot
+- **1-15** `[A1, B1]` Quick pilot with the repaired threat model: `results_pilot_stage1/` (commit `f5e1049`,
+  no uncommitted changes, 1 seed, 7.2 min). **All 8 `violations` are 0.** Compared with
+  `results_pilot_stage0/` (same code path and seeding, draft-v1 threat model), so differences are the repair:
+  - unchanged: clean metrics of every model; group-ablation certified detection for all k and r (the
+    certificate never used the annotation), e.g. k=1: 90.8 / 78.7 / 64.0 / 0.0 % at r = 1..4;
+  - group-transplant attack, now allowed to transplant Header and DataDir: empirical detection of the k=3
+    detector at r=2 falls from 11.3% to 4.0%; other cells move by at most 0.3 points;
+  - constrained PGD is stronger (larger box): detection of the standard MLP at ε=0.05 falls 71.9 → 69.2%,
+    of PGD-AT at ε=0.2 67.5 → 64.7%;
+  - certified detection at the training budget ε=0.05 barely moves (CROWN-IBP 97.3 → 97.3%, IBP 96.8 → 96.5%),
+    but at ε=0.1 it falls: CROWN-IBP 49.3 → 44.9%, IBP 31.1 → 26.5%, asymmetric CROWN-IBP 31.4 → 19.8%.
+  One seed, quick budgets: directions are indicative only; the full runs are Stage 3.
+- **Open:** plan section **1h** (announced by the author) is not in the `REVISION_PLAN.md` on disk and was
+  therefore not done.
 
 ### Tests
 - **1-10** `[A1, B1]` `tests/test_threat_model.py` (8 tests): units tile the vector and respect groups;
