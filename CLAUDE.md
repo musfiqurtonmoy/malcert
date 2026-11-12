@@ -1,6 +1,6 @@
 # Project: certified robustness of PE malware detectors (BODMAS)
 
-Research code + manuscript for an Elsevier (Computers & Security) paper by Ababil Hossain Fahad.
+Research code + manuscript for an Elsevier (Computers & Security) paper. Sole author: Md. Musfiqur Rahman.
 The user is new to adversarial ML: explain the reason behind each step and each fix, briefly.
 
 ## Machine

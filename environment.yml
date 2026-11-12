@@ -1,0 +1,67 @@
+# Pinned environment for all experiments (exported from the `malcert` env on 2026-11-12).
+#   conda env create -f environment.yml
+# conda-forge is used on purpose: the Anaconda default channels need their Terms of Service accepted.
+# torch 2.14.0+cu126 is the last PyTorch release whose CUDA build still supports Pascal GPUs (GTX 10xx).
+name: malcert
+channels:
+  - conda-forge
+dependencies:
+  - bzip2=1.0.8
+  - ca-certificates=2026.10.23
+  - libexpat=2.9.0
+  - libffi=3.7.0
+  - liblzma=5.8.3
+  - libpython=3.11.18
+  - libsqlite=3.54.1
+  - libzlib=1.3.2
+  - openssl=3.6.5
+  - packaging=26.3
+  - pip=26.2.2
+  - python=3.11.18
+  - setuptools=84.2.1
+  - tk=8.6.13
+  - ucrt=10.0.26100.0
+  - vc=14.5
+  - vc14_runtime=14.51.36247
+  - vcomp14=14.51.36247
+  - wheel=0.48.0
+  - pip:
+      - --extra-index-url https://download.pytorch.org/whl/cu126
+      - beautifulsoup4==4.15.0
+      - certifi==2026.10.23
+      - charset-normalizer==3.5.2
+      - cloudpickle==3.1.2
+      - colorama==0.4.6
+      - contourpy==1.3.3
+      - cycler==0.12.1
+      - filelock==4.2.4
+      - fonttools==4.68.0
+      - fsspec==2026.9.0
+      - gdown==6.5.1
+      - idna==3.20
+      - jinja2==3.1.6
+      - joblib==1.6.0
+      - kiwisolver==1.5.1
+      - lightgbm==4.7.0
+      - markupsafe==3.0.3
+      - matplotlib==3.11.2
+      - mpmath==1.3.0
+      - narwhals==2.28.0
+      - networkx==3.6.1
+      - numpy==2.4.6
+      - pandas==3.1.1
+      - pillow==13.0.0
+      - pyparsing==3.3.3
+      - pysocks==1.7.1
+      - python-dateutil==4.0.0
+      - requests==2.34.2
+      - scikit-learn==1.9.1
+      - scipy==1.17.1
+      - soupsieve==4.0.1
+      - sympy==1.14.0
+      - threadpoolctl==3.8.0
+      - torch==2.14.0+cu126
+      - tqdm==4.70.1
+      - typing-extensions==4.16.0
+      - tzdata==2026.6
+      - urllib3==2.8.0
