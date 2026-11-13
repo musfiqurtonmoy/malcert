@@ -523,6 +523,24 @@ carry a **Basis:** line saying what they were fixed from.
   standardisation (and the family sets' sd) fitted on the 2 training folds. Score = mean over folds of the
   metrics of 2-17 (FPR cap applied to the mean FPR). The test part is never used.
 
+- **2-31** `[A5, B4]` **Category-by-category assignment implemented** (`assign_families`, used by `family_split`
+  and `family_folds` in `malcert/data.py`). A first version (random family order, relative deficit) missed the size
+  targets (validation 25.7% of malware); fixed by visiting families roughly largest first (size × random factor) into
+  the part with the largest absolute deficit, ties broken at random. The random factor width was chosen on split
+  balance only (5 seeds, no model): (0.8, 1.25) gave the smallest worst share error (2.7 points) with seeds still
+  differing (test-family overlap 0.31; (1, 1) gives 0.99). Worst category-mix error stays about 10 points for every
+  width: whole families of about 1,000 samples cannot be split. Seed 0, malware (share) and mix trojan / worm /
+  backdoor / other: whole 12,773, 52.2 / 29.1 / 12.8 / 5.8%; train 8,987 (70.4%), 50.5 / 30.2 / 12.3 / 7.0;
+  val 1,266 (9.9%), 59.3 / 22.4 / 16.4 / 2.0; test 2,520 (19.7%), 55.0 / 28.6 / 12.7 / 3.7. Folds over train + val
+  (10,253 malware, mix 51.6 / 29.3 / 12.8 / 6.3): 3,636 (35.5%), 50.7 / 28.8 / 19.0 / 1.5; 3,356 (32.7%),
+  51.7 / 31.6 / 5.3 / 11.5; 3,261 (31.8%), 52.4 / 27.4 / 13.6 / 6.5. `tests/test_split.py`: 3 tests (shares within
+  3.5 points, large-category mix within 13 points, folds partition train + val exactly and never touch test).
+- **2-32** `[A2, A5]` `tools/tune_validation.py` now runs grouped 3-fold CV (log 2-30). Smoke test (1 epoch, first grid
+  point, 3 folds, 4.5 min): mean accuracy MLP 91.5% (folds 86.1 / 94.2 / 94.3), per-view LightGBM main 95.0%
+  (FPR 0.4%, score 31.7), second 94.0% (score 66.1), aligned7 MLP views 89.8% (FPR 7.0%), uniform / box CROWN-IBP
+  90.8 / 91.0% with 0 certified over T_f(1), edit-aware 85.9% (FPR 4.6%, mean certified over T_f(1) 18.0%).
+  Full grid: about 70–80 min; command in `RUN_NEXT.md`. All 20 unit tests pass.
+
 ### Ideas not done
 - Execution check of edited binaries in a sandboxed VM (would turn "plausibly functionality-preserving" into
   "verified"); out of the lean scope.

@@ -1,10 +1,11 @@
 # Run next (started by the author from a terminal)
 
-## 2i validation tuning grid, family-disjoint split (about 35–40 min on the GTX 1050 Ti)
+## 2i validation tuning grid: grouped 3-fold CV on the family split (about 70–80 min on the GTX 1050 Ti)
 
-Validation part of the family split, seed 0; the test split is never used. Expected time, from the smoke test:
-MLP 10 min, per-view LightGBM 10 min, aligned7 MLP views 3 min, uniform and box CROWN-IBP 3 min,
-edit-aware CROWN-IBP 7 min, data loading about 1 min.
+Train + validation of the seed-0 family split, 3 family-disjoint folds; the test part is never used.
+Expected time, scaled from the 3-fold smoke test: per-view LightGBM main 25 min and second 6 min, edit-aware
+CROWN-IBP 18 min, MLP 8 min, uniform and box CROWN-IBP 8 min, aligned7 MLP views 6 min, data loading 1 min.
+Keep the PC awake; the GPU and about 3 GB of RAM are in use.
 
 ```powershell
 cd "D:\Users\Public\Downloads\VS code\malcert_release"

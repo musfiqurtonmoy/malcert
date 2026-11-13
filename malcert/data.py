@@ -276,40 +276,73 @@ def select_subset(cfg, seed=0):
 
 
 SPLIT_SHARES = (0.7, 0.1, 0.2)          # train / val / test
+# Random factor on family size when ordering families (assign_families). Chosen on split balance only (log 2-31):
+# over 5 seeds, (0.8, 1.25) gave the smallest worst share error (2.7 points) while seeds still differ (test-family
+# overlap 0.31); (1, 1) makes all seeds nearly identical (0.99), (0.5, 1.5) unbalances the parts (4.2 points).
+FAMILY_ORDER_JITTER = (0.8, 1.25)
 
 
-def family_split(y, family, seed=0):
-    """Family-disjoint split (REVISION_PLAN 3b): every malware family goes wholly to train, val or test.
-    Families are visited in a seeded random order and each goes to the part furthest below its malware target
-    (70/10/20), relative to that target; this keeps each part near its share although families are uneven.
-    Benign files have no family and are split at random 70/10/20. Malware without a family is its own family."""
-    rng = np.random.default_rng(seed)
+def assign_families(y, family, category, shares, rng):
+    """Part index (0..len(shares)-1) for every sample, family-disjoint and category by category (log 2-29):
+    each malware family takes the majority category of its samples; within each category, families are visited
+    roughly largest first (size times a random factor, FAMILY_ORDER_JITTER) and each goes to the part with the largest
+    absolute deficit against that category's target, so every part keeps its share and a category mix close to
+    the whole. Benign files (no family) are split at random by the shares.
+    Malware without a family is its own family."""
     y = np.asarray(y)
+    shares = np.asarray(shares, dtype=float)
+    part = np.empty(len(y), dtype=np.int64)
     mal = np.where(y == 1)[0]
-    fam = np.asarray(family, dtype=object)[mal]
-    fam = np.array([f if isinstance(f, str) and f not in ("", "benign") else f"_single_{i}" for i, f in zip(mal, fam)])
+    fam = np.array([f if isinstance(f, str) and f not in ("", "benign") else f"_single_{i}"
+                    for i, f in zip(mal, np.asarray(family, dtype=object)[mal])])
+    cat = np.asarray(category, dtype=object)[mal]
     names, inv = np.unique(fam, return_inverse=True)
     sizes = np.bincount(inv)
-    target = np.array(SPLIT_SHARES) * len(mal)
-    got = np.zeros(3)
+    fam_cat = np.array([pd.Series(cat[inv == j]).mode().iloc[0] for j in range(len(names))], dtype=object)
     part_of = np.empty(len(names), dtype=np.int64)
-    for j in rng.permutation(len(names)):
-        p = int(np.argmax((target - got) / target))
-        part_of[j] = p
-        got[p] += sizes[j]
-    parts = {k: [mal[part_of[inv] == p]] for p, k in enumerate(("tr", "va", "te"))}
+    for c in sorted(set(fam_cat)):
+        js = np.where(fam_cat == c)[0]
+        target = shares * sizes[js].sum()
+        got = np.zeros(len(shares))
+        # roughly largest first (random factor so seeds differ), each to the part with the largest absolute deficit:
+        # large families fill the large part, small ones top up the small parts, so shares stay near target
+        order = js[np.argsort(-(sizes[js] * rng.uniform(*FAMILY_ORDER_JITTER, len(js))))]
+        for j in order:
+            d = target - got
+            p = int(rng.choice(np.flatnonzero(d == d.max())))     # ties at random, not always the first part
+            part_of[j] = p
+            got[p] += sizes[j]
+    part[mal] = part_of[inv]
     ben = rng.permutation(np.where(y == 0)[0])
-    a, b = int(SPLIT_SHARES[0] * len(ben)), int((SPLIT_SHARES[0] + SPLIT_SHARES[1]) * len(ben))
-    for k, idx in zip(("tr", "va", "te"), (ben[:a], ben[a:b], ben[b:])):
-        parts[k].append(idx)
-    return {k: rng.permutation(np.concatenate(v)) for k, v in parts.items()}
+    cuts = np.round(np.cumsum(shares)[:-1] * len(ben)).astype(int)
+    for p, idx in enumerate(np.split(ben, cuts)):
+        part[idx] = p
+    return part
+
+
+def family_split(y, family, category, seed=0):
+    """Family-disjoint split (REVISION_PLAN 3b): every malware family goes wholly to train, val or test,
+    category by category (assign_families), 70/10/20."""
+    rng = np.random.default_rng(seed)
+    part = assign_families(y, family, category, SPLIT_SHARES, rng)
+    return {k: rng.permutation(np.where(part == p)[0]) for p, k in enumerate(("tr", "va", "te"))}
+
+
+def family_folds(y, family, category, pool, k=3, seed=0):
+    """Grouped k-fold over the sample indices `pool` (2i: train + validation of the family split), category by
+    category. Returns a list of k index arrays (positions in the full arrays)."""
+    rng = np.random.default_rng(10_007 + seed)
+    pool = np.asarray(pool)
+    part = assign_families(np.asarray(y)[pool], np.asarray(family, dtype=object)[pool],
+                           np.asarray(category, dtype=object)[pool], [1.0 / k] * k, rng)
+    return [pool[part == f] for f in range(k)]
 
 
 def split_indices(data, cfg, seed=0):
     n = len(data["y"])
     rng = np.random.default_rng(seed)
     if cfg.split == "family":
-        return family_split(data["y"], data["family"], seed)
+        return family_split(data["y"], data["family"], data["category"], seed)
     if cfg.split == "temporal":
         order = np.argsort(data["timestamp"].values.astype("datetime64[ns]"))
     else:   # stratified on category (which also stratifies the label)

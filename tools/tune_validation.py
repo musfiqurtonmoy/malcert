@@ -3,11 +3,13 @@
     python tools/tune_validation.py --split family --out results_tuning            # full grid (~45 min GPU)
     python tools/tune_validation.py --split family --smoke --out results_tuning_smoke   # 1 epoch, 1 grid point
 
-Seed 0, family-disjoint split (log 2-22). Trains on the training split, evaluates on the VALIDATION split only; the test split is never
-transformed. Writes <out>/<model>.csv (one row per grid point, with wall-clock) and <out>/chosen.json.
+Seed 0, family-disjoint split. Grouped 3-fold cross-validation over train + validation of that split (log 2-30):
+families assigned to folds category by category; each grid point is trained on 2 folds and scored on the third,
+three times, and ranked by the mean over folds. The test part is never transformed or used.
+Writes <out>/<model>.csv (one row per grid point: fold means, per-fold accuracy, wall-clock) and <out>/chosen.json.
 The chosen settings are frozen in config.py by hand, then committed, before Stage 3 (plan 2i).
 """
-import argparse, json, os, sys, time, zlib
+import argparse, itertools, json, os, sys, time, zlib
 from dataclasses import replace
 import numpy as np
 import pandas as pd
@@ -18,7 +20,7 @@ sys.path.insert(0, ROOT)
 from malcert.attacks import Constraints                                                 # noqa: E402
 from malcert.certify import ablation_certify_exact, ablation_view_votes, ceiling_r, votes_from_views   # noqa: E402
 from malcert.config import get_config                                                    # noqa: E402
-from malcert.data import Preprocessor, load_subset, split_indices, threat_masks          # noqa: E402
+from malcert.data import Preprocessor, family_folds, load_subset, split_indices, threat_masks   # noqa: E402
 from malcert.models import MLP, AblationNet, load_families                              # noqa: E402
 from malcert.partitions import attackable, partition                                    # noqa: E402
 from malcert.train import fit                                                            # noqa: E402
@@ -49,46 +51,52 @@ def main():
     dev = torch.device("cuda" if torch.cuda.is_available() else "cpu")
     data = load_subset(cfg, seed=0)
     sp = split_indices(data, cfg, seed=0)
-    pp = Preprocessor().fit(data["X"][sp["tr"]])
-    T = lambda v, dt=torch.float32: torch.as_tensor(v, dtype=dt, device=dev)
-    Xtr, ytr = T(pp.transform(data["X"][sp["tr"]])), T(data["y"][sp["tr"]], torch.long)
-    Xva, yva = T(pp.transform(data["X"][sp["va"]])), T(data["y"][sp["va"]], torch.long)
-    Xtr_raw, Xva_raw, ytr_np, yv = data["X"][sp["tr"]], data["X"][sp["va"]], data["y"][sp["tr"]], data["y"][sp["va"]]
-    del data                                                     # the test split is never transformed
+    pool = np.concatenate([sp["tr"], sp["va"]])                  # train + validation; the test part is not used
+    folds = family_folds(data["y"], data["family"], data["category"], pool, 3, 0)    # grouped 3-fold CV (log 2-30)
+    X_all, y_all = data["X"], data["y"]
+    del data
     mutable, monotone = threat_masks()
-    zlo, zhi = pp.bounds()
-    Ccon = Constraints(mutable, monotone, zlo, zhi, dev, constrained=True)
-    Cunc = Constraints(mutable, monotone, zlo, zhi, dev, constrained=False)
-    fams = load_families(pp.sd, dev)
     fp = pd.read_csv(os.path.join("ps_results", "grouping_footprint.csv"))
-    mal = yv == 1
-    d = Xtr.shape[1]
     if a.smoke:
         cfg = replace(cfg, epochs=1, ibp_epochs=1, ibp_warmup=0, ibp_ramp=1)
+    T = lambda v, dt=torch.float32: torch.as_tensor(v, dtype=dt, device=dev)
 
-    def clean(pred):
-        return dict(val_acc=float((pred == yv).mean()), val_tpr=float(pred[mal].mean()), val_fpr=float(pred[~mal].mean()))
+    def fold_ctx(i):
+        """Training = the other two folds, evaluation = fold i; standardisation fitted on the training folds."""
+        tr = np.concatenate([folds[j] for j in range(3) if j != i]); ev = folds[i]
+        pp = Preprocessor().fit(X_all[tr])
+        zlo, zhi = pp.bounds()
+        return dict(Xtr=T(pp.transform(X_all[tr])), ytr=T(y_all[tr], torch.long), Xva=T(pp.transform(X_all[ev])),
+                    yv=y_all[ev], Xtr_raw=X_all[tr], Xva_raw=X_all[ev], ytr_np=y_all[tr],
+                    Ccon=Constraints(mutable, monotone, zlo, zhi, dev, constrained=True),
+                    Cunc=Constraints(mutable, monotone, zlo, zhi, dev, constrained=False),
+                    fams=load_families(pp.sd, dev))
 
-    def group_metric(vm, part, k):
-        gid, names = partition(part)
-        att = attackable(gid)
-        subs = [tuple(s) for s in __import__("itertools").combinations(range(len(names)), k)]
-        ex = ablation_certify_exact(vm, torch.as_tensor(yv, device=vm.device), subs, att, len(att))
-        cs = []
-        for row in fp[fp.partition == part].itertuples():
-            ok = row.r_needed <= min(ceiling_r(len(names), k), len(att))
-            cs.append(float(ex[mal, row.r_needed].mean()) if ok else 0.0)
-        votes = votes_from_views(vm)
-        pred = (votes[:, 1] >= votes[:, 0]).long().cpu().numpy()
-        return dict(clean(pred), cert=float(np.mean(cs)))
+    def run(model, p, c):
+        Xtr, ytr, Xva, yv, fams, Ccon, Cunc = c["Xtr"], c["ytr"], c["Xva"], c["yv"], c["fams"], c["Ccon"], c["Cunc"]
+        mal, d = yv == 1, Xtr.shape[1]
 
-    def crown_metric(m):
-        with torch.no_grad():
-            pred = m(Xva).argmax(1).cpu().numpy()
-        fr = family_report(m, Xva, yv, fams, (1.0,), Ccon.zlo, Ccon.zhi, dev)
-        return dict(clean(pred), cert=fr["mean_over_families_t1"], **{f"cert_{f}": fr[f][0] for f in fams})
+        def clean(pred):
+            return dict(val_acc=float((pred == yv).mean()), val_tpr=float(pred[mal].mean()), val_fpr=float(pred[~mal].mean()))
 
-    def run(model, p):
+        def group_metric(vm, part, k):
+            gid, names = partition(part)
+            att = attackable(gid)
+            subs = [tuple(s) for s in itertools.combinations(range(len(names)), k)]
+            ex = ablation_certify_exact(vm, torch.as_tensor(yv, device=vm.device), subs, att, len(att))
+            cs = []
+            for row in fp[fp.partition == part].itertuples():
+                ok = row.r_needed <= min(ceiling_r(len(names), k), len(att))
+                cs.append(float(ex[mal, row.r_needed].mean()) if ok else 0.0)
+            votes = votes_from_views(vm)
+            return dict(clean((votes[:, 1] >= votes[:, 0]).long().cpu().numpy()), cert=float(np.mean(cs)))
+
+        def crown_metric(m):
+            with torch.no_grad():
+                pred = m(Xva).argmax(1).cpu().numpy()
+            fr = family_report(m, Xva, yv, fams, (1.0,), Ccon.zlo, Ccon.zhi, dev)
+            return dict(clean(pred), cert=fr["mean_over_families_t1"], **{f"cert_{f}": fr[f][0] for f in fams})
+
         torch.manual_seed(zlib.crc32(f"{model}|{sorted(p.items())}".encode()))
         t0 = time.time()
         if model == "mlp":
@@ -99,8 +107,8 @@ def main():
         elif model.startswith("lgbm_"):
             _, part, k = cfg.ablation_configs[0 if model == "lgbm_main" else 1]
             gid, _ = partition(part)
-            _, views = fit_lgbm_views(Xtr_raw, ytr_np, gid, k, p["n_estimators"], p["num_leaves"], 0)
-            out = group_metric(lgbm_view_votes(views, Xva_raw), part, k)
+            _, views = fit_lgbm_views(c["Xtr_raw"], c["ytr_np"], gid, k, p["n_estimators"], p["num_leaves"], 0)
+            out = group_metric(lgbm_view_votes(views, c["Xva_raw"]), part, k)
         elif model == "abl_second_mlp":
             _, part, k = cfg.ablation_configs[1]
             gid, names = partition(part)
@@ -121,13 +129,19 @@ def main():
             if not model.startswith("lgbm_") else None
         return out
 
+    ctxs = [fold_ctx(i) for i in range(3)]
+    print("folds (malware / benign):", [(int((y_all[f] == 1).sum()), int((y_all[f] == 0).sum())) for f in folds], flush=True)
     chosen = {}
     for model in a.models.split(","):
         rows = []
         for p in GRIDS[model][:1] if a.smoke else GRIDS[model]:
-            r = dict(p, **run(model, p))
+            per = [run(model, p, c) for c in ctxs]                 # one score per fold
+            r = dict(p, **{k: float(np.mean([o[k] for o in per])) for k in per[0]
+                           if per[0][k] is not None and k != "seconds"},
+                     val_acc_folds=[round(o["val_acc"], 4) for o in per],
+                     seconds=round(sum(o["seconds"] for o in per), 1))         # total over the 3 folds
             rows.append(r)
-            print(model, r, flush=True)
+            print(model, {k: (round(v, 4) if isinstance(v, float) else v) for k, v in r.items()}, flush=True)
         D = pd.DataFrame(rows)
         D.to_csv(os.path.join(a.out, f"{model}.csv"), index=False)
         if model == "mlp":
