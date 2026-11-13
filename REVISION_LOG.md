@@ -640,6 +640,19 @@ carry a **Basis:** line saying what they were fixed from.
   better than uniform at ε = 0.05) is **not supported** (comparison 2). Near-twins: 2.4% of test malware; removing
   them moves every main metric by ≤ 1.1 points. Random split (3 seeds) for contrast: LightGBM 99.5, per-view LightGBM
   certified at r = 1 96.6, edit-aware over T_f(1) 83.7%: family-disjoint testing costs 5–40 points.
+- **3-14** `[infra]` **Resume bug fixed** (commit `4d2ae93`, log 3-10): `run_all.config_json` (JSON round trip of the
+  configuration) and `config_diff`; the resume check compares the JSON forms. Test `test_run_all_resume_config_check`
+  (nested values compare equal after the round trip; seeds/out_dir ignored; a changed split is detected; the old
+  comparison did fail; the stored `results_family` configuration matches). All 21 unit tests pass. Pilot
+  `results_pilot_stage4/` (quick, family, seed 0): `--blocks clean`, then all blocks into the same folder (resume
+  accepted); all 15 violations 0; every result value equals `results_pilot_stage3` (17 differences, all timings).
+- **3-15** `[A4, B5]` `tools/make_runtime.py` pools several folders and lists edit-aware CROWN-IBP and the second
+  per-view LightGBM; `tab_runtime.tex` from family seeds 0–4 (commit `f0cbd43`).
+
+## Stage 4
+- **4-0** `[all]` `paper/OUTLINE.md`: title kept, contributions with final numbers, abstract draft from macros (new
+  macros listed per owning script), section map with comment IDs, appendices, removals. No manuscript edits yet.
+  Random-vs-family gap in certified detection: 14.3–50.3 points (per-view LightGBM main 41.6, MLP views main 50.3).
 
 ### Ideas not done
 - Execution check of edited binaries in a sandboxed VM (would turn "plausibly functionality-preserving" into
