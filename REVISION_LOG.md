@@ -583,6 +583,30 @@ carry a **Basis:** line saying what they were fixed from.
   statistics); near-twin = distance ≤ 0.1. Sensitivity = main metrics recomputed with near-twins removed, from the
   saved per-sample arrays (no new training).
 
+- **3-5** `[A5, B3, B4, B6, B7, Am1]` **Stage 3 preparation** (commit `cb5d822`): `run_all.py` gains splits `family`
+  and `cutoff`, `--seeds`, `--full_data` (memory-lean: `load_full`, chunked `fit_rows`, chunked transfer to the GPU),
+  `--ablation_only_main`; it saves per-sample predictions, family certificates at t = 1, the nearest-training-
+  neighbour distance, the test month and validation predictions. Smoothing trimmed (isotropic, σ 0.25 / 0.5, every
+  test point). Tools: `stats.py` (3a, comparisons 3-1, near-duplicate sensitivity), `leakage_audit.py` (3b),
+  `temporal_decay.py` (3c), `representativeness.py` (3e).
+- **3-6** `[A5, B4]` **Leakage audit** (`results_leakage/leakage.json`, `numbers_leak.tex`): 14 duplicate rows in BODMAS
+  (7 groups), 0 label conflicts, 0 duplicate hashes. Random split seed 0: 0 exact twins across train/test; 98.4% of
+  test malware from a family in training; near-twins 20.3% of test malware, 3.8% of benign (plan pre-check:
+  23.3% / 4.1%; not reproduced exactly, cause not identified); median nearest-neighbour distance 0.78 / 9.84.
+  Family split seed 0: 0 twins, 0% family overlap, near-twins 2.9% / 3.5%, medians 24.9 / 10.2.
+- **3-7** `[A5, B3]` **Representativeness** (`results_repr/`, `tab_representativeness.tex`): subset and full BODMAS
+  agree on malware share (42.6%) and category shares to 0.1 point; 353 of 582 families in the subset, which cover
+  99.3% of all BODMAS malware; monthly malware shares differ by at most 0.24 points.
+- **3-8** `[all]` **Stage 3 pilot** `results_pilot_stage3/` (quick, family split, seed 0, test part): all 10
+  `violations` 0; corpus soundness 0 of 4,336 per certified-training model. Accuracy: LightGBM 96.0, MLP 92.5,
+  per-view LightGBM main 95.6 (FPR 0.1), MLP views main 92.6, second 91.4, EMBER groups 83.3. Certified detection at
+  r = 1: LightGBM views main 57.5%, second 74.1%; MLP views main 37.7%, second 65.7%. CROWN-IBP over T_f(1): edit-aware
+  60.4% (content 40.8, section 73.8, import 43.1, strip 83.8), uniform / box / standard / PGD-AT 0.0%; at ε = 0.05:
+  box 85.3, uniform 80.5, edit-aware 80.6. Group attack r = 1: LightGBM 0%, LightGBM views main 77.0%, MLP views
+  main 55.0%. Smoothing accuracy: σ 0.25 93.0, σ 0.5 94.8, Giri 95.4. Quick timing per seed: 11.2 min.
+- **3-9** Final run set in `RUN_NEXT.md` (6 runs, about 6.5–7 h). The full-data mode has not been run end to end;
+  its run is last so that a failure blocks nothing else.
+
 ### Ideas not done
 - Execution check of edited binaries in a sandboxed VM (would turn "plausibly functionality-preserving" into
   "verified"); out of the lean scope.

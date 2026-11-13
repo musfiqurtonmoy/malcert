@@ -1,20 +1,49 @@
 # Run next (started by the author from a terminal)
 
-## 2i validation tuning grid: grouped 3-fold CV on the family split (about 70–80 min on the GTX 1050 Ti)
+## Stage 3 final runs (about 6.5–7 h in total; run them one at a time, in this order)
 
-Train + validation of the seed-0 family split, 3 family-disjoint folds; the test part is never used.
-Expected time, scaled from the 3-fold smoke test: per-view LightGBM main 25 min and second 6 min, edit-aware
-CROWN-IBP 18 min, MLP 8 min, uniform and box CROWN-IBP 8 min, aligned7 MLP views 6 min, data loading 1 min.
-Keep the PC awake; the GPU and about 3 GB of RAM are in use.
+Rules for every run:
+- Start it from a PowerShell terminal; keep the PC awake (Settings > System > Power: sleep "Never" while running).
+- **Resume:** if a run stops (crash, restart, power cut), paste the **same line** again. Finished seeds and blocks
+  are skipped and it continues where it stopped.
+- **Do not change or commit code between the runs:** a folder only accepts results from the same code.
+- Watch progress with `Get-Content <folder>\log.txt -Tail 15 -Wait` (Ctrl+C stops watching, not the run).
+- Times are estimates scaled from the quick pilot; the first seed of run 1 gives the real figure.
+
+Every line starts the same way. Paste it once per terminal first:
 
 ```powershell
-cd "D:\Users\Public\Downloads\VS code\malcert_release"
-$env:PYTHONPATH = "."
-& "C:\Users\USER\miniconda3\envs\malcert\python.exe" tools\tune_validation.py --split family --out results_tuning
+cd "D:\Users\Public\Downloads\VS code\malcert_release"; $env:GIT_EXE = "D:\malcert_envs\git\Library\cmd\git.exe"; $py = "C:\Users\USER\miniconda3\envs\malcert\python.exe"
 ```
 
-Output: `results_tuning\<model>.csv` (one row per grid point) and `results_tuning\chosen.json`.
-Then tell Claude; it freezes the chosen settings in `config.py` and commits before Stage 3.
+1. **Family split, seeds 0–2, all blocks incl. smoothing on every test point** (main split; about 1 h 55 min, 38 min per seed):
+   ```powershell
+   & $py run_all.py --preset full --split family --seeds 0,1,2 --out_dir results_family
+   ```
+2. **Family split, seeds 3–4, without smoothing** (same folder; about 50 min):
+   ```powershell
+   & $py run_all.py --preset full --split family --seeds 3,4 --blocks clean,attacks,ablation,certified --out_dir results_family
+   ```
+3. **Random split, seeds 0–2, without smoothing** (comparison with earlier work; about 1 h 10 min):
+   ```powershell
+   & $py run_all.py --preset full --split random --seeds 0,1,2 --blocks clean,attacks,ablation,certified --out_dir results_random
+   ```
+4. **Temporal cut-off 2019-12, seeds 0–2** (decay curve; about 1 h):
+   ```powershell
+   & $py run_all.py --preset full --split cutoff --cutoff 2019-12 --seeds 0,1,2 --blocks clean,ablation,certified --out_dir results_cut_2019-12
+   ```
+5. **Temporal cut-off 2020-04, seeds 0–2** (retraining; about 1 h):
+   ```powershell
+   & $py run_all.py --preset full --split cutoff --cutoff 2020-04 --seeds 0,1,2 --blocks clean,ablation,certified --out_dir results_cut_2020-04
+   ```
+6. **Full-data check, 1 seed, family split, clean + main group certificate** (all 134,435 rows; about 35–45 min,
+   about 3.5 GB RAM; close other programs):
+   ```powershell
+   & $py run_all.py --preset full --split family --seeds 0 --full_data --ablation_only_main --blocks clean,ablation --out_dir results_fulldata
+   ```
+
+When all six are done, tell Claude: it runs the analysis tools (`tools/stats.py`, `tools/temporal_decay.py`,
+`tools/make_runtime.py`) and checks every `violations` count.
 
 ## Backup to a private GitHub repository (REVISION_PLAN 1i.6) — needs your GitHub login
 
