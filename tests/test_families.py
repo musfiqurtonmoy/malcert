@@ -61,8 +61,8 @@ def test_edits_inside_sets_and_certificates_consistent():
         zo, ze = torch.as_tensor(pp.transform(Xo)), torch.as_tensor(pp.transform(Xe))
         y = net(zo).argmax(1)
         for t in SCALES:
-            ins = (~(np.abs(D[:, ~sup]) > 1e-6).any(1)) & ((D[:, sup] >= t * lo_s[sup] - 1e-6) &
-                                                          (D[:, sup] <= t * hi_s[sup] + 1e-6)).all(1)
+            ins = (~(D[:, ~sup] != 0).any(1)) & ((D[:, sup] >= t * lo_s[sup] - 1e-9) &
+                                                (D[:, sup] <= t * hi_s[sup] + 1e-9)).all(1)   # as edit_families.inside
             if not ins.any():
                 continue
             m = torch.as_tensor(ins)

@@ -275,9 +275,41 @@ def select_subset(cfg, seed=0):
     return sel, y, meta
 
 
+SPLIT_SHARES = (0.7, 0.1, 0.2)          # train / val / test
+
+
+def family_split(y, family, seed=0):
+    """Family-disjoint split (REVISION_PLAN 3b): every malware family goes wholly to train, val or test.
+    Families are visited in a seeded random order and each goes to the part furthest below its malware target
+    (70/10/20), relative to that target; this keeps each part near its share although families are uneven.
+    Benign files have no family and are split at random 70/10/20. Malware without a family is its own family."""
+    rng = np.random.default_rng(seed)
+    y = np.asarray(y)
+    mal = np.where(y == 1)[0]
+    fam = np.asarray(family, dtype=object)[mal]
+    fam = np.array([f if isinstance(f, str) and f not in ("", "benign") else f"_single_{i}" for i, f in zip(mal, fam)])
+    names, inv = np.unique(fam, return_inverse=True)
+    sizes = np.bincount(inv)
+    target = np.array(SPLIT_SHARES) * len(mal)
+    got = np.zeros(3)
+    part_of = np.empty(len(names), dtype=np.int64)
+    for j in rng.permutation(len(names)):
+        p = int(np.argmax((target - got) / target))
+        part_of[j] = p
+        got[p] += sizes[j]
+    parts = {k: [mal[part_of[inv] == p]] for p, k in enumerate(("tr", "va", "te"))}
+    ben = rng.permutation(np.where(y == 0)[0])
+    a, b = int(SPLIT_SHARES[0] * len(ben)), int((SPLIT_SHARES[0] + SPLIT_SHARES[1]) * len(ben))
+    for k, idx in zip(("tr", "va", "te"), (ben[:a], ben[a:b], ben[b:])):
+        parts[k].append(idx)
+    return {k: rng.permutation(np.concatenate(v)) for k, v in parts.items()}
+
+
 def split_indices(data, cfg, seed=0):
     n = len(data["y"])
     rng = np.random.default_rng(seed)
+    if cfg.split == "family":
+        return family_split(data["y"], data["family"], seed)
     if cfg.split == "temporal":
         order = np.argsort(data["timestamp"].values.astype("datetime64[ns]"))
     else:   # stratified on category (which also stratifies the label)

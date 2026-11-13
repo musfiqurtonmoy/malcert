@@ -16,7 +16,7 @@ class Config:
     out_dir: str = "results"
     n_malware: int = 12773          # size of the 30K subset (abstract)
     n_benign: int = 17227
-    split: str = "random"           # "random" (stratified 70/10/20) or "temporal"
+    split: str = "random"           # "random" (stratified 70/10/20), "family" (family-disjoint) or "temporal"
     eval_split: str = "test"        # "val": evaluate on the validation split (pilots before Stage 3)
     seeds: tuple = (0, 1, 2)
     device: str = "auto"

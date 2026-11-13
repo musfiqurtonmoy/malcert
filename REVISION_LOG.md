@@ -488,6 +488,30 @@ carry a **Basis:** line saying what they were fixed from.
   - All other features: [min, max] of the change over fit-half files where it changed, widened to include 0.
   - Support threshold (≥ 1% of fit-half files) unchanged for non-hashed features; t grid unchanged.
 
+- **2-24** `[A5, B4]` **Family-disjoint split** `family_split()` in `malcert/data.py` (`--split family`): malware
+  families visited in seeded random order, each to the part furthest below its 70/10/20 malware target (relative);
+  benign split at random 70/10/20. `tests/test_split.py` (2 tests: disjoint families, every sample once, both
+  classes per part, shares within 3 points, deterministic, seeds differ). Seed 0: train 20,782 (8,724 malware,
+  68.3%; 259 families), val 3,077 (1,354, 10.6%; 37 families), test 6,141 (2,695, 21.1%; 57 families).
+  Malware mix: train trojan 50.7 / worm 31.9 / backdoor 11.9%; val 62.7 / 4.9 / 28.8%; test 52.1 / 32.4 / 7.6%.
+  The validation part has few families, so its mix differs from train and test.
+- **2-25** `[A1, A3]` **2h-revision implemented** (`tools/edit_families.py`). Supports: content 625, section 820,
+  import 2,053, strip 665 (before: 625 / 784 / 654 / 617). Eval-half coverage at t = 0.25 / 0.5 / 1 / 2:
+  content 24.7 / 39.9 / 84.0 / 93.2%; section 0 / 8.3 / 65.1 / 81.9%; import 0 / 0 / 7.0 / 28.1%;
+  strip 0 / 0 / 37.1 / 52.8%. Before (95% intervals, `family_coverage_v1.csv`): content 15.5 / 25.3 / 67.3 / 78.8;
+  section 0 / 0 / 21.6 / 51.2; import 0 / 0 / 0 / 0.9; strip 0 / 0 / 16.9 / 36.0 (computed with the loose
+  tolerance below, so slightly overstated).
+- **2-26** `[A1]` **Bug fixed:** the "inside T_f(t)" check allowed changes up to 1e-6 (signed-log units) off the
+  support; on features with tiny sd that is 0.001 standardised units, so a file could be counted as covered while
+  outside the box (found by `test_families`). Now: exactly zero off the support, 1e-9 rounding tolerance on it, in
+  `edit_families.inside`, `run_all.corpus_soundness` and the test. Family test: 4,336 cases inside, 4,040 certified,
+  0 flipped. All 19 unit tests pass.
+- **2-27** `[A2, A5]` 2i script now defaults to the family split. Smoke test on it (1 epoch, first grid point,
+  validation): MLP accuracy 90.9% (TPR 80.7%); per-view LightGBM main 92.1%, FPR 0.6%, certified score 37.9%;
+  second 90.8%, score 66.9%; aligned7 MLP views 82.5%; uniform / box CROWN-IBP 96.9 / 96.6%, certified over T_f(1) 0%;
+  edit-aware 90.2%, FPR 5.5%, mean certified over T_f(1) 15.8%. One epoch: says only that the pipeline runs.
+  Grid command (family split, about 35–40 min) in `RUN_NEXT.md`.
+
 ### Ideas not done
 - Execution check of edited binaries in a sandboxed VM (would turn "plausibly functionality-preserving" into
   "verified"); out of the lean scope.

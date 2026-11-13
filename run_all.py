@@ -224,8 +224,8 @@ def corpus_soundness(model, pp, fams_slog, fams_z, scales, zlo, zhi, dev):
         with torch.no_grad():
             pred_e = model(ze).argmax(1).cpu().numpy()
         for t in scales:
-            ins = (~(np.abs(D[:, ~sup]) > 1e-6).any(1)) & ((D[:, sup] >= t * lo_s[sup] - 1e-6) &
-                                                          (D[:, sup] <= t * hi_s[sup] + 1e-6)).all(1)
+            ins = (~(D[:, ~sup] != 0).any(1)) & ((D[:, sup] >= t * lo_s[sup] - 1e-9) &
+                                                (D[:, sup] <= t * hi_s[sup] + 1e-9)).all(1)   # as edit_families.inside
             if not ins.any():
                 continue
             c = family_verify(model, zo[ins], torch.zeros(int(ins.sum()), dtype=torch.long, device=dev),

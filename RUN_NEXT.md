@@ -1,17 +1,16 @@
 # Run next (started by the author from a terminal)
 
-## 2i validation tuning grid (about 35–45 min on the GTX 1050 Ti; validation split only)
+## 2i validation tuning grid, family-disjoint split (about 35–40 min on the GTX 1050 Ti)
 
-The plan asks for the family split, which is built in Stage 3b. Choose one:
-- **(a) now, on the random split**, seed 0:
+Validation part of the family split, seed 0; the test split is never used. Expected time, from the smoke test:
+MLP 10 min, per-view LightGBM 10 min, aligned7 MLP views 3 min, uniform and box CROWN-IBP 3 min,
+edit-aware CROWN-IBP 7 min, data loading about 1 min.
 
-  ```powershell
-  cd "D:\Users\Public\Downloads\VS code\malcert_release"
-  $env:PYTHONPATH = "."
-  & "C:\Users\USER\miniconda3\envs\malcert\python.exe" tools\tune_validation.py --split random --out results_tuning
-  ```
-- **(b) after Stage 3b**, on the family split: the same command with `--split family --out results_tuning_family`
-  (the script refuses `family` until 3b exists).
+```powershell
+cd "D:\Users\Public\Downloads\VS code\malcert_release"
+$env:PYTHONPATH = "."
+& "C:\Users\USER\miniconda3\envs\malcert\python.exe" tools\tune_validation.py --split family --out results_tuning
+```
 
 Output: `results_tuning\<model>.csv` (one row per grid point) and `results_tuning\chosen.json`.
 Then tell Claude; it freezes the chosen settings in `config.py` and commits before Stage 3.

@@ -1,9 +1,9 @@
 """Validation tuning for every model (REVISION_PLAN 2i; grids and metrics in REVISION_LOG 2-17).
 
-    python tools/tune_validation.py --split random --out results_tuning            # full grid (~40-60 min GPU)
-    python tools/tune_validation.py --smoke --out results_tuning_smoke             # 1 epoch, 1 grid point each
+    python tools/tune_validation.py --split family --out results_tuning            # full grid (~45 min GPU)
+    python tools/tune_validation.py --split family --smoke --out results_tuning_smoke   # 1 epoch, 1 grid point
 
-Seed 0. Trains on the training split, evaluates on the VALIDATION split only; the test split is never
+Seed 0, family-disjoint split (log 2-22). Trains on the training split, evaluates on the VALIDATION split only; the test split is never
 transformed. Writes <out>/<model>.csv (one row per grid point, with wall-clock) and <out>/chosen.json.
 The chosen settings are frozen in config.py by hand, then committed, before Stage 3 (plan 2i).
 """
@@ -38,13 +38,11 @@ FPR_MAX = 0.01
 
 def main():
     ap = argparse.ArgumentParser()
-    ap.add_argument("--split", default="random", choices=["random", "family"])
+    ap.add_argument("--split", default="family", choices=["random", "family"])
     ap.add_argument("--out", default="results_tuning")
     ap.add_argument("--models", default=",".join(GRIDS))
     ap.add_argument("--smoke", action="store_true", help="1 epoch and the first grid point of every model")
     a = ap.parse_args()
-    if a.split == "family":
-        raise SystemExit("the family-disjoint split is built in Stage 3b; it does not exist yet")
     os.chdir(ROOT)
     os.makedirs(a.out, exist_ok=True)
     cfg = get_config("full", split=a.split)                     # full-preset budgets, as in Stage 3

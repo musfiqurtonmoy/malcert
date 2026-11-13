@@ -4,9 +4,10 @@
 
 From ps_results/features.npz (problem-space measurements) only:
   - corpus halves: fit / eval, 50/50 per architecture, seed 0; all edits of an original follow it;
-  - per family f: support S_f (features changed in >= 1% of the family's fit-half files) and per-feature
-    interval [lo, hi] of the change in signed-log units (2.5 / 97.5 percentiles over fit-half files where the
-    feature changed, widened to include 0);
+  - per family f (rule of REVISION_LOG 2-23, the plan's "2h-revision"): name-hashed blocks (imports, exports,
+    hashed section blocks) are structural: whole block in the support, every bucket +-m_f (largest per-bucket
+    change in the family's fit half); other features: support = changed in >= 1% of fit-half files, interval =
+    full fit-half range [min, max] of the change, widened to include 0. Signed-log units.
   - coverage: share of eval-half edited files whose whole change lies in T_f(t), t in {0.25, 0.5, 1, 2}.
 Writes ps_results/corpus_halves.csv, ps_results/edit_families.npz, ps_results/family_coverage.csv,
 paper/tables/numbers_fam.tex (prefix Fam).
@@ -19,9 +20,13 @@ import pandas as pd
 
 ROOT = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
 sys.path.insert(0, ROOT)
-from malcert.data import FAMILIES, slog1p_                      # noqa: E402
+from malcert.data import FAMILIES, slog1p_, unit_index          # noqa: E402
 
 RES = os.path.join(ROOT, "ps_results")
+# name-hashed blocks (log 2-23): a new import, export or section name lands in an effectively random bucket
+NAME_HASHED = ["Imports.libraries", "Imports.functions", "Exports.functions", "Section.sizes", "Section.entropy",
+               "Section.vsizes", "Section.entry_name", "Section.entry_characteristics"]
+HASHED_BLOCKS = [unit_index()[u][:2] for u in NAME_HASHED]
 SCALES = (0.25, 0.5, 1.0, 2.0)
 SUPPORT_MIN = 0.01
 
@@ -36,9 +41,11 @@ def halves(names, seed=0):
     return fit
 
 
-def inside(D, lo, hi, sup, t, tol=1e-6):
-    """Rows of D (changes, slog units) inside T(t): zero off the support, within t*[lo, hi] on it."""
-    off = (np.abs(D[:, ~sup]) > tol).any(1)
+def inside(D, lo, hi, sup, t, tol=1e-9):
+    """Rows of D (changes, slog units) inside T(t): EXACTLY zero off the support (an unchanged feature gives
+    exactly 0; a tolerance there would admit real changes on features with tiny sd), within t*[lo, hi] on it
+    (tol only absorbs floating rounding of t*lo, t*hi)."""
+    off = (D[:, ~sup] != 0).any(1)
     on = ((D[:, sup] >= t * lo[sup] - tol) & (D[:, sup] <= t * hi[sup] + tol)).all(1)
     return ~off & on
 
@@ -58,11 +65,19 @@ def main():
         isfit = np.array([fn[i] in fit for i in rows])
         Df, De = D[isfit], D[~isfit]
         changed = Df != 0
+        # rule 2 (non-hashed): support = changed in >= 1% of fit-half files; interval = full fit-half range incl. 0
         sup = changed.mean(0) >= SUPPORT_MIN
         lo, hi = np.zeros(D.shape[1]), np.zeros(D.shape[1])
         for j in np.where(sup)[0]:
             v = Df[changed[:, j], j]
-            lo[j], hi[j] = min(np.percentile(v, 2.5), 0.0), max(np.percentile(v, 97.5), 0.0)
+            lo[j], hi[j] = min(v.min(), 0.0), max(v.max(), 0.0)
+        # rule 1 (name-hashed blocks, log 2-23): whole block if the family changes any of it; every bucket +-m_f
+        for a, b in HASHED_BLOCKS:
+            if changed[:, a:b].any():
+                m = float(np.abs(Df[:, a:b]).max())
+                sup[a:b], lo[a:b], hi[a:b] = True, -m, m
+            else:
+                sup[a:b], lo[a:b], hi[a:b] = False, 0.0, 0.0
         out[f"{fam}_support"], out[f"{fam}_lo"], out[f"{fam}_hi"] = sup, lo, hi
         row = dict(family=fam, edits=" ".join(edits), support=int(sup.sum()), n_fit=int(isfit.sum()),
                    n_eval=int((~isfit).sum()), one_sided=int((sup & (lo == 0)).sum()))
