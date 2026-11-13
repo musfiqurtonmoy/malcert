@@ -627,6 +627,19 @@ carry a **Basis:** line saying what they were fixed from.
   (cut-off 2019-12: 46.0 / 68.4 / 57.2%), partly recovered in 2020-08/09. Retraining at 2020-04 recovers 8–16 points
   on the same months (2020-09: 52.9 → 68.5, 74.8 → 87.8, 61.9 → 73.4%). Clean TPR: drift effect −0.3 to −5.9 points,
   composition effect +0.2 to +0.8 (category mix explains almost none of the drop).
+- **3-13** `[A5, B6]` **Family seeds 3–4** (`results_family_s34/`, same code hash as `results_family`): all `violations` and
+  `corpus_violations` 0. `tools/stats.py --family results_family results_family_s34 --random results_random` →
+  `results_family/stats_*.csv`, `paper/tables/numbers_stats.tex`. Family split, 5 seeds, mean [95% t-interval]:
+  accuracy LightGBM 94.6 [93.2, 96.0], per-view LightGBM main 92.8 [90.5, 95.2] (FPR 0.2), MLP views main 88.5
+  [85.2, 91.8], edit-aware CROWN-IBP 91.4 [87.6, 95.1] (FPR 1.2); certified at r = 1: per-view LightGBM main 55.1
+  [45.7, 64.4], MLP views main 36.6 [29.7, 43.5]; over the 9 edit types: main 20.3, second 43.7, EMBER 9.0, per-view
+  LightGBM 30.6; over T_f(1): edit-aware 56.0 [49.0, 63.0], uniform and box 0.0; at ε = 0.05: box 73.1, uniform 72.6.
+  Comparisons 3-1 (difference in points [interval], Holm p): 1 +56.0 [49.0, 62.9], 0.0001; 2 +0.5 [−0.8, 1.8], 0.34;
+  3 +11.3 [7.6, 15.1], 0.004; 4 +18.5 [8.4, 28.6], 0.021; 5 +62.6 [47.4, 77.8], 0.002; 6 −1.8 [−4.2, 0.6], 0.20.
+  **C3 rule (2-15): met** (edit-aware > uniform-ball, interval above zero). The original C3 claim (box-constrained
+  better than uniform at ε = 0.05) is **not supported** (comparison 2). Near-twins: 2.4% of test malware; removing
+  them moves every main metric by ≤ 1.1 points. Random split (3 seeds) for contrast: LightGBM 99.5, per-view LightGBM
+  certified at r = 1 96.6, edit-aware over T_f(1) 83.7%: family-disjoint testing costs 5–40 points.
 
 ### Ideas not done
 - Execution check of edited binaries in a sandboxed VM (would turn "plausibly functionality-preserving" into

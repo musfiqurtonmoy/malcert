@@ -2,6 +2,9 @@
 
 ## Stage 3: remaining run (2026-11-14)
 
+**Done (2026-11-14):** all six runs finished; run 2 went into `results_family_s34` (REVISION_LOG 3-13).
+Kept for the record:
+
 Runs 1, 3, 4, 5, 6 below finished (exit code 0). Run 2 was refused at start by a bug in the resume check
 (REVISION_LOG 3-10), so it goes into a **new folder** with the unchanged code (about 50 min):
 
