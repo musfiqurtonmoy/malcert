@@ -18,6 +18,9 @@ class Config:
     n_benign: int = 17227
     split: str = "random"           # "random" (stratified 70/10/20), "family" (family-disjoint) or "temporal"
     eval_split: str = "test"        # "val": evaluate on the validation split (pilots before Stage 3)
+    cutoff: str = "2019-12"         # split "cutoff" (3c): train on files up to the end of this month, test on later
+    full_data: bool = False         # 3e: all 134,435 BODMAS rows (memory-lean) instead of the 30K subset
+    ablation_only_main: bool = False   # 3e: only the main group-ablation configuration
     seeds: tuple = (0, 1, 2)
     device: str = "auto"
 
@@ -52,11 +55,11 @@ class Config:
     group_attack_max_r: int = 3
 
     # ---- C2b: Gaussian randomized smoothing --------------------------------
-    sigmas: tuple = (0.25, 0.5, 1.0)
+    sigmas: tuple = (0.25, 0.5)     # 3d: isotropic only, two sigmas fixed a priori (log 3-2)
     n0: int = 100
     n_cert: int = 10000
     alpha: float = 0.001
-    n_cert_points: int = 1000
+    n_cert_points: int = 0          # 0 = every test point (3d)
 
     # ---- C3: certified training (IBP / CROWN-IBP) -------------------------
     ibp_hidden: tuple = (256, 256)

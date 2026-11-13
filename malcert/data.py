@@ -240,7 +240,7 @@ def load_subset(cfg, seed=0):
     # then sorts last, i.e. into the "future" test set. format="mixed" parses each row on its own;
     # suffix-less rows are read as UTC, the zone of every other BODMAS timestamp.
     ts = pd.to_datetime(meta["timestamp"].values[sel], format="mixed", errors="coerce", utc=True)
-    if cfg.split == "temporal" and ts.isna().any():
+    if cfg.split in ("temporal", "cutoff") and ts.isna().any():
         raise ValueError(f"{int(ts.isna().sum())} unparseable timestamps would leak into the temporal test set")
     return dict(X=X[sel].astype(np.float32), y=y[sel], category=meta["category"].values[sel],
                 family=meta["family"].fillna("benign").values[sel], timestamp=ts, index=sel)
@@ -343,6 +343,14 @@ def split_indices(data, cfg, seed=0):
     rng = np.random.default_rng(seed)
     if cfg.split == "family":
         return family_split(data["y"], data["family"], data["category"], seed)
+    if cfg.split == "cutoff":
+        # 3c: training period = up to the end of the cut-off month (random 90/10 train/val); test = every later file
+        end = pd.Period(cfg.cutoff, freq="M").end_time.tz_localize("UTC")
+        t = pd.DatetimeIndex(data["timestamp"])
+        pre, post = np.where(t <= end)[0], np.where(t > end)[0]
+        pre = rng.permutation(pre)
+        a = int(0.9 * len(pre))
+        return {"tr": pre[:a], "va": pre[a:], "te": rng.permutation(post)}
     if cfg.split == "temporal":
         order = np.argsort(data["timestamp"].values.astype("datetime64[ns]"))
     else:   # stratified on category (which also stratifies the label)
@@ -404,6 +412,21 @@ class Preprocessor:
         Used to score attacked vectors with models trained on raw features (LightGBM)."""
         S = np.asarray(Z, dtype=np.float64) * self.sd + self.mu
         return (np.sign(S) * np.expm1(np.abs(S))).astype(np.float32)
+
+    def fit_rows(self, X, train_idx, chunk=4096):
+        """fit(X[train_idx]) without a full-size copy: statistics accumulated in float64 over row chunks
+        (used by the full-data check; X itself is left unchanged)."""
+        train_idx = np.sort(np.asarray(train_idx))
+        s = np.zeros(X.shape[1]); ss = np.zeros(X.shape[1])
+        for a in range(0, len(train_idx), chunk):
+            v = X[train_idx[a:a + chunk]].astype(np.float64)
+            v = np.sign(v) * np.log1p(np.abs(v))
+            s += v.sum(0); ss += (v * v).sum(0)
+        mu = s / len(train_idx)
+        sd = np.sqrt(np.maximum(ss / len(train_idx) - mu * mu, 0.0))
+        sd[sd < 1e-6] = 1.0
+        self.mu, self.sd = mu.astype(np.float32), sd.astype(np.float32)
+        return self
 
     def fit_transform_inplace(self, X, train_idx, chunk=4096):
         """Memory-lean equivalent of fit(X[train_idx]) followed by transform(X), for the full dataset.

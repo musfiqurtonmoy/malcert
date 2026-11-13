@@ -14,7 +14,7 @@ import torch.nn.functional as F
 from sklearn.metrics import roc_auc_score, f1_score
 
 from malcert.config import get_config
-from malcert.data import (load_subset, split_indices, Preprocessor, threat_masks, group_ids,
+from malcert.data import (load_subset, load_full, split_indices, Preprocessor, threat_masks, group_ids,
                           GROUP_NAMES, attackable_groups, FAMILIES, slog1p_)
 from malcert.models import (MLP, AblationNet, RandomAblationMLP, ibp, crown, input_box, family_box,
                             load_families)
@@ -240,16 +240,35 @@ def run_seed(cfg, seed, dev, log, todo, R, S, run_id, legacy_rng=False, save=lam
     """Run the blocks in `todo` for one seed, adding to R (scalar results) and S (per-sample
     arrays), which may already hold other blocks of this seed. save() is called after each block."""
     torch.manual_seed(seed); np.random.seed(seed)
-    data = load_subset(cfg, seed=0)                # same 30K subset for every seed
+    # 30K subset (same for every seed), or all of BODMAS (3e full-data check, memory-lean: X is the only full copy)
+    data = load_full(cfg) if cfg.full_data else load_subset(cfg, seed=0)
     sp = split_indices(data, cfg, seed=seed)
     if cfg.eval_split == "val":                    # pilots before Stage 3: evaluate on validation, never on test
         sp = dict(tr=sp["tr"], va=sp["va"], te=sp["va"])
-    pp = Preprocessor().fit(data["X"][sp["tr"]])
+    pp = Preprocessor().fit_rows(data["X"], sp["tr"]) if cfg.full_data else Preprocessor().fit(data["X"][sp["tr"]])
     T = lambda a, dt=torch.float32: torch.as_tensor(a, dtype=dt, device=dev)
-    Xtr, Xva, Xte = (T(pp.transform(data["X"][sp[k]])) for k in ("tr", "va", "te"))
+
+    def to_dev(idx, chunk=8192):
+        """Standardised rows idx as one tensor on the device, transformed in chunks (no full-size host copy)."""
+        out = torch.empty(len(idx), data["X"].shape[1], dtype=torch.float32, device=dev)
+        for a in range(0, len(idx), chunk):
+            out[a:a + chunk] = T(pp.transform(data["X"][idx[a:a + chunk]]))
+        return out
+
+    Xtr, Xva, Xte = (to_dev(sp[k]) for k in ("tr", "va", "te"))
     ytr, yva, yte = (T(data["y"][sp[k]], torch.long) for k in ("tr", "va", "te"))
     yte_np = data["y"][sp["te"]]
     S["y"], S["category"] = yte_np, np.asarray(data["category"][sp["te"]], dtype=str)
+    S["val_y"], S["val_category"] = data["y"][sp["va"]], np.asarray(data["category"][sp["va"]], dtype=str)
+    ts = data["timestamp"][sp["te"]]
+    S["month"] = np.asarray(ts.strftime("%Y-%m").fillna("unknown"), dtype=str)          # 3c: test month
+    # 3b: L2 distance of every test sample to its nearest training sample (standardised; near-twin <= 0.1)
+    nn = []
+    with torch.no_grad():
+        for a in range(0, len(Xte), 256):
+            nn.append(torch.cat([torch.cdist(Xte[a:a + 256], Xtr[b:b + 16384]).min(1).values[:, None]
+                                 for b in range(0, len(Xtr), 16384)], 1).min(1).values.cpu())
+    S["nn_dist"] = torch.cat(nn).numpy()
     mutable, monotone = threat_masks()
     gid = group_ids()
     zlo, zhi = pp.bounds()                         # natural bounds per feature, not the training range
@@ -347,12 +366,16 @@ def run_seed(cfg, seed, dev, log, todo, R, S, run_id, legacy_rng=False, save=lam
             tr_s = time.time() - t1
             s = gbm.predict_proba(data["X"][sp["te"]])[:, 1]
             R[name] = metrics(yte_np, s >= 0.5, s)
+            S["pred_" + name] = (s >= 0.5).astype(np.int8)
+            S["val_pred_" + name] = (gbm.predict_proba(data["X"][sp["va"]])[:, 1] >= 0.5).astype(np.int8)
             cost(name, tr_s)
             log(f"  {name} {R[name]}  ({tr_s:.0f}s)")
             attack_all(name, raw_score(lambda A, g=gbm: g.predict_proba(A)[:, 1]), raw=True)
         std = get_std()
         s = predict(std, Xte); R["mlp"] = metrics(yte_np, s >= 0.5, s); log(f"  MLP {R['mlp']}")
         S["p_mlp"] = s
+        S["pred_mlp"] = (s >= 0.5).astype(np.int8)
+        S["val_pred_mlp"] = (predict(std, Xva) >= 0.5).astype(np.int8)
         attack_all("mlp", lambda Z: torch.as_tensor(predict(std, Z)))
         finish("clean", t0)
 
@@ -403,17 +426,21 @@ def run_seed(cfg, seed, dev, log, todo, R, S, run_id, legacy_rng=False, save=lam
                                        empirical_tpr=emp.mean(0).tolist(),
                                        violations=int((cert_sub & ~emp).sum()), **extra)   # must stay 0
             S[f"abl_{name}_cert_exact"] = cert_ex
+            S[f"pred_abl_{name}"] = pred.astype(np.int8)
             log(f"  ablation {name} ({part}, k={k}): acc {R['ablation'][name]['clean']['acc']:.4f} "
                 f"cert_exact {[round(v, 4) for v in R['ablation'][name]['cert_tpr_exact']]} "
                 f"violations {R['ablation'][name]['violations']}")
 
-        for name, part, k, view_epochs in cfg.ablation_configs:
+        configs = cfg.ablation_configs[:1] if cfg.ablation_only_main else cfg.ablation_configs   # 3e full-data check
+        for name, part, k, view_epochs in configs:
             gid_p, names_p = partition(part)
             G, att = len(names_p), attackable(gid_p)
             t1 = time.time()
             net = fit(AblationNet(d, G, gid_p, cfg.hidden).to(dev), Xtr, ytr, cfg, "ablation", k=k, seed=seed, log=log,
                       epochs=view_epochs or cfg.epochs)
             tr_s, t2 = time.time() - t1, time.time()
+            vv = votes_from_views(ablation_view_votes(net, Xva, k))
+            S[f"val_pred_abl_{name}"] = (vv[:, 1] >= vv[:, 0]).cpu().numpy().astype(np.int8)
             vm = ablation_view_votes(net, Xte, k)
             cert_ex = ablation_certify_exact(vm, yte, net.subsets(k), att, len(att))      # exact (2a)
             cert_s = time.time() - t2
@@ -428,12 +455,14 @@ def run_seed(cfg, seed, dev, log, todo, R, S, run_id, legacy_rng=False, save=lam
 
         # ---- 2c / 2g: one LightGBM per view, main and second configurations (Theorem 1 only counts votes) ----
         Xtr_raw, Xte_raw = data["X"][sp["tr"]], data["X"][sp["te"]]
-        for (name, part, k, _), (n_est, n_leaves) in zip(cfg.ablation_configs[:2], cfg.lgbm_view_params):
+        for (name, part, k, _), (n_est, n_leaves) in zip(configs[:2], cfg.lgbm_view_params):
             gid_p, names_p = partition(part)
             att = attackable(gid_p)
             t1 = time.time()
             subsets, views = fit_lgbm_views(Xtr_raw, data["y"][sp["tr"]], gid_p, k, n_est, n_leaves, seed)
             tr_s, t2 = time.time() - t1, time.time()
+            vv = votes_from_views(lgbm_view_votes(views, data["X"][sp["va"]]))
+            S[f"val_pred_abl_lgbm_{name}"] = (vv[:, 1] >= vv[:, 0]).numpy().astype(np.int8)
             vm = lgbm_view_votes(views, Xte_raw)
             cert_ex = ablation_certify_exact(vm, torch.as_tensor(yte_np), subsets, att, len(att))
             cert_s = time.time() - t2
@@ -451,9 +480,9 @@ def run_seed(cfg, seed, dev, log, todo, R, S, run_id, legacy_rng=False, save=lam
         t0 = time.time()
         reseed("smoothing")
         R["smoothing"] = {}
-        pts = torch.arange(min(cfg.n_cert_points, len(Xte)), device=dev)
-        masks = {"isotropic": torch.ones(d, device=dev),
-                 "subspace": torch.as_tensor(mutable, dtype=torch.float32, device=dev)}
+        # 3d: isotropic noise only (subspace variant dropped, Am1); n_cert_points = 0 means every test point
+        pts = torch.arange(len(Xte) if cfg.n_cert_points == 0 else min(cfg.n_cert_points, len(Xte)), device=dev)
+        masks = {"isotropic": torch.ones(d, device=dev)}
         for sigma in cfg.sigmas:
             for vname, nm in masks.items():
                 m = fit(MLP(d, cfg.hidden).to(dev), Xtr, ytr, cfg, "gauss", sigma=sigma, noise_mask=nm,
@@ -539,6 +568,9 @@ def run_seed(cfg, seed, dev, log, todo, R, S, run_id, legacy_rng=False, save=lam
                 row["violations"] += int((c[mal.cpu().numpy()] & fooled).sum())   # must stay 0
                 if abs(eps - cfg.ibp_train_eps) < 1e-12:
                     S[f"ct_{vname}_cert"] = c
+            S[f"pred_ct_{vname}"] = (s >= 0.5).astype(np.int8)
+            for f_, (lo_z, hi_z) in fams.items():                         # per-sample family certificates at t = 1
+                S[f"ct_{vname}_famcert_t1_{f_}"] = family_verify(m, Xte, yte, lo_z, hi_z, 1.0, Ccon.zlo, Ccon.zhi)
             row["family_cert"] = family_report(m, Xte, yte_np, fams, cfg.family_scales, Ccon.zlo, Ccon.zhi, dev)
             row["family_scales"] = list(cfg.family_scales)
             row["corpus_violations"], row["corpus_checked"] = corpus_soundness(m, pp, fams_slog, fams,
@@ -563,7 +595,11 @@ def main():
     ap.add_argument("--preset", default="quick", choices=["quick", "full"])
     ap.add_argument("--data_dir", default="data")
     ap.add_argument("--out_dir", default="results")
-    ap.add_argument("--split", default="random", choices=["random", "temporal"])
+    ap.add_argument("--split", default="random", choices=["random", "family", "temporal", "cutoff"])
+    ap.add_argument("--cutoff", default="2019-12", help="with --split cutoff: last month of the training period")
+    ap.add_argument("--seeds", default=None, help="comma-separated seeds, overriding the preset (e.g. 0,1,2)")
+    ap.add_argument("--full_data", action="store_true", help="3e: all of BODMAS, memory-lean")
+    ap.add_argument("--ablation_only_main", action="store_true", help="3e: only the main group-ablation configuration")
     ap.add_argument("--eval_split", default="test", choices=["test", "val"],
                     help="val: evaluate on the validation split (pilots before Stage 3)")
     ap.add_argument("--blocks", default="all",
@@ -580,7 +616,9 @@ def main():
     blocks = [b for b in BLOCKS if b in blocks]                 # execution order
     if a.legacy_rng and blocks != list(BLOCKS):
         ap.error("--legacy_rng reproduces the draft-v1 random stream only when all blocks run")
-    cfg = get_config(a.preset, out_dir=a.out_dir, split=a.split, eval_split=a.eval_split,
+    extra = dict(seeds=tuple(int(s) for s in a.seeds.split(","))) if a.seeds else {}
+    cfg = get_config(a.preset, out_dir=a.out_dir, split=a.split, eval_split=a.eval_split, cutoff=a.cutoff,
+                     full_data=a.full_data, ablation_only_main=a.ablation_only_main, **extra,
                      data_npz=os.path.join(a.data_dir, "bodmas.npz"),
                      meta_csv=os.path.join(a.data_dir, "bodmas_metadata.csv"),
                      cat_csv=os.path.join(a.data_dir, "bodmas_malware_category.csv"))

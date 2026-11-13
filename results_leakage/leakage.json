@@ -1,0 +1,23 @@
+{
+ "bodmas_rows": 134435,
+ "duplicate_vector_rows": 14,
+ "duplicate_vector_groups": 7,
+ "groups_with_label_conflict": 0,
+ "duplicate_sha256": 0,
+ "random": {
+  "test_rows_with_exact_twin": 0,
+  "test_malware_family_in_train": 0.9843627834245504,
+  "near_twin_malware": 0.2032838154808444,
+  "near_twin_benign": 0.03801508995937319,
+  "median_nn_malware": 0.7798815965652466,
+  "median_nn_benign": 9.836355209350586
+ },
+ "family": {
+  "test_rows_with_exact_twin": 0,
+  "test_malware_family_in_train": 0.0,
+  "near_twin_malware": 0.02896825396825397,
+  "near_twin_benign": 0.03454281567489115,
+  "median_nn_malware": 24.924968719482422,
+  "median_nn_benign": 10.189868927001953
+ }
+}
