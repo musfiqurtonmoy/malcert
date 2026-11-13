@@ -654,6 +654,17 @@ carry a **Basis:** line saying what they were fixed from.
   macros listed per owning script), section map with comment IDs, appendices, removals. No manuscript edits yet.
   Random-vs-family gap in certified detection: 14.3–50.3 points (per-view LightGBM main 41.6, MLP views main 50.3).
 
+### 3g. Uniform-ball ε sweep (declared before any sweep run)
+- **3-16** `[A2, A3]` **Accuracy-matched comparison rule (plan 3g.4), declared before any sweep result.** Sweep:
+  uniform-ball CROWN-IBP at ε_train ∈ {0.05, 0.1, 0.2, 0.5, 1, 2, 4} (plus max ε_f if larger and trainable), family
+  split, seeds 0–4, every other setting as frozen in 2i; nothing is selected from the sweep. The comparison model is the
+  ε_train whose **mean clean test accuracy over the 5 seeds** is closest to edit-aware CROWN-IBP's (5-seed mean from
+  `results_family` + `results_family_s34`); ties go to the larger ε. Statistic: paired difference per seed (edit-aware
+  minus sweep model) in certified detection over T_f(1), mean over the four families; 95% t-interval and paired t-test.
+  Secondary analysis, **not** in the Holm family of six. A collapsed run (constant classifier) is recorded as such and
+  still counts in the sweep. Whatever the outcome is reported; if a sweep model reaches comparable certified detection at
+  similar accuracy, the C3 wording is revised in Stage 4.
+
 ### Ideas not done
 - Execution check of edited binaries in a sandboxed VM (would turn "plausibly functionality-preserving" into
   "verified"); out of the lean scope.
