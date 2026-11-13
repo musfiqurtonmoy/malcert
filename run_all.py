@@ -38,6 +38,20 @@ def done_blocks(R):
     return [b for b in BLOCKS if all(k in R for k in BLOCK_KEYS[b])]
 
 
+RESUME_FREE = ("seeds", "out_dir", "device")          # may differ between runs into one results folder
+
+
+def config_json(cfg):
+    """The configuration exactly as results.json stores it: a JSON round trip turns tuples, nested ones included,
+    into lists, so a stored and a live configuration compare equal when they describe the same experiment."""
+    return json.loads(json.dumps(vars(cfg)))
+
+
+def config_diff(stored, current):
+    """Keys whose value differs between a stored and a live configuration (both in JSON form)."""
+    return [k for k in current if k not in RESUME_FREE and stored.get(k) != current[k]]
+
+
 def block_seed(seed, block):
     """Seed of the torch generators at the start of a block. Reseeding per block makes a block's
     result independent of which other blocks ran before it (they all share torch's global RNG)."""
@@ -625,13 +639,13 @@ def main():
     dev = torch.device("cuda" if torch.cuda.is_available() else "cpu") if cfg.device == "auto" else torch.device(cfg.device)
     os.makedirs(cfg.out_dir, exist_ok=True)
     res_path = os.path.join(cfg.out_dir, "results.json")
-    cfg_dict = {k: (list(v) if isinstance(v, tuple) else v) for k, v in vars(cfg).items()}
+    cfg_dict = config_json(cfg)
     prov = provenance(dev, blocks, a.legacy_rng)
 
     # ---- resume: continue an existing results.json only if it is the same experiment and code ----
     if os.path.exists(res_path):
         allR = json.load(open(res_path))
-        diff = [k for k in cfg_dict if k not in ("seeds", "out_dir", "device") and allR["config"].get(k) != cfg_dict[k]]
+        diff = config_diff(allR["config"], cfg_dict)
         if diff:
             raise SystemExit(f"{res_path} was produced with a different configuration ({', '.join(diff)}). "
                              "Use a new --out_dir.")

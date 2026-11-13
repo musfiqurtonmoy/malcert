@@ -186,6 +186,28 @@ def test_run_all_block_bookkeeping():
     assert c is None or (len(c) == 40 and all(ch in "0123456789abcdef" for ch in c))
 
 
+def test_run_all_resume_config_check():
+    """REVISION_LOG 3-10: nested tuples (ablation_configs, lgbm_view_params) made every resume fail."""
+    import json
+    import run_all
+    root = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
+    kw = dict(out_dir="x", split="family", eval_split="test", cutoff="2019-12", full_data=False, ablation_only_main=False,
+              data_npz=os.path.join("data", "bodmas.npz"), meta_csv=os.path.join("data", "bodmas_metadata.csv"),
+              cat_csv=os.path.join("data", "bodmas_malware_category.csv"))
+    cfg = get_config("full", **kw)
+    live = run_all.config_json(cfg)
+    assert any(isinstance(v, list) and v and isinstance(v[0], list) for v in live.values())   # nested values exist
+    stored = json.loads(json.dumps(live))                                                       # as written to disk
+    assert run_all.config_diff(stored, live) == []                                              # same run resumes
+    assert run_all.config_diff(stored, run_all.config_json(get_config("full", **dict(kw, seeds=(3, 4), out_dir="y")))) == []
+    assert run_all.config_diff(stored, run_all.config_json(get_config("full", **dict(kw, split="random")))) == ["split"]
+    old = {k: (list(v) if isinstance(v, tuple) else v) for k, v in vars(cfg).items()}          # the buggy comparison
+    assert any(stored[k] != old[k] for k in old)                                                # ... which did fail
+    res = os.path.join(root, "results_family", "results.json")                                  # the real Stage 3 folder
+    if os.path.exists(res):
+        assert run_all.config_diff(json.load(open(res))["config"], live) == []
+
+
 if __name__ == "__main__":
     tests = [v for k, v in sorted(globals().items()) if k.startswith("test_") and callable(v)]
     for t in tests:
