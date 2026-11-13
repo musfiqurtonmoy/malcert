@@ -1,5 +1,21 @@
 # Run next (started by the author from a terminal)
 
+## 2i validation tuning grid (about 35–45 min on the GTX 1050 Ti; validation split only)
+
+The plan asks for the family split, which is built in Stage 3b. Choose one:
+- **(a) now, on the random split**, seed 0:
+
+  ```powershell
+  cd "D:\Users\Public\Downloads\VS code\malcert_release"
+  $env:PYTHONPATH = "."
+  & "C:\Users\USER\miniconda3\envs\malcert\python.exe" tools\tune_validation.py --split random --out results_tuning
+  ```
+- **(b) after Stage 3b**, on the family split: the same command with `--split family --out results_tuning_family`
+  (the script refuses `family` until 3b exists).
+
+Output: `results_tuning\<model>.csv` (one row per grid point) and `results_tuning\chosen.json`.
+Then tell Claude; it freezes the chosen settings in `config.py` and commits before Stage 3.
+
 ## Backup to a private GitHub repository (REVISION_PLAN 1i.6) — needs your GitHub login
 
 1. In a browser, sign in at https://github.com, then open https://github.com/new

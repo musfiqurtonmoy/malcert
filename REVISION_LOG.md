@@ -451,6 +451,29 @@ carry a **Basis:** line saying what they were fixed from.
   - **Split:** the plan says family split, which is built in Stage 3b. The script takes `--split`; which split
     to use for the grid run is put to the author (`RUN_NEXT.md`).
 
+### 2h–2i implementation
+- **2-18** `[A1, A2, A3]` **2h edit families** (`tools/edit_families.py` → `ps_results/corpus_halves.csv`,
+  `edit_families.npz`, `family_coverage.csv`, `paper/tables/numbers_fam.tex`). Halves: 75 fit / 75 eval
+  originals. Supports: F_content 625, F_section 784, F_import 654, F_strip 617 features. Eval-half coverage of
+  T_f(t) at t = 0.25 / 0.5 / 1 / 2: content 15.5 / 25.3 / 67.3 / 78.8%; section 0 / 0 / 21.6 / 51.2%;
+  import 0 / 0 / 0 / 0.9%; strip 0 / 0 / 16.9 / 36.0%. Low values for section, import and strip: a file counts
+  only if every one of its several hundred changed features lies inside its 95% interval; hashed import features
+  change sparsely, so an import edit nearly always hits a bucket outside the interval or the support.
+- **2-19** `[A2, A3]` `malcert/models.py`: `family_box` (T_f(t), natural bounds kept), `load_families`;
+  `malcert/train.py`: edit-aware CROWN-IBP (robust loss over the four family boxes, mean or max, t ramped to
+  t_train); `run_all.py` certified block: models standard, PGD-AT, CROWN-IBP box, uniform-ball (ε =
+  `unc_train_eps`), edit-aware; every model certified on T_f(t) per family and for all four families
+  (`family_cert`), and the corpus soundness check `corpus_violations` (must be 0). Per-view LightGBM now runs for
+  main and second (`lgbm_view_params`).
+- **2-20** `[A1]` `tests/test_families.py`: box shape; every eval-half edited vector counted inside T_f(t) lies in
+  `family_box`, and for a network with shrunk weights on the support features (so that certificates are not
+  vacuous) no certified original is flipped by its real edit: 3,130 cases inside, 3,129 certified, 0 flipped.
+  All 17 unit tests pass.
+- **2-21** `[A2, A5]` **2i** `tools/tune_validation.py` (grids and metrics of 2-17; validation only). Smoke test
+  (`results_tuning_smoke/`, 1 epoch, first grid point each): all 7 models run. Edit-aware CROWN-IBP 2.7 s per epoch
+  vs 1.0 s for box CROWN-IBP (incl. validation certification; 4 family boxes per batch). Full grid command in
+  `RUN_NEXT.md`; split choice (random now, or family after 3b) is with the author.
+
 ### Ideas not done
 - Execution check of edited binaries in a sandboxed VM (would turn "plausibly functionality-preserving" into
   "verified"); out of the lean scope.

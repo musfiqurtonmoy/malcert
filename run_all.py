@@ -15,8 +15,9 @@ from sklearn.metrics import roc_auc_score, f1_score
 
 from malcert.config import get_config
 from malcert.data import (load_subset, split_indices, Preprocessor, threat_masks, group_ids,
-                          GROUP_NAMES, attackable_groups)
-from malcert.models import MLP, AblationNet, RandomAblationMLP, ibp, crown, input_box
+                          GROUP_NAMES, attackable_groups, FAMILIES, slog1p_)
+from malcert.models import (MLP, AblationNet, RandomAblationMLP, ibp, crown, input_box, family_box,
+                            load_families)
 from malcert.attacks import Constraints, pgd, group_transplant
 from malcert.certify import (ablation_votes, ablation_certify, ablation_certify_exact, ablation_view_votes,
                              ceiling_r, smooth_certify, votes_from_views)
@@ -151,6 +152,87 @@ def verify(model, X, y, eps, C, bs=1024):
             lb_c = crown(model, lo, hi, t, pre)
         res.append((torch.maximum(lb_i, lb_c) > 0).cpu().numpy())
     return np.concatenate(res)
+
+
+def fit_lgbm_views(Xraw, y, gid, k, n_estimators, num_leaves, seed):
+    """One LightGBM per view (kept-group subset of size k), trained on the raw features of the kept groups."""
+    import lightgbm as lgb
+    subsets = [tuple(s) for s in itertools.combinations(range(int(gid.max()) + 1), k)]
+    views = []
+    for s in subsets:
+        cols = np.where(np.isin(gid, s))[0]
+        g = lgb.LGBMClassifier(n_estimators=n_estimators, num_leaves=num_leaves, learning_rate=0.05,
+                               random_state=seed, verbose=-1)
+        g.fit(Xraw[:, cols], y)
+        views.append((cols, g))
+    return subsets, views
+
+
+def lgbm_view_votes(views, A):
+    """(N, V) bool malware votes of per-view LightGBMs on raw features A."""
+    A = np.asarray(A)
+    return torch.as_tensor(np.stack([g.predict_proba(A[:, c])[:, 1] >= 0.5 for c, g in views], 1))
+
+
+def family_verify(model, X, y, lo_z, hi_z, t, zlo, zhi, bs=1024):
+    """Certified over the edit-family set T_f(t) (2h): margin lower bound max(IBP, CROWN) > 0."""
+    res = []
+    for a in range(0, len(X), bs):
+        x, tt = X[a:a + bs], y[a:a + bs]
+        with torch.no_grad():
+            lo, hi = family_box(x, t, lo_z, hi_z, zlo, zhi)
+            lb_i, pre = ibp(model, lo, hi, tt)
+            lb_c = crown(model, lo, hi, tt, pre)
+        res.append((torch.maximum(lb_i, lb_c) > 0).cpu().numpy())
+    return np.concatenate(res)
+
+
+def family_report(model, X, y_np, fams, scales, zlo, zhi, dev):
+    """Certified detection of malware over T_f(t), per family and for all four families at once."""
+    yt = torch.as_tensor(y_np, device=dev)
+    mal = y_np == 1
+    out, allc = {}, {}
+    for f, (lo_z, hi_z) in fams.items():
+        out[f] = []
+        for t in scales:
+            c = family_verify(model, X, yt, lo_z, hi_z, t, zlo, zhi)
+            out[f].append(float(c[mal].mean()))
+            allc[t] = c if t not in allc else (allc[t] & c)
+    out["all_families"] = [float(allc[t][mal].mean()) for t in scales]
+    out["mean_over_families_t1"] = float(np.mean([out[f][list(scales).index(1.0)] for f in fams]))
+    return out
+
+
+def corpus_soundness(model, pp, fams_slog, fams_z, scales, zlo, zhi, dev):
+    """2h.9: eval-half benign corpus files whose real edit lies inside T_f(t): if the original is certified
+    benign over T_f(t), the edited file must still be classified benign. Returns the number of violations
+    (must be 0) and the number of (file, family, t) cases checked."""
+    F = np.load(os.path.join(ROOT, "ps_results", "features.npz"))
+    halves = dict(np.loadtxt(os.path.join(ROOT, "ps_results", "corpus_halves.csv"), delimiter=",", dtype=str,
+                             skiprows=1))
+    X, fn, ed = F["X"], F["fname"], F["edit"]
+    orig = {f: X[i] for i, f in enumerate(fn) if ed[i] == "orig"}
+    viol, checked = 0, 0
+    for f, edits in FAMILIES.items():
+        rows = [i for i in range(len(X)) if ed[i] in edits and halves.get(str(fn[i])) == "eval"]
+        if not rows:
+            continue
+        Xo = np.stack([orig[fn[i]] for i in rows]); Xe = X[rows]
+        D = slog1p_(Xe.copy()) - slog1p_(Xo.copy())
+        lo_s, hi_s, sup = fams_slog[f]
+        zo = torch.as_tensor(pp.transform(Xo), device=dev); ze = torch.as_tensor(pp.transform(Xe), device=dev)
+        with torch.no_grad():
+            pred_e = model(ze).argmax(1).cpu().numpy()
+        for t in scales:
+            ins = (~(np.abs(D[:, ~sup]) > 1e-6).any(1)) & ((D[:, sup] >= t * lo_s[sup] - 1e-6) &
+                                                          (D[:, sup] <= t * hi_s[sup] + 1e-6)).all(1)
+            if not ins.any():
+                continue
+            c = family_verify(model, zo[ins], torch.zeros(int(ins.sum()), dtype=torch.long, device=dev),
+                              fams_z[f][0], fams_z[f][1], t, zlo, zhi)
+            viol += int((c & (pred_e[ins] != 0)).sum())
+            checked += int(ins.sum())
+    return viol, checked
 
 
 # ------------------------------------- one seed ---------------------------------------
@@ -343,35 +425,24 @@ def run_seed(cfg, seed, dev, log, todo, R, S, run_id, legacy_rng=False, save=lam
             cost("ablation_" + name, tr_s, cert_s, len(Xte), n_sub)
             attack_all("ablation_" + name, score)
 
-        # ---- 2c: one LightGBM per view, main configuration only (Theorem 1 only counts votes) ----
-        import lightgbm as lgb
-        name, part, k = cfg.ablation_configs[0]
-        gid_p, names_p = partition(part)
-        att = attackable(gid_p)
-        subsets = [tuple(s) for s in itertools.combinations(range(len(names_p)), k)]
+        # ---- 2c / 2g: one LightGBM per view, main and second configurations (Theorem 1 only counts votes) ----
         Xtr_raw, Xte_raw = data["X"][sp["tr"]], data["X"][sp["te"]]
-        t1 = time.time()
-        views = []
-        for s in subsets:
-            cols = np.where(np.isin(gid_p, s))[0]
-            g = lgb.LGBMClassifier(n_estimators=cfg.lgbm_view_trees, num_leaves=64, learning_rate=0.05,
-                                   random_state=seed, verbose=-1)
-            g.fit(Xtr_raw[:, cols], data["y"][sp["tr"]])
-            views.append((cols, g))
-        tr_s, t2 = time.time() - t1, time.time()
-
-        def lgbm_view_votes(A):
-            return torch.as_tensor(np.stack([g.predict_proba(A[:, c])[:, 1] >= 0.5 for c, g in views], 1))
-
-        vm = lgbm_view_votes(Xte_raw)
-        cert_ex = ablation_certify_exact(vm, torch.as_tensor(yte_np), subsets, att, len(att))
-        cert_s = time.time() - t2
-        cert_bd = ablation_certify(votes_from_views(vm), torch.as_tensor(yte_np), len(names_p), k, len(att))
-        score = raw_score(lambda A: lgbm_view_votes(A).float().mean(1).numpy())
-        emp = emp_curve(score, gid_p, att, raw=True)
-        record("lgbm_" + name, part, k, vm, subsets, cert_ex, cert_bd, emp, dict(trees_per_view=cfg.lgbm_view_trees))
-        cost("ablation_lgbm_" + name, tr_s, cert_s, len(Xte), len(subsets))
-        attack_all("ablation_lgbm_" + name, score, raw=True)
+        for (name, part, k), (n_est, n_leaves) in zip(cfg.ablation_configs[:2], cfg.lgbm_view_params):
+            gid_p, names_p = partition(part)
+            att = attackable(gid_p)
+            t1 = time.time()
+            subsets, views = fit_lgbm_views(Xtr_raw, data["y"][sp["tr"]], gid_p, k, n_est, n_leaves, seed)
+            tr_s, t2 = time.time() - t1, time.time()
+            vm = lgbm_view_votes(views, Xte_raw)
+            cert_ex = ablation_certify_exact(vm, torch.as_tensor(yte_np), subsets, att, len(att))
+            cert_s = time.time() - t2
+            cert_bd = ablation_certify(votes_from_views(vm), torch.as_tensor(yte_np), len(names_p), k, len(att))
+            score = raw_score(lambda A, views=views: lgbm_view_votes(views, A).float().mean(1).numpy())
+            emp = emp_curve(score, gid_p, att, raw=True)
+            record("lgbm_" + name, part, k, vm, subsets, cert_ex, cert_bd, emp,
+                   dict(trees_per_view=n_est, leaves=n_leaves))
+            cost("ablation_lgbm_" + name, tr_s, cert_s, len(Xte), len(subsets))
+            attack_all("ablation_lgbm_" + name, score, raw=True)
         finish("ablation", t0)
 
     # ---------------- C2b: randomized smoothing ----------------
@@ -429,15 +500,19 @@ def run_seed(cfg, seed, dev, log, todo, R, S, run_id, legacy_rng=False, save=lam
         t0 = time.time()
         reseed("certified")
         R["certified_training"] = {}
-        box = lambda C: dict(eps=cfg.ibp_train_eps, mask=C.mask, mono=C.mono, zlo=C.zlo, zhi=C.zhi, asym=False)
-        # 2d: four models. Plain IBP and asymmetric CROWN-IBP were dropped (plan 2d). CROWN-IBP is trained on the
-        # constrained box ("crownibp") and on the unconstrained L-inf ball ("crownibp_unc"); both are certified on
-        # both boxes (cert_tpr: constrained, cert_tpr_unconstrained), which gives the 2 x 2 table.
+        box = lambda C, e: dict(eps=e, mask=C.mask, mono=C.mono, zlo=C.zlo, zhi=C.zhi, asym=False)
+        fams = load_families(pp.sd, dev)                                  # T_f in standardised units (2h)
+        E = np.load(os.path.join(ROOT, "ps_results", "edit_families.npz"))
+        fams_slog = {f: (E[f + "_lo"], E[f + "_hi"], E[f + "_support"]) for f in FAMILIES}
+        # 2d / 2h: standard, PGD-AT, CROWN-IBP on the constrained box (ablation of C3), on the uniform ball, and
+        # edit-aware CROWN-IBP over the four family sets (C3). All certified on both L-inf boxes and on T_f(t).
         variants = {
             "standard": dict(mode="clean"),
             "pgd_at": dict(mode="pgd", C=Ccon),
-            "crownibp": dict(mode="crownibp", cert=box(Ccon)),
-            "crownibp_unc": dict(mode="crownibp", cert=box(Cunc)),
+            "crownibp": dict(mode="crownibp", cert=box(Ccon, cfg.ibp_train_eps)),
+            "crownibp_unc": dict(mode="crownibp", cert=box(Cunc, cfg.unc_train_eps)),
+            "crownibp_edit": dict(mode="crownibp", cert=dict(families=fams, t_train=cfg.edit_t_train, agg=cfg.edit_agg,
+                                                             zlo=Ccon.zlo, zhi=Ccon.zhi)),
         }
         for vname, kw in variants.items():
             ep = cfg.ibp_epochs if "ibp" in vname else cfg.epochs
@@ -463,6 +538,10 @@ def run_seed(cfg, seed, dev, log, todo, R, S, run_id, legacy_rng=False, save=lam
                 row["violations"] += int((c[mal.cpu().numpy()] & fooled).sum())   # must stay 0
                 if abs(eps - cfg.ibp_train_eps) < 1e-12:
                     S[f"ct_{vname}_cert"] = c
+            row["family_cert"] = family_report(m, Xte, yte_np, fams, cfg.family_scales, Ccon.zlo, Ccon.zhi, dev)
+            row["family_scales"] = list(cfg.family_scales)
+            row["corpus_violations"], row["corpus_checked"] = corpus_soundness(m, pp, fams_slog, fams,
+                                                                               cfg.family_scales, Ccon.zlo, Ccon.zhi, dev)
             R["certified_training"][vname] = row
             log(f"  certified training {vname}: {row}")
         finish("certified", t0)

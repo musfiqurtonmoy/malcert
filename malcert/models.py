@@ -113,6 +113,28 @@ def crown(model, xl, xu, y, pre=None):
     return (Lam * c).sum(1) - (Lam.abs() * r).sum(1) + const
 
 
+def family_box(x, t, lo_z, hi_z, zlo, zhi):
+    """Edit-family threat set T_f(t) (REVISION_PLAN 2h): x + t * [lo_z, hi_z] per feature (lo_z = hi_z = 0 off the
+    family's support), clipped to the natural bounds; x itself always stays inside.
+    lo_z / hi_z are the family's measured change intervals divided by the run's standardisation sd."""
+    lo = x + t * lo_z
+    hi = x + t * hi_z
+    lo = torch.maximum(lo, torch.minimum(zlo, x))
+    hi = torch.minimum(hi, torch.maximum(zhi, x))
+    return lo, hi
+
+
+def load_families(sd, device, path=None):
+    """Family intervals in standardised units for a run with standardisation sd: {family: (lo_z, hi_z)}."""
+    import os
+    import numpy as np
+    from .data import FAMILIES
+    path = path or os.path.join(os.path.dirname(os.path.dirname(os.path.abspath(__file__))), "ps_results", "edit_families.npz")
+    E = np.load(path)
+    t = lambda a: torch.as_tensor(a / sd, dtype=torch.float32, device=device)
+    return {f: (t(E[f + "_lo"]), t(E[f + "_hi"])) for f in FAMILIES}
+
+
 def input_box(x, eps, mask, mono, zlo, zhi):
     """Constraint-aware L_inf box: immutable dims fixed, monotone dims only go up, and every dim
     stays inside its NATURAL bound [zlo, zhi] (data.natural_bounds: e.g. a histogram bin lies in

@@ -4,7 +4,7 @@ import time
 import torch
 import torch.nn.functional as F
 from .attacks import pgd
-from .models import ibp, crown, input_box
+from .models import ibp, crown, input_box, family_box
 
 
 def _batches(n, bs, device, gen):
@@ -48,10 +48,23 @@ def fit(model, Xtr, ytr, cfg, mode="clean", sigma=0.0, noise_mask=None, C=None, 
                 # schedule: clean warm-up, then ramp eps (and kappa / beta) linearly
                 prog = (ep - cfg.ibp_warmup + it / steps_per_epoch) / cfg.ibp_ramp
                 prog = min(max(prog, 0.0), 1.0)
-                eps = cert["eps"] * prog
+                eps = cert.get("eps", 0.0) * prog
                 kappa = 1.0 - 0.5 * prog
                 clean = F.cross_entropy(model(x), y, reduction="none")
-                if eps > 0:
+                if cert.get("families") and prog > 0:
+                    # edit-aware CROWN-IBP (2h): robust loss over the four family boxes T_f(t), t ramped to t_train
+                    t = cert["t_train"] * prog
+                    beta = 1.0 - prog
+                    robs = []
+                    for lo_z, hi_z in cert["families"].values():
+                        lo, hi = family_box(x, t, lo_z, hi_z, cert["zlo"], cert["zhi"])
+                        lb_ibp, pre = ibp(model, lo, hi, y)
+                        lb = beta * crown(model, lo, hi, y, pre) + (1 - beta) * lb_ibp if beta > 0 else lb_ibp
+                        robs.append(F.softplus(-lb))
+                    R_ = torch.stack(robs, 0)
+                    rob = R_.max(0).values if cert.get("agg") == "max" else R_.mean(0)
+                    loss = (kappa * clean + (1 - kappa) * rob).mean()
+                elif eps > 0 and not cert.get("families"):
                     lo, hi = input_box(x, eps, cert["mask"], cert["mono"], cert["zlo"], cert["zhi"])
                     lb_ibp, pre = ibp(model, lo, hi, y)
                     if mode == "crownibp":

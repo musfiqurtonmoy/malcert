@@ -121,6 +121,10 @@ EDIT_SCOPE = {
 
 DRAFT_V1_IMMUTABLE_GROUPS = {"Header(static)", "DataDir"}
 
+# Edit families for edit-aware certified training (REVISION_PLAN 2h): threat sets T_f(t) built from the edit map.
+FAMILIES = {"F_content": ["E1_overlay", "E2_strings", "E5_timestamp", "E7_header", "E10_hdrfields"],
+            "F_section": ["E3_section", "E6_secnames"], "F_import": ["E4_imports"], "F_strip": ["E8_strip"]}
+
 
 def threat_masks_draft_v1():
     """The annotation of draft v1, kept ONLY so the problem-space check can report how many real

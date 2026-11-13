@@ -1,0 +1,2 @@
+lr,epochs,val_acc,val_tpr,val_fpr,seconds,seconds_per_epoch
+0.001,30,0.9873375541486171,0.9882629107981221,0.013348810214741729,3.7,3.7
