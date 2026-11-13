@@ -1,5 +1,18 @@
 # Run next (started by the author from a terminal)
 
+## Stage 3g: uniform-ball ε sweep (about 20–25 min; REVISION_LOG 3-16, 3-17)
+
+40 models: ε_train 0.05, 0.1, 0.2, 0.5, 1, 2, 4 and the largest containment radius (≈ 290), family split, seeds 0–4.
+Resumable: if it stops, paste the same line again (finished models are skipped). Do not change code while it runs.
+
+```powershell
+cd "D:\Users\Public\Downloads\VS code\malcert_release"; $env:GIT_EXE = "D:\malcert_envs\git\Library\cmd\git.exe"; $py = "C:\Users\USER\miniconda3\envs\malcert\python.exe"
+& $py tools/eps_sweep.py --seeds 0,1,2,3,4 --out results_eps_sweep
+```
+
+Watch: `Get-Content results_eps_sweep\log.txt -Tail 15 -Wait`. When it is done, tell Claude: it runs
+`python tools/eps_sweep.py --analyse` (summary, accuracy-matched comparison, figure, `numbers_sweep.tex`).
+
 ## Stage 3: remaining run (2026-11-14)
 
 **Done (2026-11-14):** all six runs finished; run 2 went into `results_family_s34` (REVISION_LOG 3-13).

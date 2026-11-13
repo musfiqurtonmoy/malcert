@@ -664,6 +664,18 @@ carry a **Basis:** line saying what they were fixed from.
   Secondary analysis, **not** in the Holm family of six. A collapsed run (constant classifier) is recorded as such and
   still counts in the sweep. Whatever the outcome is reported; if a sweep model reaches comparable certified detection at
   similar accuracy, the C3 wording is revised in Stage 4.
+- **3-17** `[A2, A3]` **`tools/eps_sweep.py`** (tool only; `run_all.py` and `malcert/` unchanged, code hash unchanged).
+  Same data, split, standardisation, network, epochs, warm-up/ramp and uniform ball as `crownibp_unc` in run_all's
+  certified block; only ε_train varies; torch seed 1,000,003·seed + 100 + ε index. Resumable (refuses other code or
+  configuration). Records clean metrics, collapse flag, certified detection over T_f(t) per family and at its own ε.
+  `--analyse`: summary, the 3-16 comparison, `fig_eps_sweep.pdf`, `numbers_sweep.tex` (macros `Sw...`).
+  - **Containment radius ε_f** (largest |endpoint| of T_f(1), standardised units; seeds 0–4): content 109–125,
+    section 290.2, import 73–145, strip 43–53; maximum 290.2 in every seed (section family). The edit sets reach
+    hundreds of standard deviations on a few low-variance features; no grid ε comes near containing them.
+  - Max ε_f (rounded to 0.1, i.e. 290.2) is added to the grid per plan 3g.2 and trained; a collapse is recorded as such.
+  - **Smoke test** (seed 0, ε 0.1, 1 epoch, scratch folder): runs end to end in 21 s incl. `--analyse`; accuracy 93.0%,
+    FPR 0.5%, certified 0% at own ε and over T_f(1). With 1 epoch the ε ramp never starts (5 warm-up epochs), so the
+    smoke test checks the pipeline, not robust training. Full sweep: 40 models, about 20–25 min (`RUN_NEXT.md`).
 
 ### Ideas not done
 - Execution check of edited binaries in a sandboxed VM (would turn "plausibly functionality-preserving" into
