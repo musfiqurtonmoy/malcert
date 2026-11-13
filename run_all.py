@@ -407,11 +407,12 @@ def run_seed(cfg, seed, dev, log, todo, R, S, run_id, legacy_rng=False, save=lam
                 f"cert_exact {[round(v, 4) for v in R['ablation'][name]['cert_tpr_exact']]} "
                 f"violations {R['ablation'][name]['violations']}")
 
-        for name, part, k in cfg.ablation_configs:
+        for name, part, k, view_epochs in cfg.ablation_configs:
             gid_p, names_p = partition(part)
             G, att = len(names_p), attackable(gid_p)
             t1 = time.time()
-            net = fit(AblationNet(d, G, gid_p, cfg.hidden).to(dev), Xtr, ytr, cfg, "ablation", k=k, seed=seed, log=log)
+            net = fit(AblationNet(d, G, gid_p, cfg.hidden).to(dev), Xtr, ytr, cfg, "ablation", k=k, seed=seed, log=log,
+                      epochs=view_epochs or cfg.epochs)
             tr_s, t2 = time.time() - t1, time.time()
             vm = ablation_view_votes(net, Xte, k)
             cert_ex = ablation_certify_exact(vm, yte, net.subsets(k), att, len(att))      # exact (2a)
@@ -427,7 +428,7 @@ def run_seed(cfg, seed, dev, log, todo, R, S, run_id, legacy_rng=False, save=lam
 
         # ---- 2c / 2g: one LightGBM per view, main and second configurations (Theorem 1 only counts votes) ----
         Xtr_raw, Xte_raw = data["X"][sp["tr"]], data["X"][sp["te"]]
-        for (name, part, k), (n_est, n_leaves) in zip(cfg.ablation_configs[:2], cfg.lgbm_view_params):
+        for (name, part, k, _), (n_est, n_leaves) in zip(cfg.ablation_configs[:2], cfg.lgbm_view_params):
             gid_p, names_p = partition(part)
             att = attackable(gid_p)
             t1 = time.time()
@@ -509,7 +510,7 @@ def run_seed(cfg, seed, dev, log, todo, R, S, run_id, legacy_rng=False, save=lam
         variants = {
             "standard": dict(mode="clean"),
             "pgd_at": dict(mode="pgd", C=Ccon),
-            "crownibp": dict(mode="crownibp", cert=box(Ccon, cfg.ibp_train_eps)),
+            "crownibp": dict(mode="crownibp", cert=box(Ccon, cfg.box_train_eps)),
             "crownibp_unc": dict(mode="crownibp", cert=box(Cunc, cfg.unc_train_eps)),
             "crownibp_edit": dict(mode="crownibp", cert=dict(families=fams, t_train=cfg.edit_t_train, agg=cfg.edit_agg,
                                                              zlo=Ccon.zlo, zhi=Ccon.zhi)),

@@ -541,6 +541,23 @@ carry a **Basis:** line saying what they were fixed from.
   90.8 / 91.0% with 0 certified over T_f(1), edit-aware 85.9% (FPR 4.6%, mean certified over T_f(1) 18.0%).
   Full grid: about 70–80 min; command in `RUN_NEXT.md`. All 20 unit tests pass.
 
+- **2-33** `[A2, A5]` **2i grid run** (author, `results_tuning/`, grouped 3-fold CV, family split seed 0; fold means)
+  and **frozen settings** (`config.py`):
+  - MLP: lr 1e-3, 30 epochs (94.3% accuracy; 3e-4/60: 93.9%) → unchanged defaults.
+  - Per-view LightGBM main: 200 trees, 64 leaves (93.6%, FPR 0.30%, score 35.1; 200/31 had 95.0% but 31.7).
+  - Per-view LightGBM second: 200 trees, 64 leaves (93.2%, FPR 0.65%, score 67.2).
+  - aligned7 MLP views: 90 epochs (93.6%, FPR 1.98%; no setting met 1%, lowest FPR taken) → `ablation_configs`
+    gets a 4th field, view epochs.
+  - Uniform-ball CROWN-IBP: ε_train 0.1. Both settings certify 0.00% over T_f(1); the rule did not specify ties,
+    resolved by the higher validation accuracy (95.0 vs 94.7%) → `unc_train_eps` = 0.1.
+  - Box CROWN-IBP: ε_train 0.1 (0.01% vs 0.00% over T_f(1)) → new field `box_train_eps` = 0.1; `ibp_train_eps`
+    stays 0.05 as the reporting budget of the original C3 rule.
+  - Edit-aware CROWN-IBP: t_train 0.5, mean (92.3%, FPR 1.67%, certified over T_f(1) 65.8%; no setting met 1%,
+    lowest FPR taken; t 1.0 / mean certified 76.2% at FPR 2.49%).
+  - Observation for Stage 4: uniform and box CROWN-IBP certify essentially nothing over the edit-family sets; the
+    family sets are far larger than ε = 0.1 in standardised units (median ε needed by real edits 0.2–28).
+  Unit tests pass (20). No pilot run yet with the frozen settings (Stage 3 starts with one).
+
 ### Ideas not done
 - Execution check of edited binaries in a sandboxed VM (would turn "plausibly functionality-preserving" into
   "verified"); out of the lean scope.

@@ -1,0 +1,32 @@
+{
+ "chosen": {
+  "mlp": {
+   "lr": 0.001,
+   "epochs": 30
+  },
+  "lgbm_main": {
+   "n_estimators": 200,
+   "num_leaves": 64
+  },
+  "lgbm_second": {
+   "n_estimators": 200,
+   "num_leaves": 64
+  },
+  "abl_second_mlp": {
+   "epochs": 90
+  },
+  "crown_unc": {
+   "eps": 0.1
+  },
+  "crown_box": {
+   "eps": 0.1
+  },
+  "crown_edit": {
+   "t_train": 0.5,
+   "agg": "mean"
+  }
+ },
+ "split": "family",
+ "smoke": false,
+ "fpr_max": 0.01
+}

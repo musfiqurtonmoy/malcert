@@ -41,9 +41,10 @@ class Config:
     # ---- C2a: feature-group ablation certificates -------------------------
     # (name, partition, k). "main" was chosen on validation by the pre-registered rule (log 2-3, 2-5);
     # "second" is the declared coverage/accuracy operating point; "ember" is the negative baseline.
-    ablation_configs: tuple = (("main", "aligned5", 2), ("second", "aligned7", 1), ("ember", "ember", 1))
+    # 4th field: training epochs of the MLP views (None = cfg.epochs); "second": 90, tuned (log 2-33)
+    ablation_configs: tuple = (("main", "aligned5", 2, None), ("second", "aligned7", 1, 90), ("ember", "ember", 1, None))
     grouping: str = "aligned5"      # partition of the threat model's group attack (uniform attack table)
-    lgbm_view_params: tuple = ((200, 64), (200, 64))   # (n_estimators, num_leaves) per view: main, second (2i)
+    lgbm_view_params: tuple = ((200, 64), (200, 64))   # (n_estimators, num_leaves) per view: main, second (2i, frozen)
     giri_sigma: float = 0.3         # Giri et al. (2026) re-implementation: their sigma (Sec. 4.2, 4.3)
     giri_drop: float = 0.2          # share of groups removed per sample (their Sec. 3)
     group_attack_points: int = 500
@@ -64,8 +65,10 @@ class Config:
     ibp_warmup: int = 5             # clean epochs before the eps ramp
     ibp_ramp: int = 20              # epochs to ramp eps from 0 -> target
     cert_eps_list: tuple = (0.005, 0.01, 0.02, 0.05, 0.1)
-    unc_train_eps: float = 0.05     # uniform-ball CROWN-IBP training budget (tuned on validation, 2i)
-    edit_t_train: float = 1.0       # edit-aware CROWN-IBP (2h): family-set scale at the end of the ramp (2i)
+    # Frozen from the 2i grid (results_tuning/, grouped 3-fold CV on the family split; log 2-33):
+    unc_train_eps: float = 0.1      # uniform-ball CROWN-IBP training budget
+    box_train_eps: float = 0.1      # box-constrained CROWN-IBP training budget (ibp_train_eps stays the reporting budget)
+    edit_t_train: float = 0.5       # edit-aware CROWN-IBP (2h): family-set scale at the end of the ramp
     edit_agg: str = "mean"          # aggregation of the four family losses: mean or max (2i)
     family_scales: tuple = (0.25, 0.5, 1.0, 2.0)
 

@@ -105,12 +105,12 @@ def main():
             with torch.no_grad():
                 out = clean(m(Xva).argmax(1).cpu().numpy())
         elif model.startswith("lgbm_"):
-            _, part, k = cfg.ablation_configs[0 if model == "lgbm_main" else 1]
+            _, part, k, _ = cfg.ablation_configs[0 if model == "lgbm_main" else 1]
             gid, _ = partition(part)
             _, views = fit_lgbm_views(c["Xtr_raw"], c["ytr_np"], gid, k, p["n_estimators"], p["num_leaves"], 0)
             out = group_metric(lgbm_view_votes(views, c["Xva_raw"]), part, k)
         elif model == "abl_second_mlp":
-            _, part, k = cfg.ablation_configs[1]
+            _, part, k, _ = cfg.ablation_configs[1]
             gid, names = partition(part)
             net = fit(AblationNet(d, len(names), gid, cfg.hidden).to(dev), Xtr, ytr, cfg, "ablation", k=k,
                       epochs=1 if a.smoke else p["epochs"], seed=0, log=lambda s: None)
