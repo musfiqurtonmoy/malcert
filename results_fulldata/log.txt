@@ -1,0 +1,29 @@
+=== preset full | device cuda | split family | blocks clean,ablation | commit 1000b63 | Sat Nov 14 02:27:17 2026 ===
+seed 0: train 94331 / val 13313 / test 26791; mutable dims 2314; blocks clean,ablation
+  lightgbm {'acc': 0.9848456571236609, 'f1': 0.981829573934837, 'tpr': 0.9653260582592625, 'fpr': 0.00077780658542909, 'auc': 0.9993796702135672}  (139s)
+  group-transplant (aligned5 groups) on lightgbm: [0.972, 0.0, 0.0, 0.0]
+  lightgbm_mono {'acc': 0.9847710051883095, 'f1': 0.9817384298630383, 'tpr': 0.9651500484027106, 'fpr': 0.00077780658542909, 'auc': 0.9993468651615504}  (185s)
+  group-transplant (aligned5 groups) on lightgbm_mono: [0.972, 0.0, 0.0, 0.0]
+    [clean] epoch 1/30 loss 0.0326 (2s)
+    [clean] epoch 6/30 loss 0.0042 (8s)
+    [clean] epoch 11/30 loss 0.0022 (14s)
+    [clean] epoch 16/30 loss 0.0013 (20s)
+    [clean] epoch 21/30 loss 0.0005 (26s)
+    [clean] epoch 26/30 loss 0.0002 (32s)
+    [clean] epoch 30/30 loss 0.0001 (36s)
+  MLP {'acc': 0.9699152700533762, 'f1': 0.9633769538349691, 'tpr': 0.9329402446537006, 'fpr': 0.002851957479906663, 'auc': 0.996691010703859}
+  group-transplant (aligned5 groups) on mlp: [0.954, 0.002, 0.0, 0.0]
+  [block clean done in 428s]
+    [ablation] epoch 1/30 loss 0.1257 (2s)
+    [ablation] epoch 6/30 loss 0.0483 (8s)
+    [ablation] epoch 11/30 loss 0.0357 (14s)
+    [ablation] epoch 16/30 loss 0.0290 (20s)
+    [ablation] epoch 21/30 loss 0.0221 (27s)
+    [ablation] epoch 26/30 loss 0.0187 (33s)
+    [ablation] epoch 30/30 loss 0.0182 (38s)
+  ablation main (aligned5, k=2): acc 0.9712 cert_exact [0.9208, 0.6062, 0.0, 0.0] violations 0
+  group-transplant (aligned5 groups) on ablation_main: [0.93, 0.724, 0.0, 0.0]
+  ablation lgbm_main (aligned5, k=2): acc 0.9749 cert_exact [0.9064, 0.6599, 0.0, 0.0] violations 0
+  group-transplant (aligned5 groups) on ablation_lgbm_main: [0.938, 0.828, 0.0, 0.0]
+  [block ablation done in 418s]
+done

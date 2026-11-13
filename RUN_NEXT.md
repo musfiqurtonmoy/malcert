@@ -1,5 +1,20 @@
 # Run next (started by the author from a terminal)
 
+## Stage 3: remaining run (2026-11-14)
+
+Runs 1, 3, 4, 5, 6 below finished (exit code 0). Run 2 was refused at start by a bug in the resume check
+(REVISION_LOG 3-10), so it goes into a **new folder** with the unchanged code (about 50 min):
+
+```powershell
+cd "D:\Users\Public\Downloads\VS code\malcert_release"; $env:GIT_EXE = "D:\malcert_envs\git\Library\cmd\git.exe"; $py = "C:\Users\USER\miniconda3\envs\malcert\python.exe"
+& $py run_all.py --preset full --split family --seeds 3,4 --blocks clean,attacks,ablation,certified --out_dir results_family_s34
+```
+
+- Do not change `run_all.py` or `malcert/` before it finishes (the code hash must equal that of `results_family`).
+- Resume does **not** work until the bug is fixed: if the run stops, delete `results_family_s34` and start the line again.
+- When it is done, tell Claude: it runs
+  `python tools/stats.py --family results_family results_family_s34 --random results_random` (seeds 0–4 pooled).
+
 ## Stage 3 final runs (about 6.5–7 h in total; run them one at a time, in this order)
 
 Rules for every run:

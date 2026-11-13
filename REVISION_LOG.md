@@ -607,6 +607,27 @@ carry a **Basis:** line saying what they were fixed from.
 - **3-9** Final run set in `RUN_NEXT.md` (6 runs, about 6.5–7 h). The full-data mode has not been run end to end;
   its run is last so that a failure blocks nothing else.
 
+- **3-10** `[A5, B6]` **Stage 3 runs (2026-11-13/14, `run_stage3.ps1`, commit `1000b63`).** Runs 1, 3, 4, 5, 6 finished
+  (exit 0): `results_family` (seeds 0–2, all blocks), `results_random`, `results_cut_2019-12`, `results_cut_2020-04`,
+  `results_fulldata`. **Every `violations` and `corpus_violations` count is 0** (15 fields per seed; 2 for full data).
+  **Run 2 (family seeds 3–4) was refused at start:** the resume check compares the live configuration with the stored
+  one, but `cfg_dict` turns only top-level tuples into lists, so the nested `ablation_configs` and `lgbm_view_params`
+  (lists of tuples) never equal their JSON copy (lists of lists). Every resume into a folder fails; no stored result is
+  affected. **Not fixed yet, on purpose:** any edit of `run_all.py` changes the code hash, and seeds 3–4 must come from
+  the same code as seeds 0–2. They run into a new folder `results_family_s34` (`RUN_NEXT.md`); fix after that run
+  (compare `json.loads(json.dumps(cfg_dict))`), with a test.
+- **3-11** `[A5, B6, B7]` **Analysis-tool fixes** (tools only; not in the code hash). `tools/stats.py --family` takes several
+  folders and pools their seeds (refuses if configuration or code hash differ, or a seed repeats).
+  `tools/temporal_decay.py`: bins were listed in sample order, not by month, so the update-frequency "first month" was
+  wrong (2020-05 instead of 2020-01 for cut-off 2019-12); now chronological.
+- **3-12** `[A5, B7, Am4, Am5]` **Temporal decay** (`results_temporal_decay/`, 3 seeds, final). First-month certified
+  detection, cut-off 2019-12 (2020-01) / 2020-04 (2020-05): MLP views main at r = 1 79.3 / 84.1%, LightGBM views main 94.4 /
+  94.6%, edit-aware CROWN-IBP over T_f(1) 81.6 / 88.0%. Below 90% of the first month: MLP views after 1 month (2020-02,
+  then recovers), the others at 2020-07 under both cut-offs. 2020-07 is a dip for every model under both cut-offs
+  (cut-off 2019-12: 46.0 / 68.4 / 57.2%), partly recovered in 2020-08/09. Retraining at 2020-04 recovers 8–16 points
+  on the same months (2020-09: 52.9 → 68.5, 74.8 → 87.8, 61.9 → 73.4%). Clean TPR: drift effect −0.3 to −5.9 points,
+  composition effect +0.2 to +0.8 (category mix explains almost none of the drop).
+
 ### Ideas not done
 - Execution check of edited binaries in a sandboxed VM (would turn "plausibly functionality-preserving" into
   "verified"); out of the lean scope.

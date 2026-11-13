@@ -48,7 +48,7 @@ def main():
             S, seed = dict(np.load(f)), os.path.basename(f)[12:-4]
             y, cat, b = S["y"], S["category"], bins(S["month"], S["y"])
             vy, vc = S["val_y"], S["val_category"]
-            for lab in [x for x in dict.fromkeys(b) if x != "unknown"]:
+            for lab in sorted(set(b) - {"unknown"}):      # chronological: labels start with YYYY-MM
                 m = b == lab
                 r = dict(cutoff=cfg["cutoff"], seed=seed, bin=lab, n_malware=int((y[m] == 1).sum()), n_benign=int((y[m] == 0).sum()))
                 for k in CLEAN:
@@ -78,7 +78,7 @@ def main():
     D, C = pd.DataFrame(rows), pd.DataFrame(comp)
     D.to_csv(os.path.join(a.out, "decay.csv"), index=False)
     C.to_csv(os.path.join(a.out, "composition.csv"), index=False)
-    M = D.groupby(["cutoff", "bin"], sort=False).mean(numeric_only=True).reset_index()
+    M = D.groupby(["cutoff", "bin"], sort=True).mean(numeric_only=True).reset_index()   # first bin = first test month
     upd = []
     for cut, g in M.groupby("cutoff", sort=False):
         for k in [c for c in g.columns if c.startswith("cert_")]:

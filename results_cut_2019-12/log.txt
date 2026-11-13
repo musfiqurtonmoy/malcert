@@ -1,0 +1,335 @@
+=== preset full | device cuda | split cutoff | blocks clean,ablation,certified | commit 1000b63 | Sat Nov 14 01:06:38 2026 ===
+seed 0: train 9475 / val 1053 / test 19472; mutable dims 2314; blocks clean,ablation,certified
+  lightgbm {'acc': 0.9885476581758422, 'f1': 0.9878665868654443, 'tpr': 0.9814054054054054, 'fpr': 0.00498923889649775, 'auc': 0.9992251793957918}  (36s)
+  group-transplant (aligned5 groups) on lightgbm: [0.986, 0.0, 0.0, 0.0]
+  lightgbm_mono {'acc': 0.9881368118323747, 'f1': 0.9874299395984111, 'tpr': 0.9808648648648649, 'fpr': 0.005282723537468206, 'auc': 0.9992269244396029}  (51s)
+  group-transplant (aligned5 groups) on lightgbm_mono: [0.982, 0.0, 0.0, 0.0]
+    [clean] epoch 1/30 loss 0.1447 (1s)
+    [clean] epoch 6/30 loss 0.0079 (1s)
+    [clean] epoch 11/30 loss 0.0011 (2s)
+    [clean] epoch 16/30 loss 0.0023 (3s)
+    [clean] epoch 21/30 loss 0.0002 (3s)
+    [clean] epoch 26/30 loss 0.0002 (4s)
+    [clean] epoch 30/30 loss 0.0002 (4s)
+  MLP {'acc': 0.9793036154478225, 'f1': 0.978065639797529, 'tpr': 0.9713513513513513, 'fpr': 0.01350029348464097, 'auc': 0.9949553480304799}
+  group-transplant (aligned5 groups) on mlp: [0.982, 0.006, 0.0, 0.0]
+  [block clean done in 128s]
+    [ablation] epoch 1/30 loss 0.3209 (0s)
+    [ablation] epoch 6/30 loss 0.1056 (1s)
+    [ablation] epoch 11/30 loss 0.0836 (2s)
+    [ablation] epoch 16/30 loss 0.0725 (2s)
+    [ablation] epoch 21/30 loss 0.0565 (3s)
+    [ablation] epoch 26/30 loss 0.0580 (4s)
+    [ablation] epoch 30/30 loss 0.0524 (4s)
+  ablation main (aligned5, k=2): acc 0.9749 cert_exact [0.9015, 0.6557, 0.0, 0.0] violations 0
+  group-transplant (aligned5 groups) on ablation_main: [0.954, 0.75, 0.0, 0.0]
+    [ablation] epoch 1/90 loss 0.4619 (0s)
+    [ablation] epoch 6/90 loss 0.2797 (1s)
+    [ablation] epoch 11/90 loss 0.2603 (1s)
+    [ablation] epoch 16/90 loss 0.2985 (2s)
+    [ablation] epoch 21/90 loss 0.2466 (3s)
+    [ablation] epoch 26/90 loss 0.2269 (3s)
+    [ablation] epoch 31/90 loss 0.2296 (4s)
+    [ablation] epoch 36/90 loss 0.2177 (4s)
+    [ablation] epoch 41/90 loss 0.2220 (5s)
+    [ablation] epoch 46/90 loss 0.2171 (6s)
+    [ablation] epoch 51/90 loss 0.2083 (6s)
+    [ablation] epoch 56/90 loss 0.2017 (7s)
+    [ablation] epoch 61/90 loss 0.1972 (7s)
+    [ablation] epoch 66/90 loss 0.1955 (8s)
+    [ablation] epoch 71/90 loss 0.1962 (9s)
+    [ablation] epoch 76/90 loss 0.1951 (9s)
+    [ablation] epoch 81/90 loss 0.1931 (10s)
+    [ablation] epoch 86/90 loss 0.1952 (10s)
+    [ablation] epoch 90/90 loss 0.1934 (11s)
+  ablation second (aligned7, k=1): acc 0.9528 cert_exact [0.9199, 0.8829, 0.7423, 0.3925, 0.0, 0.0] violations 0
+  group-transplant (aligned5 groups) on ablation_second: [0.912, 0.582, 0.0, 0.0]
+    [ablation] epoch 1/30 loss 0.4984 (0s)
+    [ablation] epoch 6/30 loss 0.2973 (1s)
+    [ablation] epoch 11/30 loss 0.2654 (1s)
+    [ablation] epoch 16/30 loss 0.2380 (2s)
+    [ablation] epoch 21/30 loss 0.2187 (3s)
+    [ablation] epoch 26/30 loss 0.2129 (3s)
+    [ablation] epoch 30/30 loss 0.2036 (4s)
+  ablation ember (ember, k=1): acc 0.9278 cert_exact [0.8533, 0.7872, 0.6286, 0.4308, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0] violations 0
+  group-transplant (aligned5 groups) on ablation_ember: [0.85, 0.0, 0.0, 0.0]
+  ablation lgbm_main (aligned5, k=2): acc 0.9858 cert_exact [0.9504, 0.8608, 0.0, 0.0] violations 0
+  group-transplant (aligned5 groups) on ablation_lgbm_main: [0.978, 0.876, 0.0, 0.0]
+  ablation lgbm_second (aligned7, k=1): acc 0.9681 cert_exact [0.9408, 0.9204, 0.8995, 0.6908, 0.0, 0.0] violations 0
+  group-transplant (aligned5 groups) on ablation_lgbm_second: [0.934, 0.862, 0.0, 0.0]
+  [block ablation done in 445s]
+    [clean] epoch 1/30 loss 0.1602 (0s)
+    [clean] epoch 6/30 loss 0.0061 (1s)
+    [clean] epoch 11/30 loss 0.0007 (1s)
+    [clean] epoch 16/30 loss 0.0003 (2s)
+    [clean] epoch 21/30 loss 0.0002 (2s)
+    [clean] epoch 26/30 loss 0.0002 (2s)
+    [clean] epoch 30/30 loss 0.0002 (3s)
+  group-transplant (aligned5 groups) on ct_standard: [0.97, 0.002, 0.0, 0.0]
+  certified training standard: {'clean': {'acc': 0.9776602300739523, 'f1': 0.9762593461769361, 'tpr': 0.9669189189189189, 'fpr': 0.012619839561729603, 'auc': 0.9950685960858138}, 'cert_tpr': [0.9576216216216217, 0.9067027027027027, 0.6738378378378378, 0.0667027027027027, 0.0006486486486486486], 'cert_acc': [0.9700595727198028, 0.9383730484798686, 0.7826109285127363, 0.1900164338537387, 0.004776088742810189], 'cert_tpr_unconstrained': [0.9571891891891892, 0.8995675675675676, 0.6291891891891892, 0.04972972972972973, 0.0006486486486486486], 'pgd_tpr': [0.965, 0.954, 0.9245, 0.638, 0.2345], 'violations': 0, 'family_cert': {'F_content': [0.0, 0.0, 0.0, 0.0], 'F_section': [0.0, 0.0, 0.0, 0.0], 'F_import': [0.0, 0.0, 0.0, 0.0], 'F_strip': [0.0012972972972972972, 0.0, 0.0, 0.0], 'all_families': [0.0, 0.0, 0.0, 0.0], 'mean_over_families_t1': 0.0}, 'family_scales': [0.25, 0.5, 1.0, 2.0], 'corpus_violations': 0, 'corpus_checked': 4336}
+    [pgd] epoch 1/30 loss 0.2724 (1s)
+    [pgd] epoch 6/30 loss 0.0213 (5s)
+    [pgd] epoch 11/30 loss 0.0426 (8s)
+    [pgd] epoch 16/30 loss 0.0052 (12s)
+    [pgd] epoch 21/30 loss 0.0027 (16s)
+    [pgd] epoch 26/30 loss 0.0050 (20s)
+    [pgd] epoch 30/30 loss 0.0022 (23s)
+  group-transplant (aligned5 groups) on ct_pgd_at: [0.984, 0.036, 0.0, 0.0]
+  certified training pgd_at: {'clean': {'acc': 0.9844391947411668, 'f1': 0.9834958331063783, 'tpr': 0.976, 'fpr': 0.00792408530620231, 'auc': 0.9974515433061706}, 'cert_tpr': [0.9703783783783784, 0.9370810810810811, 0.8017297297297298, 0.011567567567567568, 0.0], 'cert_acc': [0.9803307313064914, 0.9592748562037798, 0.8668344289235825, 0.1063064913722268, 0.00010271158586688578], 'cert_tpr_unconstrained': [0.9695135135135136, 0.9340540540540541, 0.742054054054054, 0.008864864864864866, 0.0], 'pgd_tpr': [0.977, 0.975, 0.973, 0.939, 0.898], 'violations': 0, 'family_cert': {'F_content': [0.0, 0.0, 0.0, 0.0], 'F_section': [0.0, 0.0, 0.0, 0.0], 'F_import': [0.0, 0.0, 0.0, 0.0], 'F_strip': [0.0006486486486486486, 0.0, 0.0, 0.0], 'all_families': [0.0, 0.0, 0.0, 0.0], 'mean_over_families_t1': 0.0}, 'family_scales': [0.25, 0.5, 1.0, 2.0], 'corpus_violations': 0, 'corpus_checked': 4336}
+    [crownibp] epoch 1/40 loss 0.1581 (0s)
+    [crownibp] epoch 6/40 loss 0.0044 (1s)
+    [crownibp] epoch 11/40 loss 0.0538 (3s)
+    [crownibp] epoch 16/40 loss 0.0328 (4s)
+    [crownibp] epoch 21/40 loss 0.0901 (6s)
+    [crownibp] epoch 26/40 loss 0.0917 (8s)
+    [crownibp] epoch 31/40 loss 0.0461 (8s)
+    [crownibp] epoch 36/40 loss 0.0390 (9s)
+    [crownibp] epoch 40/40 loss 0.0377 (10s)
+  group-transplant (aligned5 groups) on ct_crownibp: [0.98, 0.006, 0.0, 0.0]
+  certified training crownibp: {'clean': {'acc': 0.9849527526705012, 'f1': 0.9840665615313503, 'tpr': 0.9781621621621621, 'fpr': 0.008902367442770495, 'auc': 0.9975145922678695}, 'cert_tpr': [0.9777297297297297, 0.9765405405405405, 0.9742702702702702, 0.9381621621621622, 0.8927567567567568], 'cert_acc': [0.9843878389482333, 0.9834634346754314, 0.9815119145439606, 0.9611236647493837, 0.9255854560394412], 'cert_tpr_unconstrained': [0.9772972972972973, 0.9764324324324324, 0.9717837837837838, 0.9314594594594594, 0.7491891891891892], 'pgd_tpr': [0.9805, 0.98, 0.979, 0.94, 0.9105], 'violations': 0, 'family_cert': {'F_content': [0.25308108108108107, 0.0, 0.0, 0.0], 'F_section': [0.0, 0.0, 0.0, 0.0], 'F_import': [0.0, 0.0, 0.0, 0.0], 'F_strip': [0.9094054054054054, 0.21113513513513513, 0.0, 0.0], 'all_families': [0.0, 0.0, 0.0, 0.0], 'mean_over_families_t1': 0.0}, 'family_scales': [0.25, 0.5, 1.0, 2.0], 'corpus_violations': 0, 'corpus_checked': 4336}
+    [crownibp] epoch 1/40 loss 0.1658 (0s)
+    [crownibp] epoch 6/40 loss 0.0046 (1s)
+    [crownibp] epoch 11/40 loss 0.0511 (2s)
+    [crownibp] epoch 16/40 loss 0.0410 (4s)
+    [crownibp] epoch 21/40 loss 0.1101 (6s)
+    [crownibp] epoch 26/40 loss 0.1091 (7s)
+    [crownibp] epoch 31/40 loss 0.0686 (8s)
+    [crownibp] epoch 36/40 loss 0.0582 (9s)
+    [crownibp] epoch 40/40 loss 0.0566 (10s)
+  group-transplant (aligned5 groups) on ct_crownibp_unc: [0.984, 0.004, 0.0, 0.0]
+  certified training crownibp_unc: {'clean': {'acc': 0.9852608874281019, 'f1': 0.9843843517057511, 'tpr': 0.977945945945946, 'fpr': 0.008119741733515946, 'auc': 0.9976045413443181}, 'cert_tpr': [0.9766486486486486, 0.9572972972972973, 0.9494054054054054, 0.9361081081081081, 0.8947027027027027], 'cert_acc': [0.9846446179129006, 0.9750924404272802, 0.9702136400986031, 0.9606101068200493, 0.9286668036154478], 'cert_tpr_unconstrained': [0.9765405405405405, 0.9567567567567568, 0.9460540540540541, 0.9322162162162162, 0.8681081081081081], 'pgd_tpr': [0.9805, 0.9595, 0.9505, 0.9405, 0.9045], 'violations': 0, 'family_cert': {'F_content': [0.4749189189189189, 0.0014054054054054054, 0.0, 0.0], 'F_section': [0.0, 0.0, 0.0, 0.0], 'F_import': [0.0, 0.0, 0.0, 0.0], 'F_strip': [0.9023783783783784, 0.208972972972973, 0.0, 0.0], 'all_families': [0.0, 0.0, 0.0, 0.0], 'mean_over_families_t1': 0.0}, 'family_scales': [0.25, 0.5, 1.0, 2.0], 'corpus_violations': 0, 'corpus_checked': 4336}
+    [crownibp] epoch 1/40 loss 0.1630 (0s)
+    [crownibp] epoch 6/40 loss 0.0444 (1s)
+    [crownibp] epoch 11/40 loss 0.1201 (7s)
+    [crownibp] epoch 16/40 loss 0.1242 (12s)
+    [crownibp] epoch 21/40 loss 0.2022 (18s)
+    [crownibp] epoch 26/40 loss 0.1621 (22s)
+    [crownibp] epoch 31/40 loss 0.1244 (25s)
+    [crownibp] epoch 36/40 loss 0.1085 (27s)
+    [crownibp] epoch 40/40 loss 0.1042 (29s)
+  group-transplant (aligned5 groups) on ct_crownibp_edit: [0.972, 0.082, 0.0, 0.0]
+  certified training crownibp_edit: {'clean': {'acc': 0.9763249794576828, 'f1': 0.9748814907644526, 'tpr': 0.9671351351351352, 'fpr': 0.015359029544120524, 'auc': 0.9952725811313172}, 'cert_tpr': [0.9464864864864865, 0.9435675675675675, 0.9302702702702703, 0.855027027027027, 0.7296216216216216], 'cert_acc': [0.9659511092851274, 0.9639995891536566, 0.955474527526705, 0.9117707477403451, 0.8263147082990961], 'cert_tpr_unconstrained': [0.9454054054054054, 0.936972972972973, 0.916, 0.8031351351351351, 0.5175135135135135], 'pgd_tpr': [0.9495, 0.9485, 0.936, 0.871, 0.7705], 'violations': 0, 'family_cert': {'F_content': [0.9050810810810811, 0.8244324324324325, 0.5797837837837838, 0.09751351351351352], 'F_section': [0.9347027027027027, 0.8998918918918919, 0.8076756756756757, 0.5379459459459459], 'F_import': [0.8862702702702703, 0.8148108108108109, 0.6247567567567568, 0.12248648648648648], 'F_strip': [0.9473513513513514, 0.9463783783783783, 0.9444324324324325, 0.9352432432432433], 'all_families': [0.880972972972973, 0.8014054054054054, 0.564972972972973, 0.0932972972972973], 'mean_over_families_t1': 0.7391621621621622}, 'family_scales': [0.25, 0.5, 1.0, 2.0], 'corpus_violations': 0, 'corpus_checked': 4336}
+  [block certified done in 133s]
+seed 1: train 9475 / val 1053 / test 19472; mutable dims 2314; blocks clean,ablation,certified
+  lightgbm {'acc': 0.9870583401807724, 'f1': 0.9862640357571133, 'tpr': 0.9780540540540541, 'fpr': 0.004793582469184113, 'auc': 0.9990706742743526}  (35s)
+  group-transplant (aligned5 groups) on lightgbm: [0.984, 0.0, 0.0, 0.0]
+  lightgbm_mono {'acc': 0.9878800328677074, 'f1': 0.9871389645776567, 'tpr': 0.9791351351351352, 'fpr': 0.004206613187243201, 'auc': 0.9991203921589364}  (51s)
+  group-transplant (aligned5 groups) on lightgbm_mono: [0.984, 0.0, 0.0, 0.0]
+    [clean] epoch 1/30 loss 0.1437 (0s)
+    [clean] epoch 6/30 loss 0.0051 (1s)
+    [clean] epoch 11/30 loss 0.0009 (2s)
+    [clean] epoch 16/30 loss 0.0004 (2s)
+    [clean] epoch 21/30 loss 0.0002 (3s)
+    [clean] epoch 26/30 loss 0.0002 (4s)
+    [clean] epoch 30/30 loss 0.0002 (4s)
+  MLP {'acc': 0.981101068200493, 'f1': 0.9799673380511704, 'tpr': 0.973081081081081, 'fpr': 0.011641557425161417, 'auc': 0.9959829302987198}
+  group-transplant (aligned5 groups) on mlp: [0.984, 0.0, 0.0, 0.0]
+  [block clean done in 123s]
+    [ablation] epoch 1/30 loss 0.3105 (0s)
+    [ablation] epoch 6/30 loss 0.0911 (1s)
+    [ablation] epoch 11/30 loss 0.0773 (2s)
+    [ablation] epoch 16/30 loss 0.0625 (2s)
+    [ablation] epoch 21/30 loss 0.0523 (3s)
+    [ablation] epoch 26/30 loss 0.0452 (3s)
+    [ablation] epoch 30/30 loss 0.0440 (4s)
+  ablation main (aligned5, k=2): acc 0.9678 cert_exact [0.936, 0.7084, 0.0, 0.0] violations 0
+  group-transplant (aligned5 groups) on ablation_main: [0.96, 0.822, 0.0, 0.0]
+    [ablation] epoch 1/90 loss 0.4667 (0s)
+    [ablation] epoch 6/90 loss 0.3082 (1s)
+    [ablation] epoch 11/90 loss 0.2625 (1s)
+    [ablation] epoch 16/90 loss 0.2561 (2s)
+    [ablation] epoch 21/90 loss 0.2395 (3s)
+    [ablation] epoch 26/90 loss 0.2249 (3s)
+    [ablation] epoch 31/90 loss 0.2187 (4s)
+    [ablation] epoch 36/90 loss 0.2100 (4s)
+    [ablation] epoch 41/90 loss 0.2085 (5s)
+    [ablation] epoch 46/90 loss 0.2055 (6s)
+    [ablation] epoch 51/90 loss 0.2104 (6s)
+    [ablation] epoch 56/90 loss 0.1957 (7s)
+    [ablation] epoch 61/90 loss 0.2050 (7s)
+    [ablation] epoch 66/90 loss 0.1868 (8s)
+    [ablation] epoch 71/90 loss 0.1908 (9s)
+    [ablation] epoch 76/90 loss 0.1923 (9s)
+    [ablation] epoch 81/90 loss 0.1872 (10s)
+    [ablation] epoch 86/90 loss 0.1897 (10s)
+    [ablation] epoch 90/90 loss 0.1908 (11s)
+  ablation second (aligned7, k=1): acc 0.9578 cert_exact [0.931, 0.8851, 0.7674, 0.3906, 0.0, 0.0] violations 0
+  group-transplant (aligned5 groups) on ablation_second: [0.962, 0.588, 0.0, 0.0]
+    [ablation] epoch 1/30 loss 0.4858 (0s)
+    [ablation] epoch 6/30 loss 0.2855 (1s)
+    [ablation] epoch 11/30 loss 0.2467 (2s)
+    [ablation] epoch 16/30 loss 0.2410 (2s)
+    [ablation] epoch 21/30 loss 0.2048 (3s)
+    [ablation] epoch 26/30 loss 0.2022 (3s)
+    [ablation] epoch 30/30 loss 0.2016 (4s)
+  ablation ember (ember, k=1): acc 0.9372 cert_exact [0.8737, 0.7945, 0.6778, 0.4477, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0] violations 0
+  group-transplant (aligned5 groups) on ablation_ember: [0.892, 0.0, 0.0, 0.0]
+  ablation lgbm_main (aligned5, k=2): acc 0.9852 cert_exact [0.9599, 0.8585, 0.0, 0.0] violations 0
+  group-transplant (aligned5 groups) on ablation_lgbm_main: [0.978, 0.906, 0.0, 0.0]
+  ablation lgbm_second (aligned7, k=1): acc 0.9686 cert_exact [0.9404, 0.9148, 0.8939, 0.6608, 0.0, 0.0] violations 0
+  group-transplant (aligned5 groups) on ablation_lgbm_second: [0.96, 0.89, 0.0, 0.0]
+  [block ablation done in 410s]
+    [clean] epoch 1/30 loss 0.1545 (0s)
+    [clean] epoch 6/30 loss 0.0032 (1s)
+    [clean] epoch 11/30 loss 0.0007 (1s)
+    [clean] epoch 16/30 loss 0.0004 (1s)
+    [clean] epoch 21/30 loss 0.0002 (2s)
+    [clean] epoch 26/30 loss 0.0002 (2s)
+    [clean] epoch 30/30 loss 0.0002 (3s)
+  group-transplant (aligned5 groups) on ct_standard: [0.986, 0.0, 0.0, 0.0]
+  certified training standard: {'clean': {'acc': 0.9808956450287593, 'f1': 0.9797716150081566, 'tpr': 0.973945945945946, 'fpr': 0.01281549598904324, 'auc': 0.9958894594065792}, 'cert_tpr': [0.969081081081081, 0.9445405405405405, 0.7102702702702702, 0.09005405405405405, 0.0019459459459459458], 'cert_acc': [0.9763763352506163, 0.9574260476581758, 0.8001746096959738, 0.213588742810189, 0.003851684470008217], 'cert_tpr_unconstrained': [0.9687567567567568, 0.9370810810810811, 0.6611891891891892, 0.07297297297297298, 0.0018378378378378379], 'pgd_tpr': [0.973, 0.9685, 0.9445, 0.688, 0.259], 'violations': 0, 'family_cert': {'F_content': [0.00010810810810810811, 0.0, 0.0, 0.0], 'F_section': [0.0, 0.0, 0.0, 0.0], 'F_import': [0.0, 0.0, 0.0, 0.0], 'F_strip': [0.011351351351351352, 0.0006486486486486486, 0.0, 0.0], 'all_families': [0.0, 0.0, 0.0, 0.0], 'mean_over_families_t1': 0.0}, 'family_scales': [0.25, 0.5, 1.0, 2.0], 'corpus_violations': 0, 'corpus_checked': 4336}
+    [pgd] epoch 1/30 loss 0.2610 (1s)
+    [pgd] epoch 6/30 loss 0.0191 (5s)
+    [pgd] epoch 11/30 loss 0.0082 (8s)
+    [pgd] epoch 16/30 loss 0.0027 (12s)
+    [pgd] epoch 21/30 loss 0.0012 (16s)
+    [pgd] epoch 26/30 loss 0.0008 (20s)
+    [pgd] epoch 30/30 loss 0.0008 (23s)
+  group-transplant (aligned5 groups) on ct_pgd_at: [0.986, 0.028, 0.0, 0.0]
+  certified training pgd_at: {'clean': {'acc': 0.9848500410846344, 'f1': 0.9839333369642176, 'tpr': 0.9765405405405405, 'fpr': 0.007630600665231853, 'auc': 0.9985545167550645}, 'cert_tpr': [0.9731891891891892, 0.9562162162162162, 0.778054054054054, 0.01772972972972973, 0.0], 'cert_acc': [0.9813064913722268, 0.9676972062448644, 0.8414646672144618, 0.10111955628594906, 0.00015406737880032867], 'cert_tpr_unconstrained': [0.9716756756756757, 0.9532972972972973, 0.6761081081081081, 0.00908108108108108, 0.0], 'pgd_tpr': [0.974, 0.9735, 0.97, 0.958, 0.894], 'violations': 0, 'family_cert': {'F_content': [0.0, 0.0, 0.0, 0.0], 'F_section': [0.0, 0.0, 0.0, 0.0], 'F_import': [0.0, 0.0, 0.0, 0.0], 'F_strip': [0.0006486486486486486, 0.0, 0.0, 0.0], 'all_families': [0.0, 0.0, 0.0, 0.0], 'mean_over_families_t1': 0.0}, 'family_scales': [0.25, 0.5, 1.0, 2.0], 'corpus_violations': 0, 'corpus_checked': 4336}
+    [crownibp] epoch 1/40 loss 0.1536 (0s)
+    [crownibp] epoch 6/40 loss 0.0037 (1s)
+    [crownibp] epoch 11/40 loss 0.0199 (2s)
+    [crownibp] epoch 16/40 loss 0.0301 (4s)
+    [crownibp] epoch 21/40 loss 0.0516 (6s)
+    [crownibp] epoch 26/40 loss 0.0461 (7s)
+    [crownibp] epoch 31/40 loss 0.0276 (8s)
+    [crownibp] epoch 36/40 loss 0.0223 (9s)
+    [crownibp] epoch 40/40 loss 0.0213 (10s)
+  group-transplant (aligned5 groups) on ct_crownibp: [0.98, 0.012, 0.0, 0.0]
+  certified training crownibp: {'clean': {'acc': 0.9853635990139687, 'f1': 0.9844965457215906, 'tpr': 0.9782702702702702, 'fpr': 0.008217569947172765, 'auc': 0.9985502599057677}, 'cert_tpr': [0.9772972972972973, 0.9768648648648649, 0.9751351351351352, 0.9652972972972973, 0.8922162162162162], 'cert_acc': [0.9845419063270336, 0.9840283483976993, 0.9826417419884963, 0.9749897288414133, 0.9281532456861133], 'cert_tpr_unconstrained': [0.9771891891891892, 0.9762162162162162, 0.9738378378378378, 0.9502702702702702, 0.7470270270270271], 'pgd_tpr': [0.9765, 0.976, 0.976, 0.966, 0.931], 'violations': 0, 'family_cert': {'F_content': [0.3092972972972973, 0.0, 0.0, 0.0], 'F_section': [0.0, 0.0, 0.0, 0.0], 'F_import': [0.0, 0.0, 0.0, 0.0], 'F_strip': [0.907027027027027, 0.13102702702702704, 0.0, 0.0], 'all_families': [0.0, 0.0, 0.0, 0.0], 'mean_over_families_t1': 0.0}, 'family_scales': [0.25, 0.5, 1.0, 2.0], 'corpus_violations': 0, 'corpus_checked': 4336}
+    [crownibp] epoch 1/40 loss 0.1585 (0s)
+    [crownibp] epoch 6/40 loss 0.0040 (1s)
+    [crownibp] epoch 11/40 loss 0.0211 (2s)
+    [crownibp] epoch 16/40 loss 0.0405 (4s)
+    [crownibp] epoch 21/40 loss 0.0743 (6s)
+    [crownibp] epoch 26/40 loss 0.0759 (7s)
+    [crownibp] epoch 31/40 loss 0.0504 (8s)
+    [crownibp] epoch 36/40 loss 0.0429 (9s)
+    [crownibp] epoch 40/40 loss 0.0415 (10s)
+  group-transplant (aligned5 groups) on ct_crownibp_unc: [0.988, 0.0, 0.0, 0.0]
+  certified training crownibp_unc: {'clean': {'acc': 0.9861339359079704, 'f1': 0.985310119695321, 'tpr': 0.9789189189189189, 'fpr': 0.007337116024261397, 'auc': 0.9984966288926375}, 'cert_tpr': [0.9782702702702702, 0.9775135135135136, 0.9738378378378378, 0.9403243243243243, 0.9062702702702703], 'cert_acc': [0.9854663105998357, 0.9849527526705012, 0.9827444535743632, 0.9635373870172556, 0.9359593262119967], 'cert_tpr_unconstrained': [0.9782702702702702, 0.9771891891891892, 0.952972972972973, 0.9375135135135135, 0.8758918918918919], 'pgd_tpr': [0.9785, 0.977, 0.9735, 0.94, 0.9165], 'violations': 0, 'family_cert': {'F_content': [0.5669189189189189, 0.0015135135135135136, 0.0, 0.0], 'F_section': [0.0, 0.0, 0.0, 0.0], 'F_import': [0.0, 0.0, 0.0, 0.0], 'F_strip': [0.9178378378378378, 0.3038918918918919, 0.0, 0.0], 'all_families': [0.0, 0.0, 0.0, 0.0], 'mean_over_families_t1': 0.0}, 'family_scales': [0.25, 0.5, 1.0, 2.0], 'corpus_violations': 0, 'corpus_checked': 4336}
+    [crownibp] epoch 1/40 loss 0.1563 (0s)
+    [crownibp] epoch 6/40 loss 0.0405 (1s)
+    [crownibp] epoch 11/40 loss 0.1037 (7s)
+    [crownibp] epoch 16/40 loss 0.1371 (12s)
+    [crownibp] epoch 21/40 loss 0.1759 (17s)
+    [crownibp] epoch 26/40 loss 0.1405 (22s)
+    [crownibp] epoch 31/40 loss 0.1111 (25s)
+    [crownibp] epoch 36/40 loss 0.1017 (27s)
+    [crownibp] epoch 40/40 loss 0.0983 (29s)
+  group-transplant (aligned5 groups) on ct_crownibp_edit: [0.966, 0.086, 0.002, 0.0]
+  certified training crownibp_edit: {'clean': {'acc': 0.9682107641741988, 'f1': 0.9659684424652263, 'tpr': 0.9497297297297297, 'fpr': 0.015065544903150069, 'auc': 0.9958051896545344}, 'cert_tpr': [0.9477837837837838, 0.9463783783783783, 0.9410810810810811, 0.8830270270270271, 0.7606486486486487], 'cert_acc': [0.9669782251437962, 0.9655916187345933, 0.9616885784716516, 0.9267666392769104, 0.8459839769926047], 'cert_tpr_unconstrained': [0.9467027027027027, 0.944, 0.9265945945945946, 0.8192432432432433, 0.5109189189189189], 'pgd_tpr': [0.9455, 0.944, 0.941, 0.903, 0.8], 'violations': 0, 'family_cert': {'F_content': [0.9122162162162162, 0.8311351351351352, 0.5825945945945946, 0.0891891891891892], 'F_section': [0.9384864864864865, 0.9047567567567567, 0.8059459459459459, 0.5205405405405406], 'F_import': [0.9104864864864864, 0.8260540540540541, 0.6086486486486486, 0.104], 'F_strip': [0.9483243243243243, 0.9474594594594594, 0.944972972972973, 0.9348108108108109], 'all_families': [0.9068108108108108, 0.8203243243243243, 0.568, 0.08151351351351352], 'mean_over_families_t1': 0.7355405405405406}, 'family_scales': [0.25, 0.5, 1.0, 2.0], 'corpus_violations': 0, 'corpus_checked': 4336}
+  [block certified done in 132s]
+seed 2: train 9475 / val 1053 / test 19472; mutable dims 2314; blocks clean,ablation,certified
+  lightgbm {'acc': 0.9872637633525062, 'f1': 0.9864879590280048, 'tpr': 0.9787027027027027, 'fpr': 0.00498923889649775, 'auc': 0.9991521519562999}  (36s)
+  group-transplant (aligned5 groups) on lightgbm: [0.972, 0.0, 0.0, 0.0]
+  lightgbm_mono {'acc': 0.9880341002465078, 'f1': 0.9873183475752463, 'tpr': 0.9805405405405405, 'fpr': 0.0051848953238113876, 'auc': 0.9991366369304151}  (51s)
+  group-transplant (aligned5 groups) on lightgbm_mono: [0.974, 0.0, 0.0, 0.0]
+    [clean] epoch 1/30 loss 0.1570 (0s)
+    [clean] epoch 6/30 loss 0.0027 (1s)
+    [clean] epoch 11/30 loss 0.0004 (2s)
+    [clean] epoch 16/30 loss 0.0002 (2s)
+    [clean] epoch 21/30 loss 0.0002 (3s)
+    [clean] epoch 26/30 loss 0.0002 (3s)
+    [clean] epoch 30/30 loss 0.0002 (4s)
+  MLP {'acc': 0.9780197206244864, 'f1': 0.9766350038213779, 'tpr': 0.967027027027027, 'fpr': 0.012032870279788692, 'auc': 0.9952369769495576}
+  group-transplant (aligned5 groups) on mlp: [0.966, 0.01, 0.0, 0.0]
+  [block clean done in 123s]
+    [ablation] epoch 1/30 loss 0.3185 (0s)
+    [ablation] epoch 6/30 loss 0.1055 (1s)
+    [ablation] epoch 11/30 loss 0.0801 (1s)
+    [ablation] epoch 16/30 loss 0.0604 (2s)
+    [ablation] epoch 21/30 loss 0.0553 (3s)
+    [ablation] epoch 26/30 loss 0.0472 (3s)
+    [ablation] epoch 30/30 loss 0.0485 (4s)
+  ablation main (aligned5, k=2): acc 0.9698 cert_exact [0.9288, 0.6905, 0.0, 0.0] violations 0
+  group-transplant (aligned5 groups) on ablation_main: [0.94, 0.8, 0.0, 0.0]
+    [ablation] epoch 1/90 loss 0.4713 (0s)
+    [ablation] epoch 6/90 loss 0.2870 (1s)
+    [ablation] epoch 11/90 loss 0.2679 (1s)
+    [ablation] epoch 16/90 loss 0.2386 (2s)
+    [ablation] epoch 21/90 loss 0.2364 (3s)
+    [ablation] epoch 26/90 loss 0.2291 (3s)
+    [ablation] epoch 31/90 loss 0.2366 (4s)
+    [ablation] epoch 36/90 loss 0.2186 (4s)
+    [ablation] epoch 41/90 loss 0.2158 (5s)
+    [ablation] epoch 46/90 loss 0.2171 (6s)
+    [ablation] epoch 51/90 loss 0.1985 (6s)
+    [ablation] epoch 56/90 loss 0.1901 (7s)
+    [ablation] epoch 61/90 loss 0.1928 (7s)
+    [ablation] epoch 66/90 loss 0.1944 (8s)
+    [ablation] epoch 71/90 loss 0.1968 (9s)
+    [ablation] epoch 76/90 loss 0.1900 (9s)
+    [ablation] epoch 81/90 loss 0.1881 (10s)
+    [ablation] epoch 86/90 loss 0.1961 (10s)
+    [ablation] epoch 90/90 loss 0.1869 (11s)
+  ablation second (aligned7, k=1): acc 0.9556 cert_exact [0.9264, 0.8848, 0.7663, 0.417, 0.0, 0.0] violations 0
+  group-transplant (aligned5 groups) on ablation_second: [0.92, 0.532, 0.0, 0.0]
+    [ablation] epoch 1/30 loss 0.4997 (0s)
+    [ablation] epoch 6/30 loss 0.2915 (1s)
+    [ablation] epoch 11/30 loss 0.2649 (1s)
+    [ablation] epoch 16/30 loss 0.2330 (2s)
+    [ablation] epoch 21/30 loss 0.2085 (3s)
+    [ablation] epoch 26/30 loss 0.2022 (3s)
+    [ablation] epoch 30/30 loss 0.1957 (4s)
+  ablation ember (ember, k=1): acc 0.9273 cert_exact [0.8534, 0.7759, 0.6565, 0.4533, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0] violations 0
+  group-transplant (aligned5 groups) on ablation_ember: [0.86, 0.0, 0.0, 0.0]
+  ablation lgbm_main (aligned5, k=2): acc 0.9822 cert_exact [0.9602, 0.8598, 0.0, 0.0] violations 0
+  group-transplant (aligned5 groups) on ablation_lgbm_main: [0.964, 0.888, 0.0, 0.0]
+  ablation lgbm_second (aligned7, k=1): acc 0.9655 cert_exact [0.9339, 0.9117, 0.8869, 0.691, 0.0, 0.0] violations 0
+  group-transplant (aligned5 groups) on ablation_lgbm_second: [0.926, 0.858, 0.0, 0.0]
+  [block ablation done in 413s]
+    [clean] epoch 1/30 loss 0.1679 (0s)
+    [clean] epoch 6/30 loss 0.0047 (1s)
+    [clean] epoch 11/30 loss 0.0012 (1s)
+    [clean] epoch 16/30 loss 0.0003 (1s)
+    [clean] epoch 21/30 loss 0.0002 (2s)
+    [clean] epoch 26/30 loss 0.0002 (2s)
+    [clean] epoch 30/30 loss 0.0002 (3s)
+  group-transplant (aligned5 groups) on ct_standard: [0.968, 0.012, 0.0, 0.0]
+  certified training standard: {'clean': {'acc': 0.9796117502054231, 'f1': 0.9783686590748106, 'tpr': 0.9705945945945946, 'fpr': 0.012228526707102328, 'auc': 0.9958475730670996}, 'cert_tpr': [0.9625945945945946, 0.9215135135135135, 0.6940540540540541, 0.10356756756756756, 0.0018378378378378379], 'cert_acc': [0.9736544782251438, 0.9449465899753492, 0.7817892358258012, 0.20100657354149548, 0.006008627773212818], 'cert_tpr_unconstrained': [0.961945945945946, 0.916108108108108, 0.6601081081081082, 0.07762162162162162, 0.0018378378378378379], 'pgd_tpr': [0.9675, 0.959, 0.917, 0.638, 0.2305], 'violations': 0, 'family_cert': {'F_content': [0.0009729729729729729, 0.0, 0.0, 0.0], 'F_section': [0.0, 0.0, 0.0, 0.0], 'F_import': [0.0, 0.0, 0.0, 0.0], 'F_strip': [0.007243243243243243, 0.001081081081081081, 0.0, 0.0], 'all_families': [0.0, 0.0, 0.0, 0.0], 'mean_over_families_t1': 0.0}, 'family_scales': [0.25, 0.5, 1.0, 2.0], 'corpus_violations': 0, 'corpus_checked': 4336}
+    [pgd] epoch 1/30 loss 0.2726 (1s)
+    [pgd] epoch 6/30 loss 0.0237 (5s)
+    [pgd] epoch 11/30 loss 0.0079 (8s)
+    [pgd] epoch 16/30 loss 0.0039 (12s)
+    [pgd] epoch 21/30 loss 0.0015 (16s)
+    [pgd] epoch 26/30 loss 0.0010 (20s)
+    [pgd] epoch 30/30 loss 0.0009 (23s)
+  group-transplant (aligned5 groups) on ct_pgd_at: [0.97, 0.018, 0.0, 0.0]
+  certified training pgd_at: {'clean': {'acc': 0.9851068200493016, 'f1': 0.9842168281267007, 'tpr': 0.9775135135135136, 'fpr': 0.008021913519859127, 'auc': 0.9984711882690751}, 'cert_tpr': [0.972, 0.9571891891891892, 0.7742702702702703, 0.02291891891891892, 0.0], 'cert_acc': [0.9803307313064914, 0.968005341002465, 0.8468570254724733, 0.1018898931799507, 0.0002567789646672145], 'cert_tpr_unconstrained': [0.9707027027027028, 0.9472432432432433, 0.7012972972972973, 0.012972972972972972, 0.0], 'pgd_tpr': [0.977, 0.975, 0.972, 0.958, 0.8785], 'violations': 0, 'family_cert': {'F_content': [0.0, 0.0, 0.0, 0.0], 'F_section': [0.0, 0.0, 0.0, 0.0], 'F_import': [0.0, 0.0, 0.0, 0.0], 'F_strip': [0.0006486486486486486, 0.0, 0.0, 0.0], 'all_families': [0.0, 0.0, 0.0, 0.0], 'mean_over_families_t1': 0.0}, 'family_scales': [0.25, 0.5, 1.0, 2.0], 'corpus_violations': 0, 'corpus_checked': 4336}
+    [crownibp] epoch 1/40 loss 0.1776 (0s)
+    [crownibp] epoch 6/40 loss 0.0037 (1s)
+    [crownibp] epoch 11/40 loss 0.0356 (2s)
+    [crownibp] epoch 16/40 loss 0.0287 (4s)
+    [crownibp] epoch 21/40 loss 0.0446 (6s)
+    [crownibp] epoch 26/40 loss 0.0459 (7s)
+    [crownibp] epoch 31/40 loss 0.0301 (8s)
+    [crownibp] epoch 36/40 loss 0.0238 (9s)
+    [crownibp] epoch 40/40 loss 0.0229 (10s)
+  group-transplant (aligned5 groups) on ct_crownibp: [0.972, 0.038, 0.0, 0.0]
+  certified training crownibp: {'clean': {'acc': 0.9852608874281019, 'f1': 0.9843775515758533, 'tpr': 0.9775135135135136, 'fpr': 0.007728428878888672, 'auc': 0.9983561264257801}, 'cert_tpr': [0.9752432432432433, 0.9744864864864865, 0.9727567567567568, 0.9456216216216217, 0.885945945945946], 'cert_acc': [0.9840283483976993, 0.9834120788824979, 0.9817686935086277, 0.9658483976992605, 0.9221959737058341], 'cert_tpr_unconstrained': [0.975027027027027, 0.9743783783783784, 0.9528648648648649, 0.9372972972972973, 0.7417297297297297], 'pgd_tpr': [0.977, 0.9765, 0.9745, 0.9465, 0.9005], 'violations': 0, 'family_cert': {'F_content': [0.2981621621621622, 0.0, 0.0, 0.0], 'F_section': [0.0, 0.0, 0.0, 0.0], 'F_import': [0.0, 0.0, 0.0, 0.0], 'F_strip': [0.9058378378378379, 0.2268108108108108, 0.0, 0.0], 'all_families': [0.0, 0.0, 0.0, 0.0], 'mean_over_families_t1': 0.0}, 'family_scales': [0.25, 0.5, 1.0, 2.0], 'corpus_violations': 0, 'corpus_checked': 4336}
+    [crownibp] epoch 1/40 loss 0.1638 (0s)
+    [crownibp] epoch 6/40 loss 0.0038 (1s)
+    [crownibp] epoch 11/40 loss 0.0386 (3s)
+    [crownibp] epoch 16/40 loss 0.0392 (4s)
+    [crownibp] epoch 21/40 loss 0.0630 (6s)
+    [crownibp] epoch 26/40 loss 0.0748 (7s)
+    [crownibp] epoch 31/40 loss 0.0552 (8s)
+    [crownibp] epoch 36/40 loss 0.0460 (9s)
+    [crownibp] epoch 40/40 loss 0.0447 (10s)
+  group-transplant (aligned5 groups) on ct_crownibp_unc: [0.978, 0.01, 0.0, 0.0]
+  certified training crownibp_unc: {'clean': {'acc': 0.9858771569433032, 'f1': 0.9850291251565136, 'tpr': 0.9780540540540541, 'fpr': 0.007043631383290941, 'auc': 0.9984729280248748}, 'cert_tpr': [0.9695135135135136, 0.957945945945946, 0.9554594594594594, 0.935027027027027, 0.8896216216216216], 'cert_acc': [0.9815119145439606, 0.9756059983566147, 0.9737571898110107, 0.9606101068200493, 0.9270747740345111], 'cert_tpr_unconstrained': [0.9603243243243244, 0.9574054054054054, 0.9540540540540541, 0.9312432432432433, 0.8641081081081081], 'pgd_tpr': [0.9715, 0.9585, 0.956, 0.9385, 0.8995], 'violations': 0, 'family_cert': {'F_content': [0.4476756756756757, 0.00021621621621621621, 0.0, 0.0], 'F_section': [0.0, 0.0, 0.0, 0.0], 'F_import': [0.0, 0.0, 0.0, 0.0], 'F_strip': [0.8768648648648648, 0.042702702702702704, 0.0, 0.0], 'all_families': [0.0, 0.0, 0.0, 0.0], 'mean_over_families_t1': 0.0}, 'family_scales': [0.25, 0.5, 1.0, 2.0], 'corpus_violations': 0, 'corpus_checked': 4336}
+    [crownibp] epoch 1/40 loss 0.1629 (0s)
+    [crownibp] epoch 6/40 loss 0.0409 (1s)
+    [crownibp] epoch 11/40 loss 0.0970 (7s)
+    [crownibp] epoch 16/40 loss 0.1200 (12s)
+    [crownibp] epoch 21/40 loss 0.1413 (18s)
+    [crownibp] epoch 26/40 loss 0.1381 (22s)
+    [crownibp] epoch 31/40 loss 0.1197 (25s)
+    [crownibp] epoch 36/40 loss 0.0979 (27s)
+    [crownibp] epoch 40/40 loss 0.0949 (29s)
+  group-transplant (aligned5 groups) on ct_crownibp_edit: [0.93, 0.088, 0.0, 0.0]
+  certified training crownibp_edit: {'clean': {'acc': 0.9670809367296631, 'f1': 0.9646461860901219, 'tpr': 0.9454054054054054, 'fpr': 0.013304637057327333, 'auc': 0.9947049924117034}, 'cert_tpr': [0.9441081081081081, 0.9422702702702702, 0.9358918918918919, 0.8753513513513513, 0.7372972972972973], 'cert_acc': [0.9660024650780608, 0.964872637633525, 0.9600451930977815, 0.923017666392769, 0.8328882497945769], 'cert_tpr_unconstrained': [0.9431351351351351, 0.9384864864864865, 0.9278918918918919, 0.8051891891891891, 0.4864864864864865], 'pgd_tpr': [0.943, 0.9405, 0.9345, 0.88, 0.778], 'violations': 0, 'family_cert': {'F_content': [0.8954594594594595, 0.8347027027027027, 0.5884324324324325, 0.09697297297297297], 'F_section': [0.9352432432432433, 0.8964324324324324, 0.812, 0.5381621621621622], 'F_import': [0.8985945945945946, 0.8324324324324325, 0.6246486486486487, 0.11124324324324324], 'F_strip': [0.9442162162162162, 0.9429189189189189, 0.9402162162162162, 0.9326486486486486], 'all_families': [0.892972972972973, 0.824972972972973, 0.576972972972973, 0.07632432432432433], 'mean_over_families_t1': 0.7413243243243244}, 'family_scales': [0.25, 0.5, 1.0, 2.0], 'corpus_violations': 0, 'corpus_checked': 4336}
+  [block certified done in 133s]
+done

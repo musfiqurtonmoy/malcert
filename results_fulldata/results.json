@@ -1,0 +1,510 @@
+{
+ "config": {
+  "data_npz": "data\\bodmas.npz",
+  "meta_csv": "data\\bodmas_metadata.csv",
+  "cat_csv": "data\\bodmas_malware_category.csv",
+  "out_dir": "results_fulldata",
+  "n_malware": 12773,
+  "n_benign": 17227,
+  "split": "family",
+  "eval_split": "test",
+  "cutoff": "2019-12",
+  "full_data": true,
+  "ablation_only_main": true,
+  "seeds": [
+   0
+  ],
+  "device": "auto",
+  "hidden": [
+   512,
+   256
+  ],
+  "epochs": 30,
+  "batch_size": 256,
+  "lr": 0.001,
+  "weight_decay": 1e-05,
+  "eps_list": [
+   0.01,
+   0.02,
+   0.05,
+   0.1,
+   0.2,
+   0.5
+  ],
+  "pgd_steps": 50,
+  "pgd_restarts": 1,
+  "n_attack_points": 2000,
+  "at_eps": 0.1,
+  "at_steps": 10,
+  "ablation_configs": [
+   [
+    "main",
+    "aligned5",
+    2,
+    null
+   ],
+   [
+    "second",
+    "aligned7",
+    1,
+    90
+   ],
+   [
+    "ember",
+    "ember",
+    1,
+    null
+   ]
+  ],
+  "grouping": "aligned5",
+  "lgbm_view_params": [
+   [
+    200,
+    64
+   ],
+   [
+    200,
+    64
+   ]
+  ],
+  "giri_sigma": 0.3,
+  "giri_drop": 0.2,
+  "group_attack_points": 500,
+  "group_attack_donors": 10,
+  "group_attack_max_r": 3,
+  "sigmas": [
+   0.25,
+   0.5
+  ],
+  "n0": 100,
+  "n_cert": 10000,
+  "alpha": 0.001,
+  "n_cert_points": 0,
+  "ibp_hidden": [
+   256,
+   256
+  ],
+  "ibp_train_eps": 0.05,
+  "ibp_epochs": 40,
+  "ibp_warmup": 5,
+  "ibp_ramp": 20,
+  "cert_eps_list": [
+   0.005,
+   0.01,
+   0.02,
+   0.05,
+   0.1
+  ],
+  "unc_train_eps": 0.1,
+  "box_train_eps": 0.1,
+  "edit_t_train": 0.5,
+  "edit_agg": "mean",
+  "family_scales": [
+   0.25,
+   0.5,
+   1.0,
+   2.0
+  ]
+ },
+ "provenance": [
+  {
+   "started": "2026-11-14 02:27:17",
+   "argv": [
+    "--preset",
+    "full",
+    "--split",
+    "family",
+    "--seeds",
+    "0",
+    "--full_data",
+    "--ablation_only_main",
+    "--blocks",
+    "clean,ablation",
+    "--out_dir",
+    "results_fulldata"
+   ],
+   "blocks": [
+    "clean",
+    "ablation"
+   ],
+   "legacy_rng": false,
+   "git_commit": "1000b63fcf47c8e3028886c8934400fc12361e68",
+   "git_dirty": false,
+   "code_sha256": "2f0ff212aef331d1698dfcf6ef37ff366e38b9fe4da53e83bdc92e49bee76ef3",
+   "python": "3.11.18",
+   "platform": "Windows-10-10.0.19045-SP0",
+   "packages": {
+    "torch": "2.14.0+cu126",
+    "numpy": "2.4.6",
+    "pandas": "3.1.1",
+    "scipy": "1.17.1",
+    "scikit_learn": "1.9.1",
+    "lightgbm": "4.7.0"
+   },
+   "device": "cuda",
+   "device_name": "NVIDIA GeForce GTX 1050 Ti",
+   "cuda": "12.6"
+  }
+ ],
+ "seeds": {
+  "0": {
+   "data": {
+    "n_train": 94331,
+    "n_val": 13313,
+    "n_test": 26791,
+    "eval_split": "test",
+    "n_mutable": 2314,
+    "n_monotone": 9,
+    "attackable_groups": [
+     "ByteHist",
+     "ByteEntropy",
+     "Strings",
+     "General+TS",
+     "Header(static)",
+     "Section",
+     "Imports",
+     "Exports",
+     "DataDir"
+    ],
+    "n_malware": 57293,
+    "n_benign": 77142,
+    "n_categories": 14,
+    "n_families": 582,
+    "categories": {
+     "backdoor": 7331,
+     "benign": 77142,
+     "cryptominer": 20,
+     "downloader": 1031,
+     "dropper": 715,
+     "exploit": 12,
+     "informationstealer": 448,
+     "p2p-worm": 16,
+     "pua": 29,
+     "ransomware": 821,
+     "rootkit": 3,
+     "trojan": 29972,
+     "trojan-gamethief": 6,
+     "virus": 192,
+     "worm": 16697
+    }
+   },
+   "timing": {
+    "clean": 428.0,
+    "ablation": 417.7
+   },
+   "runs": {
+    "clean": 0,
+    "ablation": 0
+   },
+   "group_attack": {
+    "lightgbm": [
+     0.972,
+     0.0,
+     0.0,
+     0.0
+    ],
+    "lightgbm_mono": [
+     0.972,
+     0.0,
+     0.0,
+     0.0
+    ],
+    "mlp": [
+     0.954,
+     0.002,
+     0.0,
+     0.0
+    ],
+    "ablation_main": [
+     0.93,
+     0.724,
+     0.0,
+     0.0
+    ],
+    "ablation_lgbm_main": [
+     0.938,
+     0.828,
+     0.0,
+     0.0
+    ]
+   },
+   "cost": {
+    "lightgbm": {
+     "train_seconds": 139.0,
+     "cert_ms_per_sample": null,
+     "forward_passes_per_sample": null
+    },
+    "lightgbm_mono": {
+     "train_seconds": 185.5,
+     "cert_ms_per_sample": null,
+     "forward_passes_per_sample": null
+    },
+    "ablation_main": {
+     "train_seconds": 37.9,
+     "cert_ms_per_sample": 0.048,
+     "forward_passes_per_sample": 10
+    },
+    "ablation_lgbm_main": {
+     "train_seconds": 225.5,
+     "cert_ms_per_sample": 0.27,
+     "forward_passes_per_sample": 10
+    }
+   },
+   "lightgbm": {
+    "acc": 0.9848456571236609,
+    "f1": 0.981829573934837,
+    "tpr": 0.9653260582592625,
+    "fpr": 0.00077780658542909,
+    "auc": 0.9993796702135672
+   },
+   "lightgbm_mono": {
+    "acc": 0.9847710051883095,
+    "f1": 0.9817384298630383,
+    "tpr": 0.9651500484027106,
+    "fpr": 0.00077780658542909,
+    "auc": 0.9993468651615504
+   },
+   "mlp": {
+    "acc": 0.9699152700533762,
+    "f1": 0.9633769538349691,
+    "tpr": 0.9329402446537006,
+    "fpr": 0.002851957479906663,
+    "auc": 0.996691010703859
+   },
+   "ablation": {
+    "main": {
+     "partition": "aligned5",
+     "k": 2,
+     "n_subsets": 10,
+     "ceiling_r": 1,
+     "clean": {
+      "acc": 0.9711843529543503,
+      "f1": 0.9648899399672549,
+      "tpr": 0.9335562791516325,
+      "fpr": 0.0011018926626912109,
+      "auc": 0.9902304461639949
+     },
+     "cert_tpr_exact": [
+      0.9207955645516149,
+      0.606177945964974,
+      0.0,
+      0.0
+     ],
+     "cert_acc_exact": [
+      0.9657720876413721,
+      0.8104587361427344,
+      0.0,
+      0.0
+     ],
+     "cert_tpr": [
+      0.9207955645516149,
+      0.606177945964974,
+      0.0,
+      0.0
+     ],
+     "cert_by_edit": {
+      "E1_overlay": {
+       "r_needed": 1,
+       "certifiable": true,
+       "cert_tpr": 0.606177945964974
+      },
+      "E2_strings": {
+       "r_needed": 1,
+       "certifiable": true,
+       "cert_tpr": 0.606177945964974
+      },
+      "E3_section": {
+       "r_needed": 2,
+       "certifiable": false,
+       "cert_tpr": 0.0
+      },
+      "E4_imports": {
+       "r_needed": 3,
+       "certifiable": false,
+       "cert_tpr": 0.0
+      },
+      "E5_timestamp": {
+       "r_needed": 1,
+       "certifiable": true,
+       "cert_tpr": 0.606177945964974
+      },
+      "E6_secnames": {
+       "r_needed": 2,
+       "certifiable": false,
+       "cert_tpr": 0.0
+      },
+      "E7_header": {
+       "r_needed": 1,
+       "certifiable": true,
+       "cert_tpr": 0.606177945964974
+      },
+      "E8_strip": {
+       "r_needed": 2,
+       "certifiable": false,
+       "cert_tpr": 0.0
+      },
+      "E10_hdrfields": {
+       "r_needed": 1,
+       "certifiable": true,
+       "cert_tpr": 0.606177945964974
+      }
+     },
+     "view_vote_rate_malware": [
+      0.9077708351667694,
+      0.9445568951861304,
+      0.9106749977998768,
+      0.9107630027281528,
+      0.8628883217460178,
+      0.8516236909266919,
+      0.8326146264190795,
+      0.8654404646660213,
+      0.8312065475666637,
+      0.7805157088796972
+     ],
+     "view_vote_rate_benign": [
+      0.996175784288307,
+      0.9974073113819031,
+      0.9959813326419497,
+      0.9960461498574021,
+      0.9954627949183303,
+      0.9919626652838994,
+      0.9904718693284936,
+      0.9939071817474722,
+      0.9941664506092818,
+      0.9806844697951776
+     ],
+     "empirical_tpr": [
+      0.93,
+      0.724,
+      0.0,
+      0.0
+     ],
+     "violations": 0,
+     "views": [
+      "CONTENT+HDRMUT+SIGDBG+SECTION",
+      "CONTENT+HDRMUT+SIGDBG+IMPORTS",
+      "CONTENT+HDRMUT+SIGDBG+IMMHDR",
+      "CONTENT+HDRMUT+SIGDBG+IMMDD",
+      "SECTION+IMPORTS",
+      "SECTION+IMMHDR",
+      "SECTION+IMMDD",
+      "IMPORTS+IMMHDR",
+      "IMPORTS+IMMDD",
+      "IMMHDR+IMMDD"
+     ]
+    },
+    "lgbm_main": {
+     "partition": "aligned5",
+     "k": 2,
+     "n_subsets": 10,
+     "ceiling_r": 1,
+     "clean": {
+      "acc": 0.9748796237542459,
+      "f1": 0.9695323464167686,
+      "tpr": 0.9423567719792308,
+      "fpr": 0.001166709878143635,
+      "auc": 0.992829691799531
+     },
+     "cert_tpr_exact": [
+      0.9063627563143536,
+      0.6599489571416,
+      0.0,
+      0.0
+     ],
+     "cert_acc_exact": [
+      0.9596133029748797,
+      0.8479713336568251,
+      0.0,
+      0.0
+     ],
+     "cert_tpr": [
+      0.9063627563143536,
+      0.6599489571416,
+      0.0,
+      0.0
+     ],
+     "cert_by_edit": {
+      "E1_overlay": {
+       "r_needed": 1,
+       "certifiable": true,
+       "cert_tpr": 0.6599489571416
+      },
+      "E2_strings": {
+       "r_needed": 1,
+       "certifiable": true,
+       "cert_tpr": 0.6599489571416
+      },
+      "E3_section": {
+       "r_needed": 2,
+       "certifiable": false,
+       "cert_tpr": 0.0
+      },
+      "E4_imports": {
+       "r_needed": 3,
+       "certifiable": false,
+       "cert_tpr": 0.0
+      },
+      "E5_timestamp": {
+       "r_needed": 1,
+       "certifiable": true,
+       "cert_tpr": 0.6599489571416
+      },
+      "E6_secnames": {
+       "r_needed": 2,
+       "certifiable": false,
+       "cert_tpr": 0.0
+      },
+      "E7_header": {
+       "r_needed": 1,
+       "certifiable": true,
+       "cert_tpr": 0.6599489571416
+      },
+      "E8_strip": {
+       "r_needed": 2,
+       "certifiable": false,
+       "cert_tpr": 0.0
+      },
+      "E10_hdrfields": {
+       "r_needed": 1,
+       "certifiable": true,
+       "cert_tpr": 0.6599489571416
+      }
+     },
+     "view_vote_rate_malware": [
+      0.925547830678518,
+      0.9552934964358004,
+      0.9247557863240341,
+      0.9087388893778051,
+      0.8994983719088269,
+      0.8877937164481211,
+      0.877497139839831,
+      0.9164833230660917,
+      0.8317345771363196,
+      0.8220540350259614
+     ],
+     "view_vote_rate_benign": [
+      0.99786103189007,
+      0.9976665802437127,
+      0.9973424941664506,
+      0.9973424941664506,
+      0.9979906663209749,
+      0.9974073113819031,
+      0.9972776769509982,
+      0.9968887736582837,
+      0.9977313974591652,
+      0.9944257194710915
+     ],
+     "empirical_tpr": [
+      0.938,
+      0.828,
+      0.0,
+      0.0
+     ],
+     "violations": 0,
+     "trees_per_view": 200,
+     "leaves": 64
+    }
+   }
+  }
+ }
+}
