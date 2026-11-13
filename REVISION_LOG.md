@@ -474,6 +474,20 @@ carry a **Basis:** line saying what they were fixed from.
   vs 1.0 s for box CROWN-IBP (incl. validation certification; 4 family boxes per batch). Full grid command in
   `RUN_NEXT.md`; split choice (random now, or family after 3b) is with the author.
 
+### 2h-revision and split decision (author, 2026-11-13; logged before any run)
+- **2-22** `[A5, B4]` 2i is **not** tuned on the random split (its validation set shares families with training).
+  The family-disjoint split function and its unit test (from 3b, nothing else of 3b) are built now; the 2i grid
+  uses the validation part of the family split, seed 0. Log 2-16 and 2-17 approved except the interval rule.
+- **2-23** `[A1, A3]` **Interval rule replaced (plan "2h-revision")**, using only extractor structure and the fit half:
+  - Name-hashed blocks are structural: `Imports.libraries`, `Imports.functions`, `Exports.functions` and the five
+    hashed `Section.*` blocks (sizes, entropy, vsizes, entry_name, entry_characteristics: all hashed by section
+    name). For a family that changes any feature of such a block in the fit half, the whole block is in the support
+    and every bucket may change by ±m_f, m_f = the largest per-bucket |change| in that block in the family's fit half.
+    Hashed header blocks (machine, characteristics, subsystem, dll_characteristics, magic) hash a fixed vocabulary,
+    not names, so they follow rule 2. (Interpretation of "section-name blocks"; flagged to the author.)
+  - All other features: [min, max] of the change over fit-half files where it changed, widened to include 0.
+  - Support threshold (≥ 1% of fit-half files) unchanged for non-hashed features; t grid unchanged.
+
 ### Ideas not done
 - Execution check of edited binaries in a sandboxed VM (would turn "plausibly functionality-preserving" into
   "verified"); out of the lean scope.

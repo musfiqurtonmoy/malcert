@@ -245,6 +245,13 @@ The first Stage 1 report (commit 3f53190) is accepted. Close these gaps before f
 9. **Soundness test.** Every eval-half edited vector inside T_f(t) must be certified-consistent: no certified sample may be flipped by its own real edit (re-classify the edited vectors of malware-labelled test samples where applicable; for benign corpus files, check the certified decision is unchanged).
 10. **Cost.** About 4× the CROWN-IBP cost per batch (four family boxes). Measure on the pilot.
 
+### 2h-revision (2026-11-13, before any tuning or test evaluation)
+First implementation result: eval-half coverage at t = 1 was 67.3% (content), 21.6% (section), 16.9% (strip), 0% (import). Cause: a file counts as covered only if all of its ~600 changed features fall inside per-feature 95% intervals, so coverage compounds towards zero (0.99^600 ≈ 0.2%). The interval rule is changed, using only extractor structure and the fit half, never eval-half or BODMAS results:
+1. **Hashed blocks are treated structurally.** For the hashed import (library and function), export and section-name blocks: support = the whole block for every family that changes any feature in it; each bucket may change by up to ±m_f, where m_f is the largest per-bucket change seen in the fit half for that family. Reason: a new name lands in an effectively random bucket, so any bucket in the block is reachable.
+2. **Non-hashed features use the full fit-half range:** interval [min, max] of the measured change over fit-half files where the feature changed, widened to include 0 (one-sided where only increases were seen).
+3. t grid unchanged {0.25, 0.5, 1, 2}. Report eval-half coverage and certified detection over t, so the size/coverage trade-off is visible.
+4. Log the before/after coverage table; both appear in the paper's appendix.
+
 ### 2i. Validation tuning for every model (declared before any test evaluation)
 Selection uses the validation split only. Write each grid and the selection metric in the log, then run, then freeze the chosen settings in `config.py` and commit **before** Stage 3 touches the test set.
 - **Selection metrics:** clean detectors by validation accuracy; certified detectors by certified detection on validation, subject to validation FPR ≤ 1% (if no setting meets it, the lowest-FPR one).
@@ -255,7 +262,8 @@ Selection uses the validation split only. Write each grid and the selection metr
   - Uniform-ball CROWN-IBP: ε_train {0.05, 0.1}.
   - Edit-aware CROWN-IBP: t_train {0.5, 1} × aggregation {mean, max}.
   - Box-constrained CROWN-IBP: same ε_train grid as uniform.
-- Seed 0 only, family split. Report a one-line table per model.
+- Seed 0 only, **on the validation part of the family-disjoint split**. Build the family split (the split function and its test from 3b, nothing else of 3b) before the grid is run; do not tune on the random split, whose validation set shares families with training.
+- Report a one-line table per model.
 
 ## Stage 3: data and statistics (A5, B3, B4, B6, B7)
 
