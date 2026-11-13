@@ -558,6 +558,31 @@ carry a **Basis:** line saying what they were fixed from.
     family sets are far larger than ε = 0.1 in standardised units (median ε needed by real edits 0.2–28).
   Unit tests pass (20). No pilot run yet with the frozen settings (Stage 3 starts with one).
 
+---
+
+## Stage 3 (definitions logged before any Stage 3 run)
+- **3-1** `[A5, B6]` **Main comparisons, pre-registered** (family split, 5 seeds; paired difference per seed, 95% t-interval,
+  paired t-test, Holm correction across these six):
+  1. Edit-aware vs uniform-ball CROWN-IBP: mean certified detection over T_f(1) across the four families (the C3 rule).
+  2. Box vs uniform-ball CROWN-IBP: certified detection at ε = 0.05 on the constrained box (original rule, ablation).
+  3. Group ablation main (aligned5, k = 2, MLP views) vs EMBER groups (k = 1): mean certified detection over the
+     9 in-scope edit types at the r each needs.
+  4. Per-view LightGBM main vs MLP-view ablation main: certified detection at r = 1.
+  5. Per-view LightGBM main vs LightGBM: detection under the group-transplant attack at r = 1.
+  6. Per-view LightGBM main vs LightGBM: clean accuracy (the cost of certification).
+- **3-2** `[A5, Am1]` **3d smoothing**: isotropic noise, σ ∈ {0.25, 0.5} (the standard Cohen et al. values, fixed a priori,
+  not chosen from results), n = 10,000, every test point, family split seeds 0–2; Giri re-implementation stays in
+  the same block. Subspace variant removed.
+- **3-3** `[A5, B7, Am4, Am5]` **3c temporal**: split `cutoff`: training period = files with timestamp up to the end of the
+  cut-off month (2019-12, 2020-04), split at random 90/10 into train/val; test = every later file, evaluated per
+  month (months merged forward until ≥ 200 malware and ≥ 200 benign). Blocks clean, ablation, certified; 3 seeds.
+  Certified detection for the update-frequency statement: group ablation main at r = 1, per-view LightGBM main at
+  r = 1, edit-aware CROWN-IBP mean over T_f(1). In-distribution per-category TPR (composition analysis) = TPR on the
+  training-period validation part.
+- **3-4** `[A5, B4]` **Near-duplicates**: nearest training neighbour by L2 in standardised space (the run's
+  statistics); near-twin = distance ≤ 0.1. Sensitivity = main metrics recomputed with near-twins removed, from the
+  saved per-sample arrays (no new training).
+
 ### Ideas not done
 - Execution check of edited binaries in a sandboxed VM (would turn "plausibly functionality-preserving" into
   "verified"); out of the lean scope.
