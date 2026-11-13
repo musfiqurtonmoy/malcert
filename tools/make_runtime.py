@@ -12,18 +12,20 @@ LABELS = {"lightgbm": "LightGBM (EMBER reference)", "lightgbm_mono": "LightGBM, 
           "ablation_main": "Group ablation, main (MLP views)", "ablation_second": "Group ablation, second (MLP views)",
           "ablation_ember": "Group ablation, EMBER groups (MLP views)",
           "ablation_lgbm_main": "Group ablation, main (LightGBM views)",
+          "ablation_lgbm_second": "Group ablation, second (LightGBM views)",
           "giri_reimpl": "Giri et al., re-implementation", "ct_standard": "Standard MLP (certified training block)",
           "ct_pgd_at": "PGD-AT", "ct_crownibp": "CROWN-IBP, constrained box",
-          "ct_crownibp_unc": "CROWN-IBP, unconstrained ball"}
+          "ct_crownibp_unc": "CROWN-IBP, unconstrained ball", "ct_crownibp_edit": "CROWN-IBP, edit-aware"}
 
 
 def main():
     ap = argparse.ArgumentParser()
-    ap.add_argument("--res", required=True)
+    ap.add_argument("--res", nargs="+", required=True, help="one or more results folders; seeds are pooled")
     ap.add_argument("--paper", default=os.path.join(os.path.dirname(os.path.dirname(os.path.abspath(__file__))), "paper"))
     a = ap.parse_args()
-    R = json.load(open(os.path.join(a.res, "results.json")))
-    seeds = list(R["seeds"].values())
+    Rs = [json.load(open(os.path.join(r, "results.json"))) for r in a.res]
+    R = Rs[0]
+    seeds = [s for Ri in Rs for s in Ri["seeds"].values()]
     dev = R["provenance"][0]["device_name"]
     T = ["\\begin{tabular}{lrrr}", "\\toprule", "Model & Training (s) & Certification (ms/sample) & Forward passes/sample \\\\",
          "\\midrule"]
@@ -36,7 +38,7 @@ def main():
         fp = rows[0]["forward_passes_per_sample"]
         T.append(f"{lab} & {tr:.0f} & {np.mean(ce):.3f} & {fp if fp is not None else '1 bound pass'} \\\\"
                  if ce else f"{lab} & {tr:.0f} & -- & -- \\\\")
-    T += ["\\bottomrule", "\\end{tabular}", f"% {a.res}: {len(seeds)} seed(s), {R['config']['epochs']} epochs, {dev}"]
+    T += ["\\bottomrule", "\\end{tabular}", f"% {' + '.join(a.res)}: {len(seeds)} seed(s), {R['config']['epochs']} epochs, {dev}"]
     open(os.path.join(a.paper, "tables", "tab_runtime.tex"), "w").write("\n".join(T))
     print("\n".join(T))
 

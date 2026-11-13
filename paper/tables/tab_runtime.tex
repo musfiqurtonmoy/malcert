@@ -3,16 +3,18 @@
 Model & Training (s) & Certification (ms/sample) & Forward passes/sample \\
 \midrule
 LightGBM (EMBER reference) & 53 & -- & -- \\
-LightGBM, monotonic (Incer et al.) & 77 & -- & -- \\
-Group ablation, main (MLP views) & 4 & 0.063 & 10 \\
-Group ablation, second (MLP views) & 4 & 0.024 & 7 \\
-Group ablation, EMBER groups (MLP views) & 4 & 0.032 & 9 \\
-Group ablation, main (LightGBM views) & 92 & 0.159 & 10 \\
-Giri et al., re-implementation & 4 & 9.189 & 2100 \\
-Standard MLP (certified training block) & 3 & 0.016 & 1 bound pass \\
-PGD-AT & 25 & 0.011 & 1 bound pass \\
-CROWN-IBP, constrained box & 16 & 0.011 & 1 bound pass \\
-CROWN-IBP, unconstrained ball & 16 & 0.010 & 1 bound pass \\
+LightGBM, monotonic (Incer et al.) & 70 & -- & -- \\
+Group ablation, main (MLP views) & 9 & 0.050 & 10 \\
+Group ablation, second (MLP views) & 25 & 0.033 & 7 \\
+Group ablation, EMBER groups (MLP views) & 8 & 0.046 & 9 \\
+Group ablation, main (LightGBM views) & 96 & 0.207 & 10 \\
+Group ablation, second (LightGBM views) & 24 & 0.088 & 7 \\
+Giri et al., re-implementation & 9 & 37.166 & 10100 \\
+Standard MLP (certified training block) & 6 & 0.016 & 1 bound pass \\
+PGD-AT & 51 & 0.011 & 1 bound pass \\
+CROWN-IBP, constrained box & 22 & 0.011 & 1 bound pass \\
+CROWN-IBP, unconstrained ball & 22 & 0.011 & 1 bound pass \\
+CROWN-IBP, edit-aware & 64 & 0.011 & 1 bound pass \\
 \bottomrule
 \end{tabular}
-% results_pilot_stage2: 1 seed(s), 15 epochs, NVIDIA GeForce GTX 1050 Ti
+% results_family + results_family_s34: 5 seed(s), 30 epochs, NVIDIA GeForce GTX 1050 Ti
