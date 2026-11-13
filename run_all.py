@@ -211,28 +211,36 @@ def run_seed(cfg, seed, dev, log, todo, R, S, run_id, legacy_rng=False, save=lam
     ugid, unames = partition(cfg.grouping)                  # threat-model groups of the uniform attack table
     ugroups = attackable(ugid)
     gm_idx = torch.where(yte == 1)[0][:cfg.group_attack_points]
-    donors_pool = Xtr[ytr == 0]
+    ben_tr = np.where(data["y"][sp["tr"]] == 0)[0]
     gen = torch.Generator().manual_seed(seed)
-    donor_sets = [donors_pool[torch.randperm(len(donors_pool), generator=gen)[:cfg.group_attack_donors].to(dev)]
-                  for _ in range(len(gm_idx))]
+    donor_idx = [ben_tr[torch.randperm(len(ben_tr), generator=gen)[:cfg.group_attack_donors].numpy()]
+                 for _ in range(len(gm_idx))]
+    # Models on standardised features are attacked in standardised space; models on raw features (LightGBM)
+    # in raw space, with the donors' raw values. (Round-tripping through the standardisation is not exact:
+    # an exact 0 comes back as ~1e-8, and LightGBM splits sit exactly at such values.)
+    Xtr_raw_np, Xte_raw_np = data["X"][sp["tr"]], data["X"][sp["te"]]
     max_r = lambda groups: min(cfg.group_attack_max_r, len(groups))
 
-    def emp_curve(score_fn, g_ids=None, groups=None):
+    def emp_curve(score_fn, g_ids=None, groups=None, raw=False):
         """Detection (bool) per attacked malware sample and r = 0..max_r under the greedy group transplant."""
         g_ids, groups = (ugid, ugroups) if g_ids is None else (g_ids, groups)
         rows = []
-        for j, i in enumerate(gm_idx):
-            det = group_transplant(score_fn, Xte[i], donor_sets[j], g_ids, groups, max_r(groups))
+        for j, i in enumerate(gm_idx.tolist()):
+            if raw:
+                x, donors = torch.as_tensor(Xte_raw_np[i]), torch.as_tensor(Xtr_raw_np[donor_idx[j]])
+            else:
+                x, donors = Xte[i], Xtr[torch.as_tensor(donor_idx[j], device=dev)]
+            det = group_transplant(score_fn, x, donors, g_ids, groups, max_r(groups))
             rows.append(np.cumprod(det).astype(bool))       # budget r allows any r' <= r
         return np.array(rows)
 
-    def attack_all(name, score_fn):
-        R["group_attack"][name] = emp_curve(score_fn).mean(0).tolist()
+    def attack_all(name, score_fn, raw=False):
+        R["group_attack"][name] = emp_curve(score_fn, raw=raw).mean(0).tolist()
         log(f"  group-transplant ({cfg.grouping} groups) on {name}: {R['group_attack'][name]}")
 
     def raw_score(model_proba):
-        """score_fn for models trained on raw features (LightGBM): attacked vectors are standardised."""
-        return lambda Z: torch.as_tensor(model_proba(pp.inverse(Z.detach().cpu().numpy())))
+        """score_fn for models trained on raw features (LightGBM): the attack runs in raw space."""
+        return lambda A: torch.as_tensor(model_proba(A.detach().cpu().numpy()))
 
     def cost(name, train_s, cert_s=None, n=None, passes=None):
         R["cost"][name] = dict(train_seconds=round(train_s, 1),
@@ -259,7 +267,7 @@ def run_seed(cfg, seed, dev, log, todo, R, S, run_id, legacy_rng=False, save=lam
             R[name] = metrics(yte_np, s >= 0.5, s)
             cost(name, tr_s)
             log(f"  {name} {R[name]}  ({tr_s:.0f}s)")
-            attack_all(name, raw_score(lambda A, g=gbm: g.predict_proba(A)[:, 1]))
+            attack_all(name, raw_score(lambda A, g=gbm: g.predict_proba(A)[:, 1]), raw=True)
         std = get_std()
         s = predict(std, Xte); R["mlp"] = metrics(yte_np, s >= 0.5, s); log(f"  MLP {R['mlp']}")
         S["p_mlp"] = s
@@ -360,10 +368,10 @@ def run_seed(cfg, seed, dev, log, todo, R, S, run_id, legacy_rng=False, save=lam
         cert_s = time.time() - t2
         cert_bd = ablation_certify(votes_from_views(vm), torch.as_tensor(yte_np), len(names_p), k, len(att))
         score = raw_score(lambda A: lgbm_view_votes(A).float().mean(1).numpy())
-        emp = emp_curve(score, gid_p, att)
+        emp = emp_curve(score, gid_p, att, raw=True)
         record("lgbm_" + name, part, k, vm, subsets, cert_ex, cert_bd, emp, dict(trees_per_view=cfg.lgbm_view_trees))
         cost("ablation_lgbm_" + name, tr_s, cert_s, len(Xte), len(subsets))
-        attack_all("ablation_lgbm_" + name, score)
+        attack_all("ablation_lgbm_" + name, score, raw=True)
         finish("ablation", t0)
 
     # ---------------- C2b: randomized smoothing ----------------
