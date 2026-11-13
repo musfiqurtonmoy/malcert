@@ -1,0 +1,18 @@
+\begin{tabular}{lrrr}
+\toprule
+Model & Training (s) & Certification (ms/sample) & Forward passes/sample \\
+\midrule
+LightGBM (EMBER reference) & 53 & -- & -- \\
+LightGBM, monotonic (Incer et al.) & 77 & -- & -- \\
+Group ablation, main (MLP views) & 4 & 0.063 & 10 \\
+Group ablation, second (MLP views) & 4 & 0.024 & 7 \\
+Group ablation, EMBER groups (MLP views) & 4 & 0.032 & 9 \\
+Group ablation, main (LightGBM views) & 92 & 0.159 & 10 \\
+Giri et al., re-implementation & 4 & 9.189 & 2100 \\
+Standard MLP (certified training block) & 3 & 0.016 & 1 bound pass \\
+PGD-AT & 25 & 0.011 & 1 bound pass \\
+CROWN-IBP, constrained box & 16 & 0.011 & 1 bound pass \\
+CROWN-IBP, unconstrained ball & 16 & 0.010 & 1 bound pass \\
+\bottomrule
+\end{tabular}
+% results_pilot_stage2: 1 seed(s), 15 epochs, NVIDIA GeForce GTX 1050 Ti

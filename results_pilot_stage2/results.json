@@ -1,0 +1,1116 @@
+{
+ "config": {
+  "data_npz": "data\\bodmas.npz",
+  "meta_csv": "data\\bodmas_metadata.csv",
+  "cat_csv": "data\\bodmas_malware_category.csv",
+  "out_dir": "results_pilot_stage2",
+  "n_malware": 12773,
+  "n_benign": 17227,
+  "split": "random",
+  "eval_split": "val",
+  "seeds": [
+   0
+  ],
+  "device": "auto",
+  "hidden": [
+   512,
+   256
+  ],
+  "epochs": 15,
+  "batch_size": 256,
+  "lr": 0.001,
+  "weight_decay": 1e-05,
+  "eps_list": [
+   0.01,
+   0.02,
+   0.05,
+   0.1,
+   0.2,
+   0.5
+  ],
+  "pgd_steps": 30,
+  "pgd_restarts": 1,
+  "n_attack_points": 1000,
+  "at_eps": 0.1,
+  "at_steps": 10,
+  "ablation_configs": [
+   [
+    "main",
+    "aligned5",
+    2
+   ],
+   [
+    "second",
+    "aligned7",
+    1
+   ],
+   [
+    "ember",
+    "ember",
+    1
+   ]
+  ],
+  "grouping": "aligned5",
+  "lgbm_view_trees": 200,
+  "giri_sigma": 0.3,
+  "giri_drop": 0.2,
+  "group_attack_points": 300,
+  "group_attack_donors": 5,
+  "group_attack_max_r": 3,
+  "sigmas": [
+   0.25,
+   0.5,
+   1.0
+  ],
+  "n0": 100,
+  "n_cert": 2000,
+  "alpha": 0.001,
+  "n_cert_points": 500,
+  "ibp_hidden": [
+   256,
+   256
+  ],
+  "ibp_train_eps": 0.05,
+  "ibp_epochs": 30,
+  "ibp_warmup": 5,
+  "ibp_ramp": 15,
+  "cert_eps_list": [
+   0.005,
+   0.01,
+   0.02,
+   0.05,
+   0.1
+  ]
+ },
+ "provenance": [
+  {
+   "started": "2026-11-13 06:02:04",
+   "argv": [
+    "--preset",
+    "quick",
+    "--eval_split",
+    "val",
+    "--out_dir",
+    "results_pilot_stage2"
+   ],
+   "blocks": [
+    "clean",
+    "attacks",
+    "ablation",
+    "smoothing",
+    "certified"
+   ],
+   "legacy_rng": false,
+   "git_commit": "097e62ab30db949b78636582dbebe950d4cb2d23",
+   "git_dirty": false,
+   "code_sha256": "0a6f107a38260fcea6211fd054a250be6bfae77f4e070464fbfd77d065d0163a",
+   "python": "3.11.18",
+   "platform": "Windows-10-10.0.19045-SP0",
+   "packages": {
+    "torch": "2.14.0+cu126",
+    "numpy": "2.4.6",
+    "pandas": "3.1.1",
+    "scipy": "1.17.1",
+    "scikit_learn": "1.9.1",
+    "lightgbm": "4.7.0"
+   },
+   "device": "cuda",
+   "device_name": "NVIDIA GeForce GTX 1050 Ti",
+   "cuda": "12.6"
+  }
+ ],
+ "seeds": {
+  "0": {
+   "data": {
+    "n_train": 20995,
+    "n_val": 3001,
+    "n_test": 3001,
+    "eval_split": "val",
+    "n_mutable": 2314,
+    "n_monotone": 9,
+    "attackable_groups": [
+     "ByteHist",
+     "ByteEntropy",
+     "Strings",
+     "General+TS",
+     "Header(static)",
+     "Section",
+     "Imports",
+     "Exports",
+     "DataDir"
+    ],
+    "n_malware": 12773,
+    "n_benign": 17227,
+    "n_categories": 14,
+    "n_families": 353,
+    "categories": {
+     "backdoor": 1634,
+     "benign": 17227,
+     "cryptominer": 5,
+     "downloader": 230,
+     "dropper": 159,
+     "exploit": 5,
+     "informationstealer": 100,
+     "p2p-worm": 5,
+     "pua": 6,
+     "ransomware": 183,
+     "rootkit": 3,
+     "trojan": 6673,
+     "trojan-gamethief": 5,
+     "virus": 43,
+     "worm": 3722
+    }
+   },
+   "timing": {
+    "clean": 156.6,
+    "attacks": 39.6,
+    "ablation": 211.2,
+    "smoothing": 63.2,
+    "certified": 69.5
+   },
+   "runs": {
+    "clean": 0,
+    "attacks": 0,
+    "ablation": 0,
+    "smoothing": 0,
+    "certified": 0
+   },
+   "group_attack": {
+    "lightgbm": [
+     0.9966666666666667,
+     0.0,
+     0.0,
+     0.0
+    ],
+    "lightgbm_mono": [
+     0.9966666666666667,
+     0.0,
+     0.0,
+     0.0
+    ],
+    "mlp": [
+     0.9933333333333333,
+     0.023333333333333334,
+     0.0,
+     0.0
+    ],
+    "pgd_at": [
+     0.9933333333333333,
+     0.1,
+     0.0,
+     0.0
+    ],
+    "ablation_main": [
+     0.9966666666666667,
+     0.9033333333333333,
+     0.0,
+     0.0
+    ],
+    "ablation_second": [
+     0.9333333333333333,
+     0.6333333333333333,
+     0.0,
+     0.0
+    ],
+    "ablation_ember": [
+     0.9533333333333334,
+     0.0,
+     0.0,
+     0.0
+    ],
+    "ablation_lgbm_main": [
+     0.9966666666666667,
+     0.9833333333333333,
+     0.0,
+     0.0
+    ],
+    "giri_reimpl": [
+     0.9933333333333333,
+     0.06333333333333334,
+     0.0,
+     0.0
+    ],
+    "ct_standard": [
+     0.99,
+     0.023333333333333334,
+     0.0,
+     0.0
+    ],
+    "ct_pgd_at": [
+     0.9933333333333333,
+     0.10333333333333333,
+     0.0,
+     0.0
+    ],
+    "ct_crownibp": [
+     0.9933333333333333,
+     0.03333333333333333,
+     0.0,
+     0.0
+    ],
+    "ct_crownibp_unc": [
+     0.9933333333333333,
+     0.02666666666666667,
+     0.0,
+     0.0
+    ]
+   },
+   "cost": {
+    "lightgbm": {
+     "train_seconds": 53.4,
+     "cert_ms_per_sample": null,
+     "forward_passes_per_sample": null
+    },
+    "lightgbm_mono": {
+     "train_seconds": 76.8,
+     "cert_ms_per_sample": null,
+     "forward_passes_per_sample": null
+    },
+    "ablation_main": {
+     "train_seconds": 4.3,
+     "cert_ms_per_sample": 0.063,
+     "forward_passes_per_sample": 10
+    },
+    "ablation_second": {
+     "train_seconds": 4.2,
+     "cert_ms_per_sample": 0.024,
+     "forward_passes_per_sample": 7
+    },
+    "ablation_ember": {
+     "train_seconds": 4.0,
+     "cert_ms_per_sample": 0.032,
+     "forward_passes_per_sample": 9
+    },
+    "ablation_lgbm_main": {
+     "train_seconds": 92.3,
+     "cert_ms_per_sample": 0.159,
+     "forward_passes_per_sample": 10
+    },
+    "giri_reimpl": {
+     "train_seconds": 4.2,
+     "cert_ms_per_sample": 9.189,
+     "forward_passes_per_sample": 2100
+    },
+    "ct_standard": {
+     "train_seconds": 2.6,
+     "cert_ms_per_sample": 0.016,
+     "forward_passes_per_sample": null
+    },
+    "ct_pgd_at": {
+     "train_seconds": 25.1,
+     "cert_ms_per_sample": 0.011,
+     "forward_passes_per_sample": null
+    },
+    "ct_crownibp": {
+     "train_seconds": 15.7,
+     "cert_ms_per_sample": 0.011,
+     "forward_passes_per_sample": null
+    },
+    "ct_crownibp_unc": {
+     "train_seconds": 15.7,
+     "cert_ms_per_sample": 0.01,
+     "forward_passes_per_sample": null
+    }
+   },
+   "lightgbm": {
+    "acc": 0.9933355548150616,
+    "f1": 0.9921813917122753,
+    "tpr": 0.9929577464788732,
+    "fpr": 0.006384213580963436,
+    "auc": 0.9997983645732005
+   },
+   "lightgbm_mono": {
+    "acc": 0.9936687770743086,
+    "f1": 0.9925752246971473,
+    "tpr": 0.9937402190923318,
+    "fpr": 0.006384213580963436,
+    "auc": 0.9997988187070447
+   },
+   "mlp": {
+    "acc": 0.991669443518827,
+    "f1": 0.9902458056964495,
+    "tpr": 0.9929577464788732,
+    "fpr": 0.009286128845037725,
+    "auc": 0.9982245637363226
+   },
+   "pgd_at": {
+    "acc": 0.9940019993335555,
+    "f1": 0.9929467084639498,
+    "tpr": 0.9913928012519562,
+    "fpr": 0.004062681369704005,
+    "auc": 0.9990267911720012
+   },
+   "attacks": {
+    "mlp": {
+     "constrained": {
+      "fgsm": [
+       0.984,
+       0.972,
+       0.723,
+       0.272,
+       0.002,
+       0.0
+      ],
+      "pgd": [
+       0.984,
+       0.972,
+       0.702,
+       0.223,
+       0.002,
+       0.0
+      ]
+     },
+     "unconstrained": {
+      "fgsm": [
+       0.984,
+       0.967,
+       0.668,
+       0.211,
+       0.002,
+       0.0
+      ],
+      "pgd": [
+       0.984,
+       0.967,
+       0.616,
+       0.173,
+       0.001,
+       0.0
+      ]
+     }
+    },
+    "pgd_at": {
+     "constrained": {
+      "fgsm": [
+       0.99,
+       0.989,
+       0.985,
+       0.974,
+       0.764,
+       0.027
+      ],
+      "pgd": [
+       0.99,
+       0.989,
+       0.985,
+       0.973,
+       0.616,
+       0.008
+      ]
+     },
+     "unconstrained": {
+      "fgsm": [
+       0.989,
+       0.988,
+       0.982,
+       0.964,
+       0.445,
+       0.005
+      ],
+      "pgd": [
+       0.989,
+       0.987,
+       0.982,
+       0.948,
+       0.347,
+       0.001
+      ]
+     }
+    }
+   },
+   "ablation": {
+    "main": {
+     "partition": "aligned5",
+     "k": 2,
+     "n_subsets": 10,
+     "ceiling_r": 1,
+     "clean": {
+      "acc": 0.9896701099633456,
+      "f1": 0.987866927592955,
+      "tpr": 0.9874804381846636,
+      "fpr": 0.008705745792222866,
+      "auc": 0.9978975873685396
+     },
+     "cert_tpr_exact": [
+      0.9812206572769953,
+      0.8317683881064163,
+      0.0,
+      0.0
+     ],
+     "cert_acc_exact": [
+      0.9870043318893702,
+      0.866044651782739,
+      0.0,
+      0.0
+     ],
+     "cert_tpr": [
+      0.9812206572769953,
+      0.8317683881064163,
+      0.0,
+      0.0
+     ],
+     "cert_by_edit": {
+      "E1_overlay": {
+       "r_needed": 1,
+       "certifiable": true,
+       "cert_tpr": 0.8317683881064163
+      },
+      "E2_strings": {
+       "r_needed": 1,
+       "certifiable": true,
+       "cert_tpr": 0.8317683881064163
+      },
+      "E3_section": {
+       "r_needed": 2,
+       "certifiable": false,
+       "cert_tpr": 0.0
+      },
+      "E4_imports": {
+       "r_needed": 3,
+       "certifiable": false,
+       "cert_tpr": 0.0
+      },
+      "E5_timestamp": {
+       "r_needed": 1,
+       "certifiable": true,
+       "cert_tpr": 0.8317683881064163
+      },
+      "E6_secnames": {
+       "r_needed": 2,
+       "certifiable": false,
+       "cert_tpr": 0.0
+      },
+      "E7_header": {
+       "r_needed": 1,
+       "certifiable": true,
+       "cert_tpr": 0.8317683881064163
+      },
+      "E8_strip": {
+       "r_needed": 2,
+       "certifiable": false,
+       "cert_tpr": 0.0
+      },
+      "E10_hdrfields": {
+       "r_needed": 1,
+       "certifiable": true,
+       "cert_tpr": 0.8317683881064163
+      }
+     },
+     "view_vote_rate_malware": [
+      0.9773082942097027,
+      0.986697965571205,
+      0.9726134585289515,
+      0.9757433489827856,
+      0.9679186228482003,
+      0.9522691705790297,
+      0.9327073552425665,
+      0.9827856025039123,
+      0.9788732394366197,
+      0.8967136150234741
+     ],
+     "view_vote_rate_benign": [
+      0.9895531050493326,
+      0.9912942542077772,
+      0.9860708067324434,
+      0.9849100406268136,
+      0.9895531050493326,
+      0.9599535693557748,
+      0.958792803250145,
+      0.9802669762042948,
+      0.987811955890888,
+      0.942542077771329
+     ],
+     "empirical_tpr": [
+      0.9966666666666667,
+      0.9033333333333333,
+      0.0,
+      0.0
+     ],
+     "violations": 0,
+     "views": [
+      "CONTENT+HDRMUT+SIGDBG+SECTION",
+      "CONTENT+HDRMUT+SIGDBG+IMPORTS",
+      "CONTENT+HDRMUT+SIGDBG+IMMHDR",
+      "CONTENT+HDRMUT+SIGDBG+IMMDD",
+      "SECTION+IMPORTS",
+      "SECTION+IMMHDR",
+      "SECTION+IMMDD",
+      "IMPORTS+IMMHDR",
+      "IMPORTS+IMMDD",
+      "IMMHDR+IMMDD"
+     ]
+    },
+    "second": {
+     "partition": "aligned7",
+     "k": 1,
+     "n_subsets": 7,
+     "ceiling_r": 3,
+     "clean": {
+      "acc": 0.951682772409197,
+      "f1": 0.9429807314195832,
+      "tpr": 0.9381846635367762,
+      "fpr": 0.038305281485780614,
+      "auc": 0.991932085191876
+     },
+     "cert_tpr_exact": [
+      0.9381846635367762,
+      0.905320813771518,
+      0.8442879499217527,
+      0.6158059467918623,
+      0.0,
+      0.0
+     ],
+     "cert_acc_exact": [
+      0.951682772409197,
+      0.9113628790403199,
+      0.8127290903032323,
+      0.5744751749416861,
+      0.0,
+      0.0
+     ],
+     "cert_tpr": [
+      0.9381846635367762,
+      0.905320813771518,
+      0.8442879499217527,
+      0.6158059467918623,
+      0.0,
+      0.0
+     ],
+     "cert_by_edit": {
+      "E1_overlay": {
+       "r_needed": 1,
+       "certifiable": true,
+       "cert_tpr": 0.905320813771518
+      },
+      "E2_strings": {
+       "r_needed": 1,
+       "certifiable": true,
+       "cert_tpr": 0.905320813771518
+      },
+      "E3_section": {
+       "r_needed": 2,
+       "certifiable": true,
+       "cert_tpr": 0.8442879499217527
+      },
+      "E4_imports": {
+       "r_needed": 3,
+       "certifiable": true,
+       "cert_tpr": 0.6158059467918623
+      },
+      "E5_timestamp": {
+       "r_needed": 1,
+       "certifiable": true,
+       "cert_tpr": 0.905320813771518
+      },
+      "E6_secnames": {
+       "r_needed": 2,
+       "certifiable": true,
+       "cert_tpr": 0.8442879499217527
+      },
+      "E7_header": {
+       "r_needed": 1,
+       "certifiable": true,
+       "cert_tpr": 0.905320813771518
+      },
+      "E8_strip": {
+       "r_needed": 3,
+       "certifiable": true,
+       "cert_tpr": 0.6158059467918623
+      },
+      "E10_hdrfields": {
+       "r_needed": 2,
+       "certifiable": true,
+       "cert_tpr": 0.8442879499217527
+      }
+     },
+     "view_vote_rate_malware": [
+      0.9507042253521126,
+      0.9272300469483568,
+      0.9123630672926447,
+      0.9084507042253521,
+      0.9561815336463224,
+      0.7996870109546166,
+      0.8278560250391236
+     ],
+     "view_vote_rate_benign": [
+      0.9791062100986652,
+      0.8432965757399884,
+      0.7173534532791642,
+      0.954730121880441,
+      0.9854904236796286,
+      0.8421358096343586,
+      0.8711549622751016
+     ],
+     "empirical_tpr": [
+      0.9333333333333333,
+      0.8833333333333333,
+      0.83,
+      0.5666666666666667
+     ],
+     "violations": 0,
+     "views": [
+      "CONTENT",
+      "HDRMUT",
+      "SIGDBG",
+      "SECTION",
+      "IMPORTS",
+      "IMMHDR",
+      "IMMDD"
+     ]
+    },
+    "ember": {
+     "partition": "ember",
+     "k": 1,
+     "n_subsets": 9,
+     "ceiling_r": 4,
+     "clean": {
+      "acc": 0.9736754415194935,
+      "f1": 0.9687376335575781,
+      "tpr": 0.9577464788732394,
+      "fpr": 0.014509576320371444,
+      "auc": 0.9957845025917418
+     },
+     "cert_tpr_exact": [
+      0.9577464788732394,
+      0.9100156494522692,
+      0.7949921752738655,
+      0.6541471048513302,
+      0.0,
+      0.0,
+      0.0,
+      0.0,
+      0.0,
+      0.0
+     ],
+     "cert_acc_exact": [
+      0.9736754415194935,
+      0.9443518827057648,
+      0.8820393202265912,
+      0.8003998667110963,
+      0.4578473842052649,
+      0.0,
+      0.0,
+      0.0,
+      0.0,
+      0.0
+     ],
+     "cert_tpr": [
+      0.9577464788732394,
+      0.9100156494522692,
+      0.7949921752738655,
+      0.6541471048513302,
+      0.0,
+      0.0,
+      0.0,
+      0.0,
+      0.0,
+      0.0
+     ],
+     "cert_by_edit": {
+      "E1_overlay": {
+       "r_needed": 4,
+       "certifiable": true,
+       "cert_tpr": 0.0
+      },
+      "E2_strings": {
+       "r_needed": 4,
+       "certifiable": true,
+       "cert_tpr": 0.0
+      },
+      "E3_section": {
+       "r_needed": 6,
+       "certifiable": false,
+       "cert_tpr": 0.0
+      },
+      "E4_imports": {
+       "r_needed": 7,
+       "certifiable": false,
+       "cert_tpr": 0.0
+      },
+      "E5_timestamp": {
+       "r_needed": 3,
+       "certifiable": true,
+       "cert_tpr": 0.6541471048513302
+      },
+      "E6_secnames": {
+       "r_needed": 4,
+       "certifiable": true,
+       "cert_tpr": 0.0
+      },
+      "E7_header": {
+       "r_needed": 3,
+       "certifiable": true,
+       "cert_tpr": 0.6541471048513302
+      },
+      "E8_strip": {
+       "r_needed": 6,
+       "certifiable": false,
+       "cert_tpr": 0.0
+      },
+      "E10_hdrfields": {
+       "r_needed": 3,
+       "certifiable": true,
+       "cert_tpr": 0.6541471048513302
+      }
+     },
+     "view_vote_rate_malware": [
+      0.8716744913928013,
+      0.8341158059467919,
+      0.9327073552425665,
+      0.892018779342723,
+      0.9546165884194053,
+      0.9076682316118936,
+      0.9491392801251957,
+      0.00782472613458529,
+      0.9178403755868545
+     ],
+     "view_vote_rate_benign": [
+      0.9483459082994776,
+      0.9605339524085896,
+      0.950667440510737,
+      0.9320951828206616,
+      0.9199071387115496,
+      0.9582124201973302,
+      0.983749274521184,
+      1.0,
+      0.946604759141033
+     ],
+     "empirical_tpr": [
+      0.9533333333333334,
+      0.89,
+      0.79,
+      0.6433333333333333
+     ],
+     "violations": 0,
+     "views": [
+      "ByteHist",
+      "ByteEntropy",
+      "Strings",
+      "General+TS",
+      "Header(static)",
+      "Section",
+      "Imports",
+      "Exports",
+      "DataDir"
+     ]
+    },
+    "lgbm_main": {
+     "partition": "aligned5",
+     "k": 2,
+     "n_subsets": 10,
+     "ceiling_r": 1,
+     "clean": {
+      "acc": 0.9940019993335555,
+      "f1": 0.9929522317932654,
+      "tpr": 0.9921752738654147,
+      "fpr": 0.0046430644225188625,
+      "auc": 0.9986684795689726
+     },
+     "cert_tpr_exact": [
+      0.9890453834115805,
+      0.9655712050078247,
+      0.0,
+      0.0
+     ],
+     "cert_acc_exact": [
+      0.9926691102965678,
+      0.9640119960013329,
+      0.0,
+      0.0
+     ],
+     "cert_tpr": [
+      0.9890453834115805,
+      0.9655712050078247,
+      0.0,
+      0.0
+     ],
+     "cert_by_edit": {
+      "E1_overlay": {
+       "r_needed": 1,
+       "certifiable": true,
+       "cert_tpr": 0.9655712050078247
+      },
+      "E2_strings": {
+       "r_needed": 1,
+       "certifiable": true,
+       "cert_tpr": 0.9655712050078247
+      },
+      "E3_section": {
+       "r_needed": 2,
+       "certifiable": false,
+       "cert_tpr": 0.0
+      },
+      "E4_imports": {
+       "r_needed": 3,
+       "certifiable": false,
+       "cert_tpr": 0.0
+      },
+      "E5_timestamp": {
+       "r_needed": 1,
+       "certifiable": true,
+       "cert_tpr": 0.9655712050078247
+      },
+      "E6_secnames": {
+       "r_needed": 2,
+       "certifiable": false,
+       "cert_tpr": 0.0
+      },
+      "E7_header": {
+       "r_needed": 1,
+       "certifiable": true,
+       "cert_tpr": 0.9655712050078247
+      },
+      "E8_strip": {
+       "r_needed": 2,
+       "certifiable": false,
+       "cert_tpr": 0.0
+      },
+      "E10_hdrfields": {
+       "r_needed": 1,
+       "certifiable": true,
+       "cert_tpr": 0.9655712050078247
+      }
+     },
+     "view_vote_rate_malware": [
+      0.9913928012519562,
+      0.9921752738654147,
+      0.9913928012519562,
+      0.9874804381846636,
+      0.9859154929577465,
+      0.9827856025039123,
+      0.9804381846635368,
+      0.9859154929577465,
+      0.986697965571205,
+      0.9804381846635368
+     ],
+     "view_vote_rate_benign": [
+      0.9907138711549622,
+      0.9930354033662218,
+      0.9883923389437028,
+      0.9901334881021474,
+      0.9936157864190366,
+      0.9912942542077772,
+      0.9936157864190366,
+      0.9941961694718514,
+      0.9930354033662218,
+      0.9854904236796286
+     ],
+     "empirical_tpr": [
+      0.9966666666666667,
+      0.9833333333333333,
+      0.0,
+      0.0
+     ],
+     "violations": 0,
+     "trees_per_view": 200
+    }
+   },
+   "smoothing": {
+    "isotropic_0.25": {
+     "sigma": 0.25,
+     "variant": "isotropic",
+     "clean_acc": 0.99,
+     "abstain": 0.0,
+     "tpr": 0.9862385321100917
+    },
+    "subspace_0.25": {
+     "sigma": 0.25,
+     "variant": "subspace",
+     "clean_acc": 0.992,
+     "abstain": 0.002,
+     "tpr": 0.9908256880733946
+    },
+    "isotropic_0.5": {
+     "sigma": 0.5,
+     "variant": "isotropic",
+     "clean_acc": 0.994,
+     "abstain": 0.0,
+     "tpr": 0.9954128440366973
+    },
+    "subspace_0.5": {
+     "sigma": 0.5,
+     "variant": "subspace",
+     "clean_acc": 0.994,
+     "abstain": 0.0,
+     "tpr": 0.9954128440366973
+    },
+    "isotropic_1.0": {
+     "sigma": 1.0,
+     "variant": "isotropic",
+     "clean_acc": 0.99,
+     "abstain": 0.004,
+     "tpr": 0.9908256880733946
+    },
+    "subspace_1.0": {
+     "sigma": 1.0,
+     "variant": "subspace",
+     "clean_acc": 0.992,
+     "abstain": 0.0,
+     "tpr": 0.9908256880733946
+    },
+    "giri_reimpl": {
+     "sigma": 0.3,
+     "drop": 0.2,
+     "variant": "giri_reimpl",
+     "clean_acc": 0.99,
+     "abstain": 0.002,
+     "tpr": 0.9908256880733946
+    }
+   },
+   "certified_training": {
+    "standard": {
+     "clean": {
+      "acc": 0.9913362212595801,
+      "f1": 0.98984375,
+      "tpr": 0.9913928012519562,
+      "fpr": 0.008705745792222866,
+      "auc": 0.9982615756446201
+     },
+     "cert_tpr": [
+      0.9859154929577465,
+      0.9741784037558685,
+      0.7284820031298904,
+      0.08841940532081377,
+      0.0
+     ],
+     "cert_acc": [
+      0.9866711096301233,
+      0.9726757747417527,
+      0.8250583138953682,
+      0.17660779740086638,
+      0.013662112629123625
+     ],
+     "cert_tpr_unconstrained": [
+      0.9859154929577465,
+      0.9702660406885759,
+      0.6932707355242567,
+      0.06259780907668232,
+      0.0
+     ],
+     "pgd_tpr": [
+      0.985,
+      0.982,
+      0.97,
+      0.667,
+      0.207
+     ],
+     "violations": 0
+    },
+    "pgd_at": {
+     "clean": {
+      "acc": 0.9946684438520493,
+      "f1": 0.9937353171495693,
+      "tpr": 0.9929577464788732,
+      "fpr": 0.004062681369704005,
+      "auc": 0.999082649634831
+     },
+     "cert_tpr": [
+      0.9906103286384976,
+      0.985133020344288,
+      0.917057902973396,
+      0.0297339593114241,
+      0.0
+     ],
+     "cert_acc": [
+      0.9913362212595801,
+      0.984005331556148,
+      0.9266911029656781,
+      0.10463178940353215,
+      0.0
+     ],
+     "cert_tpr_unconstrained": [
+      0.9890453834115805,
+      0.9835680751173709,
+      0.8458528951486698,
+      0.013302034428794992,
+      0.0
+     ],
+     "pgd_tpr": [
+      0.991,
+      0.99,
+      0.989,
+      0.984,
+      0.971
+     ],
+     "violations": 0
+    },
+    "crownibp": {
+     "clean": {
+      "acc": 0.9946684438520493,
+      "f1": 0.9937254901960785,
+      "tpr": 0.9913928012519562,
+      "fpr": 0.002901915264074289,
+      "auc": 0.9986196601807271
+     },
+     "cert_tpr": [
+      0.9906103286384976,
+      0.9906103286384976,
+      0.986697965571205,
+      0.971830985915493,
+      0.405320813771518
+     ],
+     "cert_acc": [
+      0.9940019993335555,
+      0.9926691102965678,
+      0.9886704431856048,
+      0.971676107964012,
+      0.6334555148283906
+     ],
+     "cert_tpr_unconstrained": [
+      0.9906103286384976,
+      0.9898278560250391,
+      0.9859154929577465,
+      0.9647887323943662,
+      0.19796557120500782
+     ],
+     "pgd_tpr": [
+      0.99,
+      0.99,
+      0.987,
+      0.979,
+      0.849
+     ],
+     "violations": 0
+    },
+    "crownibp_unc": {
+     "clean": {
+      "acc": 0.9940019993335555,
+      "f1": 0.9929467084639498,
+      "tpr": 0.9913928012519562,
+      "fpr": 0.004062681369704005,
+      "auc": 0.9987034478749715
+     },
+     "cert_tpr": [
+      0.9913928012519562,
+      0.9898278560250391,
+      0.9874804381846636,
+      0.974960876369327,
+      0.5359937402190923
+     ],
+     "cert_acc": [
+      0.9933355548150616,
+      0.991669443518827,
+      0.9896701099633456,
+      0.975674775074975,
+      0.7077640786404532
+     ],
+     "cert_tpr_unconstrained": [
+      0.9906103286384976,
+      0.9890453834115805,
+      0.986697965571205,
+      0.971830985915493,
+      0.2887323943661972
+     ],
+     "pgd_tpr": [
+      0.99,
+      0.988,
+      0.986,
+      0.977,
+      0.883
+     ],
+     "violations": 0
+    }
+   }
+  }
+ }
+}

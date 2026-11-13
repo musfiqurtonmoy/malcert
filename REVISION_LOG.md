@@ -387,6 +387,40 @@ carry a **Basis:** line saying what they were fixed from.
   the main configuration only. EMBER groups are the negative baseline. No test-split result of any edit-aligned
   grouping exists at the time of this entry.
 
+### 2c–2f (commits `1c58f87`, `097e62a`)
+- **2-6** `[A3, B5]` `config.ablation_configs` = main (aligned5, k=2), second (aligned7, k=1), ember (EMBER groups,
+  k=1, negative baseline); `run_all.py` evaluates all three, records exact certificate, bound, ceiling,
+  certified detection per in-scope edit type at the r it needs (`cert_by_edit`), per-view vote rates.
+  `--eval_split val` added: pilots before Stage 3 evaluate on the validation split, never on test.
+- **2-7** `[A2]` **2c LightGBM per view** (main configuration only, 200 trees per view, fixed): 10 models.
+- **2-8** `[A2]` **2d** certified training keeps four models: standard, PGD-AT, CROWN-IBP trained on the constrained
+  box, CROWN-IBP trained on the unconstrained L∞ ball (`crownibp_unc`); each certified on both boxes (2 × 2).
+  Plain IBP and asymmetric CROWN-IBP removed.
+- **2-9** `[A2]` **2e** monotonic LightGBM (`monotone_constraints=+1` on the 9 increase-only features);
+  Giri et al. re-implementation (`RandomAblationMLP`: each EMBER group dropped with p = 0.2, Gaussian noise
+  σ = 0.3 on all features in training and in CERTIFY, L2 radius; labelled re-implementation; deviations: MLP base
+  instead of LightGBM, EMBER groups instead of their ~50-feature groups, noise on every sample, σ in standardised
+  units). Uniform group-transplant attack on all 13 models, in the main partition's groups, same donors.
+- **2-10** `[A4, B5]` **2f** cost records per model (training s, certification ms/sample, forward passes/sample)
+  → `tools/make_runtime.py` → `paper/tables/tab_runtime.tex`.
+- **2-11** `[infra]` **Bug found and fixed in the pilot:** the group attack scored LightGBM models on vectors
+  round-tripped through the standardisation; an exact 0 came back as ~1e-8 and flipped LightGBM splits
+  (LightGBM "detected" only 74% at r = 0; 302 false violations for per-view LightGBM). The attack now runs in
+  raw space for raw-feature models. The buggy pilot is kept as `results_pilot_stage2_rawbug/`.
+- **2-12** `[A2, A3, A4, B5]` **Stage 2 pilot** `results_pilot_stage2/` (commit `097e62a`, quick, 1 seed, **validation
+  split**): all 8 violations 0. Clean accuracy: LightGBM 99.3, monotonic LightGBM 99.4, MLP 99.2, PGD-AT 99.4;
+  main 99.0 (certified 83.2% at r = 1); second 95.2 (90.5 / 84.4 / 61.6% at r = 1, 2, 3); ember k=1 97.4 (65.4% at
+  r = 3, 0% at r = 4); LightGBM-per-view main 99.4 (certified **96.6%** at r = 1). Certified training at
+  ε = 0.05 / 0.1, constrained box: CROWN-IBP constrained-trained 97.2 / 40.5, unconstrained-trained 97.5 / 53.6
+  (**negative for the constrained-training claim**); certified on the unconstrained ball: 96.5 / 19.8 vs 97.2 / 28.9.
+  Giri re-impl.: accuracy 99.0, abstain 0.2%. Group attack (r = 1): every non-ablation model ≤ 10.3%
+  detected (LightGBM and monotonic LightGBM 0%); ablation main 90.3%, LightGBM views 98.3%.
+- **2-13** `[A4, B5]` **Stage 3 estimate** (from the pilot, scaled to full-preset budgets; to be re-measured on the
+  first Stage 3 seed): about 16 min per seed without smoothing, plus about 14 min per seed for smoothing on every
+  test point (2 σ + Giri, n = 10,000). Run set: 5 family + 3 random seeds without smoothing (2.1 h), smoothing on
+  3 seeds (0.7 h), temporal 2 cut-offs × 3 seeds, clean/ablation/certified blocks (1.4 h), full-data check (0.8 h):
+  **about 5 h total**.
+
 ### Ideas not done
 - Execution check of edited binaries in a sandboxed VM (would turn "plausibly functionality-preserving" into
   "verified"); out of the lean scope.
