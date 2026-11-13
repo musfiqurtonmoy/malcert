@@ -421,6 +421,36 @@ carry a **Basis:** line saying what they were fixed from.
   3 seeds (0.7 h), temporal 2 cut-offs × 3 seeds, clean/ablation/certified blocks (1.4 h), full-data check (0.8 h):
   **about 5 h total**.
 
+### 2g–2i decisions (author, 2026-11-13; logged before any run)
+- **2-14** `[A2, A3, B5]` **2g.** C3 stays, redefined as edit-aware certified training (2h); box-constrained
+  CROWN-IBP is kept as an ablation, compared with uniform-ball training under the original rule (paired 95%
+  interval at ε = 0.05, family split), reported whatever the outcome. Certification on the constrained box is kept.
+  The 8.1% L∞ coverage at ε = 0.05 is stated next to every certified-training number. Headline group-certified
+  detector: per-view LightGBM, aligned5 k = 2; per-view LightGBM is added for aligned7 k = 1 (7 models, 200 trees),
+  declared before any test evaluation. Giri re-implementation unchanged; deviations go to Appendix B.
+- **2-15** `[A2, A3]` **Pre-registered C3 rule (2h.8):** C3 is claimed if edit-aware CROWN-IBP > uniform-ball
+  CROWN-IBP in certified detection over T_f(1), averaged over the four families, with a paired 95% interval
+  above zero on the family split (5 seeds). Otherwise the result is reported as it is.
+- **2-16** `[A1, A3]` **2h details fixed here (not specified in the plan):** halves = random 50/50 split of the
+  150 originals, stratified by architecture, seed 0; all edits of an original follow it. Support S_f = features
+  changed in ≥ 1% of the family's fit-half edited files. lo/hi = 2.5th / 97.5th percentile of the change over the
+  fit-half files where the feature changed, widened to include 0 (so lo = 0 when only increases were seen).
+  Changes are stored in signed-log units, Δ = slog(x') − slog(x), and divided by each run's standardisation sd
+  (Δz = Δ / sd exactly; mu cancels), so the sets and their coverage do not depend on the seed's statistics.
+- **2-17** `[A2, A5]` **2i grids and selection metrics** (validation split only; seed 0):
+  - MLP: lr {1e-3, 3e-4} × epochs {30, 60}; metric validation accuracy. The chosen lr and epochs become
+    `cfg.lr` / `cfg.epochs`, i.e. the base settings of every MLP-based model not tuned separately.
+  - Per-view LightGBM, aligned5 k = 2 and aligned7 k = 1: n_estimators {200, 500} × num_leaves {31, 64}.
+  - aligned7 k = 1 MLP views: epochs {30, 60, 90}.
+  - Uniform-ball CROWN-IBP: ε_train {0.05, 0.1}; box-constrained CROWN-IBP: same grid.
+  - Edit-aware CROWN-IBP: t_train {0.5, 1} × aggregation {mean, max}.
+  - Metric for certified detectors: maximise certified detection on validation malware subject to validation
+    FPR ≤ 1% (else the lowest-FPR setting). For group-certified detectors, certified detection = mean over the
+    9 in-scope edit types at the r each needs (as in 2-3). For all three CROWN-IBP variants, certified detection =
+    mean over the four families of certified detection over T_f(1), the set the C3 rule uses.
+  - **Split:** the plan says family split, which is built in Stage 3b. The script takes `--split`; which split
+    to use for the grid run is put to the author (`RUN_NEXT.md`).
+
 ### Ideas not done
 - Execution check of edited binaries in a sandboxed VM (would turn "plausibly functionality-preserving" into
   "verified"); out of the lean scope.

@@ -217,6 +217,46 @@ The first Stage 1 report (commit 3f53190) is accepted. Close these gaps before f
 
 ---
 
+### 2g. Stage 2 result and decisions (2026-11-13, validation split, 1 seed)
+- **Certified training (C3).** In the pilot, CROWN-IBP trained on the unconstrained ball certifies as much or more than constraint-aware training, even on the constrained box (ε = 0.1: 53.6% vs 40.5%). Reason: after the repair, 2,314 of 2,381 features are mutable, only 9 are increase-only and the training-range clip is gone, so the constrained box is almost the full ball.
+  - **Decision (author, 2026-11-13): C3 stays a contribution, redefined as edit-aware certified training (2h).** The box-constrained variant is kept as an ablation: its comparison with unconstrained training is reported under the original rule (paired 95% interval at ε = 0.05 on the family split), whatever the outcome.
+  - Either way, certifying on the constrained box (a verification-time choice, sound by Proposition 1) is kept and reported.
+  - The L-infinity certificate covers 8.1% of measured edits at ε = 0.05; the paper says so next to every certified-training number.
+- **Headline group-certified detector: per-view LightGBM, aligned5, k = 2** (validation: 99.4% accuracy, 96.6% certified at r = 1). The MLP-based version is reported alongside.
+- **Added, declared before any test evaluation:** per-view LightGBM for the second operating point (aligned7, k = 1). 7 models per seed; same 200-tree settings.
+- **Giri re-implementation:** keep as is; list every deviation in Appendix B (MLP base, EMBER groups, noise on all samples, σ = 0.3).
+- **Contributions for the paper (Stage 4):** (1) problem-space-validated threat model with the edit map and coverage table; (2) edit-aligned group certificates, with the negative result for extractor-defined groups and the 0–10% group-attack detection of standard detectors; (3) constraint-aware (edit-aware) certified training (2h), evaluated against uniform-ball training on the measured edit families, plus the coverage of real edits. The title may keep "constraint-aware certified training" if 2h meets its rule; otherwise propose a new title to the author.
+
+### 2h. Edit-aware certified training: C3, redefined (author decision, declared before any test evaluation)
+**Why.** After the repair, the per-feature box is almost the full ball (2,314 of 2,381 features mutable, 9 increase-only), so training on it changes little. The edit map contains much more structure: which features each edit changes, in which direction, and by how much. Threat sets built from that structure are small and shaped like real edits.
+
+1. **Corpus halves.** Split the original corpus files at random into a *fit* half and an *eval* half. All edits of one original stay in the same half. Radii come from the fit half only; coverage is measured on the eval half only.
+2. **Edit families** (from the edit map): F_content (E1, E2, E5, E7, E10), F_section (E3, E6), F_import (E4), F_strip (E8).
+3. **Threat set per family.** For family f and budget scale t:
+   - support S_f = standardized features changed in at least 1% of fit-half edited files of that family;
+   - per-feature interval [t·lo_{f,i}, t·hi_{f,i}], with lo and hi the 2.5th and 97.5th percentiles of the measured change Δz_i (one-sided where only increases were observed);
+   - all features outside S_f fixed; natural bounds still apply.
+   - T_f(t) is the resulting box. t = 1 covers the typical measured edit of the family.
+4. **Coverage.** Share of eval-half edited files whose whole change lies inside T_f(t), for t ∈ {0.25, 0.5, 1, 2}. Report it next to certified detection, replacing the uniform-ε coverage curve as the headline coverage measure.
+5. **Certification.** A sample is certified for family f at scale t if max(IBP, CROWN) margin lower bound > 0 over T_f(t). Report per family and overall (certified for all four families).
+6. **Training.** CROWN-IBP with robust loss aggregated over the four family boxes, t ramped from 0 to t_train with the existing warm-up/ramp schedule. Aggregation (mean or max over families) and t_train ∈ {0.5, 1} are chosen on validation (2i).
+7. **Comparison on the same sets T_f(t):** standard MLP, PGD-AT, uniform-ball CROWN-IBP (its ε tuned on validation, 2i), box-constrained CROWN-IBP (2d), edit-aware CROWN-IBP.
+8. **Pre-registered claim.** C3 is claimed if edit-aware CROWN-IBP > uniform-ball CROWN-IBP in certified detection over T_f(1), averaged over the four families, with a paired 95% interval above zero on the family split (5 seeds). If not, report the result as it is.
+9. **Soundness test.** Every eval-half edited vector inside T_f(t) must be certified-consistent: no certified sample may be flipped by its own real edit (re-classify the edited vectors of malware-labelled test samples where applicable; for benign corpus files, check the certified decision is unchanged).
+10. **Cost.** About 4× the CROWN-IBP cost per batch (four family boxes). Measure on the pilot.
+
+### 2i. Validation tuning for every model (declared before any test evaluation)
+Selection uses the validation split only. Write each grid and the selection metric in the log, then run, then freeze the chosen settings in `config.py` and commit **before** Stage 3 touches the test set.
+- **Selection metrics:** clean detectors by validation accuracy; certified detectors by certified detection on validation, subject to validation FPR ≤ 1% (if no setting meets it, the lowest-FPR one).
+- **Grids (small):**
+  - MLP: learning rate {1e-3, 3e-4} × epochs {30, 60}.
+  - Per-view LightGBM (aligned5 k=2 and aligned7 k=1): n_estimators {200, 500} × num_leaves {31, 64}.
+  - aligned7 k=1 MLP views: epochs {30, 60, 90} (targets its 3.4% FPR).
+  - Uniform-ball CROWN-IBP: ε_train {0.05, 0.1}.
+  - Edit-aware CROWN-IBP: t_train {0.5, 1} × aggregation {mean, max}.
+  - Box-constrained CROWN-IBP: same ε_train grid as uniform.
+- Seed 0 only, family split. Report a one-line table per model.
+
 ## Stage 3: data and statistics (A5, B3, B4, B6, B7)
 
 All Stage 3 experiments use the 30K subset, which also keeps memory within the PC's 7.9 GB.
@@ -261,7 +301,7 @@ All Stage 3 experiments use the 30K subset, which also keeps memory within the P
 
 ### 4a. Text and figures
 1. **Soundness wording (A1, B1, B2).** Replace every "sound for the real attacker" with the exact scope: the in-scope edits measured on N benign files. Explain "over-approximation" precisely: the threat set contains every feature vector those edits produced, plus many they cannot. Make the Introduction and Section 7 agree; use the coverage table from 1g.
-2. **Contributions.** C1 becomes "a problem-space-validated threat model". C2 becomes "edit-aligned group certificates", with the negative result for extractor-defined groups stated up front. Certified training is reframed around what its epsilon actually covers (1h). Smoothing is demoted to a baseline (Am1). Adjust the title only if it no longer matches.
+2. **Contributions.** Use the contribution list in 2g. Certified training is reframed around what its epsilon actually covers (1h) and the pre-registered C3 rule. Smoothing is demoted to a baseline (Am1). Adjust the title only if it no longer matches.
 3. **The 93.9% (A4).** Separate macros for the standard-MLP evasion rate under the group attack (stated in §6.2) and the ablation detector's empirical detection (§6.3). The abstract cites the MLP one.
 4. **Table 1 (A4).** Add the standard 2381–256–256–2 network row.
 5. **Figure 5 (Am3, B6).** Wilson 95% intervals per cell; merge categories with fewer than 30 distinct test files into "other".
@@ -292,10 +332,10 @@ All Stage 3 experiments use the 30K subset, which also keeps memory within the P
 ---
 
 ## Compute estimate (GTX 1050 Ti)
-Measure per-seed time after the Stage 2 pilot and revise. Expected:
-- family split, 5 seeds ≈ 3 h
-- random split, 3 seeds ≈ 2 h
-- temporal decay curves (2 cut-offs × 3 seeds, three blocks only) ≈ 2 h
-- smoothing baseline on the full test set ≈ 3 h
-- one full-data check ≈ 1–2 h
-About 11–12 hours in total: one night plus one evening, started by the user from a terminal with resume support on.
+Re-measure after the Stage 3 pilot. Expected with 2h and 2i:
+- validation tuning (2i), seed 0 ≈ 3–4 h
+- family split, 5 seeds ≈ 4 h (edit-aware training adds about 40%)
+- random split, 3 seeds ≈ 2.5 h
+- temporal decay curves ≈ 1.5 h
+- smoothing baseline ≈ 0.7 h; full-data check ≈ 0.8 h
+About 12–13 hours: two nights, started by the user from a terminal with resume support on.
