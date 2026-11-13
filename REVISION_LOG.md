@@ -512,6 +512,17 @@ carry a **Basis:** line saying what they were fixed from.
   edit-aware 90.2%, FPR 5.5%, mean certified over T_f(1) 15.8%. One epoch: says only that the pipeline runs.
   Grid command (family split, about 35–40 min) in `RUN_NEXT.md`.
 
+### Decisions 2026-11-13 (author; logged before implementation)
+- **2-28** `[A1, A3]` Log 2-23 confirmed: all five hashed section blocks are structural.
+- **2-29** `[A5, B4]` **Family assignment category by category, for every split (3b).** Each family gets the
+  majority category of its malware; within each category, families are visited in seeded random order and each
+  goes to the part furthest below that category's target share (relative). Benign files are split at random.
+- **2-30** `[A5, B6]` **2i tuning by grouped 3-fold cross-validation** over train + validation of the seed-0 family
+  split. The pooled families are assigned to 3 folds category by category (same rule, equal targets); benign
+  files to 3 random folds. For each grid point: train on 2 folds, evaluate on the third, three times;
+  standardisation (and the family sets' sd) fitted on the 2 training folds. Score = mean over folds of the
+  metrics of 2-17 (FPR cap applied to the mean FPR). The test part is never used.
+
 ### Ideas not done
 - Execution check of edited binaries in a sandboxed VM (would turn "plausibly functionality-preserving" into
   "verified"); out of the lean scope.

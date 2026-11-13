@@ -231,7 +231,8 @@ The first Stage 1 report (commit 3f53190) is accepted. Close these gaps before f
 **Why.** After the repair, the per-feature box is almost the full ball (2,314 of 2,381 features mutable, 9 increase-only), so training on it changes little. The edit map contains much more structure: which features each edit changes, in which direction, and by how much. Threat sets built from that structure are small and shaped like real edits.
 
 1. **Corpus halves.** Split the original corpus files at random into a *fit* half and an *eval* half. All edits of one original stay in the same half. Radii come from the fit half only; coverage is measured on the eval half only.
-2. **Edit families** (from the edit map): F_content (E1, E2, E5, E7, E10), F_section (E3, E6), F_import (E4), F_strip (E8).
+2. **Hashed section blocks:** all five hashed section blocks are treated structurally, since all are keyed by section name (log 2-23, confirmed by the author).
+3. **Edit families** (from the edit map): F_content (E1, E2, E5, E7, E10), F_section (E3, E6), F_import (E4), F_strip (E8).
 3. **Threat set per family.** For family f and budget scale t:
    - support S_f = standardized features changed in at least 1% of fit-half edited files of that family;
    - per-feature interval [t·lo_{f,i}, t·hi_{f,i}], with lo and hi the 2.5th and 97.5th percentiles of the measured change Δz_i (one-sided where only increases were observed);
@@ -262,7 +263,9 @@ Selection uses the validation split only. Write each grid and the selection metr
   - Uniform-ball CROWN-IBP: ε_train {0.05, 0.1}.
   - Edit-aware CROWN-IBP: t_train {0.5, 1} × aggregation {mean, max}.
   - Box-constrained CROWN-IBP: same ε_train grid as uniform.
-- Seed 0 only, **on the validation part of the family-disjoint split**. Build the family split (the split function and its test from 3b, nothing else of 3b) before the grid is run; do not tune on the random split, whose validation set shares families with training.
+- **Tuning data (revised 2026-11-13): grouped 3-fold cross-validation over train + validation of the family split, seed 0.** Families are assigned to folds category by category so each fold's category mix stays close to the whole subset's. Each grid point is scored by its mean over the 3 folds. Reason: the seed-0 validation part held only 37 families and 4.9% worms, against about 32% in train and test, so single-split tuning would be noisy and skewed. The test part is never used.
+- **Family assignment for all splits (3b):** assign families to train/val/test category by category, so each part's category mix stays close to the whole; report the mix per part and seed.
+- Superseded: seed 0 only, on the validation part of the family-disjoint split. Build the family split (the split function and its test from 3b, nothing else of 3b) before the grid is run; do not tune on the random split, whose validation set shares families with training.
 - Report a one-line table per model.
 
 ## Stage 3: data and statistics (A5, B3, B4, B6, B7)
