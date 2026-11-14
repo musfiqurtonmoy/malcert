@@ -321,6 +321,14 @@ All Stage 3 experiments use the 30K subset, which also keeps memory within the P
 6. **Output.** `tools/eps_sweep.py`, results in `results_eps_sweep/`, one figure (clean accuracy and certified detection over T_f(1) against ε_train, edit-aware as a marker), macros prefixed `Sw`.
 7. **Cost.** Seven ε values × 5 seeds of one small network; expect about 1–1.5 h. The user runs it from a terminal. Do not change code while it runs.
 
+### 3g result and C3 wording (author decision, 2026-11-14)
+- Sweep (family split, 5 seeds): uniform-ball CROWN-IBP certifies over T_f(1) 0.0 / 0.0 / 3.1 / 24.5 / 47.3 / 0.0% at ε_train 0.05 / 0.1 / 0.2 / 0.5 / 1 / 2 (FPR 0.4 / 0.4 / 1.1 / 3.5 / 6.5 / 0.1%); ε ≥ 4 collapses to always-benign in all seeds. Edit-aware: 56.0% at FPR 1.2%.
+- Pre-registered accuracy-matched comparison (ε = 0.1): +56.0 [49.0, 62.9], p < 0.001.
+- Best uniform ε (= 1), chosen after the fact on test data and so favouring the baseline: edit-aware +8.7 [−8.8, 26.1], not significant. Uniform ε = 1 is better on content and strip; edit-aware on section (66.8 vs 32.6) and import (40.2 vs 0).
+- **C3 wording for the paper:** edit-aware certified training certifies \SwEditCert\% of malware over the measured edit sets at \SwEditFpr\% FPR. Uniform-ball training reaches comparable certified detection only at ε = 1, at \SwUnifOneFpr\% FPR. At FPR near 1% (the 2i selection cap, fixed beforehand), it certifies at most \SwUnifLowFprCert\%. The methods are complementary by edit family. Also report the pre-registered +56.0 result, with a sentence that the 2i grid for the uniform baseline ({0.05, 0.1}) was too narrow and the sweep was added to correct it. Never use "uniform-ball certifies 0%" as the headline contrast.
+- Explain the 290 containment radius: hashed Section.entry_name buckets non-zero in one training file (std 0.00478), so standardized changes are inflated.
+- Add any missing macros in that wording to eps_sweep.py (prefix Sw).
+
 ## Stage 4: manuscript, reproducibility, final audit
 
 ### 4a. Text and figures
