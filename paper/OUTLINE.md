@@ -38,42 +38,61 @@ Section 4 defines edit-aware training as the constraint-aware method. Optional s
      (+62.6 [47.4, 77.8], p = 0.002).
    - Clean accuracy 92.8% against 94.6%: 1.8 points, not significant [−4.2, 0.6], p = 0.20.
    - Answers A2, A3, B5.
-3. **Edit-aware certified training.**
-   - Threat sets T_f(t) built from the measured edit families. Certified over T_f(1): 56.0% [49.0, 63.0], against
-     0.0% for uniform-ball and box-constrained CROWN-IBP (+56.0 [49.0, 62.9], Holm p = 0.0001). C3 rule met.
+3. **Edit-aware certified training** (wording per REVISION_PLAN "3g result and C3 wording").
+   - Threat sets T_f(t) are built from the measured edit families. Edit-aware CROWN-IBP certifies \SwEditCert\% of
+     malware over T_f(1), at \SwEditFpr\% FPR.
+   - **Trade-off at matched FPR.** Uniform-ball training reaches comparable certified detection only at ε = 1
+     (\SwUnifOneCert\%), at \SwUnifOneFpr\% FPR. At an FPR no higher than edit-aware's, it certifies at most
+     \SwUnifLowFprCert\% (ε = \SwUnifLowFprEps). The best uniform ε was chosen after the fact on test data, which
+     favours the baseline, and it is still not significantly better or worse: \SwBestDiff{} points
+     [\SwBestLo, \SwBestHi].
+   - **Complementary by edit family.** Uniform ε = 1 is better on content (\SwUnifOneContent{} vs \SwEditContent)
+     and strip (\SwUnifOneStrip{} vs \SwEditStrip). Edit-aware is better on section (\SwEditSection{} vs
+     \SwUnifOneSection) and import (\SwEditImport{} vs \SwUnifOneImport).
+   - **Pre-registered result:** C3 rule met, +\CmpADiff{} points [\CmpALo, \CmpAHi], Holm p = \CmpAP. The same holds
+     at matched accuracy (+\SwMatchedDiff). The text says that the 2i grid for the uniform baseline ({0.05, 0.1}) was
+     too narrow and that the sweep (3g) was added to correct it.
+   - Never "uniform-ball certifies 0%" as the headline contrast.
    - Box-constrained training is no better than uniform-ball training at ε = 0.05 (negative ablation).
    - Answers A2, A3.
 4. **Evaluation that does not overstate** (answers A5, B4, B6, B7). Family-disjoint split, 5 seeds, paired intervals,
    Holm correction across 6 pre-registered comparisons, and a temporal decay analysis.
-   - Random splits overstate certified detection by 14–50 points (per-view LightGBM 96.6% vs 55.1%).
-   - Certified detection falls below 90% of its first-month value within 1–6 months. Retraining recovers 8–16 points.
+   - Random splits overstate certified detection by \RandFamGapMin{} to \RandFamGapMax{} points, depending on the model.
+   - Certified detection falls below 90% of its first-month value within \TdMonthsMin–\TdMonthsMax{} months.
+     Retraining recovers \TdRetrainGainMin–\TdRetrainGainMax{} points.
 
-## Abstract draft (≈ 230 words; all numbers are macros)
+## Abstract (as in `main.tex`; all numbers are macros)
 
-Machine-learning malware detectors can be evaded by small edits to a PE file. Certified defences promise
-guarantees, but only for a threat model that matches what an attacker can actually change. We measure that.
-\PsNFilesAll{} benign PE files are modified with \PsNEditTypesInScope{} functionality-preserving edit types. The
-resulting \PsNEditedInScopeAll{} feature vectors define a threat model that contains every one of them; the
-draft-style threat model contained only \PsDraftBoxInsidePct\%. The measurements show that no edit touches a single
-EMBER feature group and that an L-infinity ball of the radius used in certified training covers only
-\PsEpsLeTrainPct\% of the edits. We therefore align the groups of a group-ablation certificate with the measured
-edits, and train networks against threat sets shaped like the measured edit families. On a family-disjoint split of
-BODMAS (\NSeedsFam{} seeds, 95\% intervals), a per-view LightGBM detector certifies \FamCertLgbmViews\% of test
-malware against any edit confined to one edit-aligned group. Its clean accuracy is \CmpFAbs{} points below
-LightGBM, not significant. Under a group-transplant attack it still detects \FamGattackLgbmViews\%, while LightGBM
-detects \FamGattackLgbm\%. Edit-aware certified training certifies \FamCertEdit\% of malware over the
-measured edit families, against \FamCertUnc\% for uniform-ball training (paired difference
-\CmpADiff{} points, [\CmpALo, \CmpAHi]). Restricting training to the per-feature box gives no gain. Random train/test
-splits overstate certified robustness by up to \RandFamGapMax{} points compared with family-disjoint testing.
-Certified detection decays within months of the training cut-off, and retraining recovers \TdRetrainGainMin--\TdRetrainGainMax{}
-points.
+Machine-learning malware detectors can be evaded by small, functionality-preserving edits to a Portable Executable
+(PE) file. A certified defence holds only for the threat model it assumes, so we first measure what real edits change.
+We apply \PsNEditTypesInScope{} edit types to \PsNFiles{} benign PE files. All \PsNEditedInScope{} edited feature
+vectors lie inside our repaired threat model, against \PsDraftBoxInsidePct\% for a conventional per-feature box. No
+edit touches only one EMBER feature group, and an $\ell_\infty$ ball of the radius common in certified training
+contains only \PsEpsLeTrainPct\% of the edits. We therefore align the groups of a group-ablation certificate with the
+measured edits, and train networks against threat sets shaped like the measured edit families. On a family-disjoint
+split of BODMAS (\NSeedsFam{} seeds, 95\% intervals), a per-view LightGBM detector certifies \FamCertROneLgbmViews\%
+of test malware against any change confined to one edit-aligned group. Its clean accuracy is \CmpFAbs{} points
+below LightGBM, a difference that is not significant. Under a group-transplant attack it detects
+\FamGattackLgbmViews\% of malware, LightGBM \FamGattackLgbm\%. Edit-aware certified training certifies \SwEditCert\%
+of malware over the measured edit families at a \SwEditFpr\% false-positive rate. Uniform-ball training matches it
+only at \SwUnifOneFpr\% false positives, and the two are complementary across edit families. The pre-registered gain
+over the validation-tuned uniform baseline, +\CmpADiff{} points, is larger, because that baseline's tuning grid was
+too narrow. Random train/test splits overstate certified robustness by \RandFamGapMin{} to \RandFamGapMax{} points
+depending on the model.
 
-**(new) macros:**
-- `stats.py`: `\NSeedsFam`, `\FamCertLgbmViews` (with `Lo`/`Hi`), `\FamGattackLgbmViews`, `\FamGattackLgbm`,
-  `\FamCertEdit`, `\FamCertUnc`, `\CmpFAbs`, `\RandFamGapMin` / `\RandFamGapMax` (over certified-detection metrics),
-  and family/random means and intervals for every model in the summary.
-- `problem_space.py`: `\PsNFilesAll`, `\PsNEditedInScopeAll` (PE32+ and PE32 together).
-- `temporal_decay.py` → `numbers_decay.tex`: first-month values, months to 90%, `\TdRetrainGainMin` / `\TdRetrainGainMax`.
+**New macros (Stage 4a, step 1):**
+- `stats.py` → `numbers_stats.tex`: `\NSeedsFam`, `\NSeedsRand`, `\CmpFAbs`, `\RandFamGapMin` / `\RandFamGapMax`
+  (certified-detection metrics at ≥ 1% on either split), and `\Fam<Stem>` / `\Rand<Stem>` with `Lo` / `Hi` for every
+  model metric (stems in `MACRO`, e.g. `CertROneLgbmViews`, `GattackLgbmViews`, `CertTOneEdit`, `AccLgbm`).
+- `eps_sweep.py --analyse` → `numbers_sweep.tex`: `\SwEditCert` / `Fpr` / `Acc`, `\SwUnifOneCert` / `Fpr` / `Acc`,
+  per family `\SwEdit<Family>` / `\SwUnifOne<Family>`, `\SwUnifLowFprCert` / `Eps` / `Fpr` (best uniform model whose
+  mean FPR does not exceed edit-aware's: the "matched FPR" reading of "FPR near 1%"), `\SwBestDiff` / `Lo` / `Hi` / `P`,
+  `\SwCollapseEps`, `\SwNModels`, `\SwRadiusUnit`, `\SwRadiusUnitNTrain`, `\SwRadiusSectionSd`.
+- `temporal_decay.py` → `numbers_decay.tex`: `\TdCutA` / `B`, `\TdFirst<Model><A|B>`, `\TdMonthsMin` / `Max`,
+  `\TdRetrainGainMin` / `Max` (mean over the \TdNCommonMonths{} months both cut-offs test), `\TdDriftMin` / `Max`,
+  `\TdCompMin` / `Max`.
+- Not needed after all: `\PsNFilesAll` and `\PsNEditedInScopeAll`, because `\PsNFiles` (150) and
+  `\PsNEditedInScope` (4,169) already cover both architectures.
 
 ## Sections
 
