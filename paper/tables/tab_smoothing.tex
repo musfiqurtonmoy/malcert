@@ -1,12 +1,12 @@
-\begin{tabular}{llccccc}
+\begin{tabular}{lrrrrrr}
 \toprule
-$\sigma$ & Noise & Clean acc. (\%) & $R\geq$0.0 & $R\geq$0.25 & $R\geq$0.5 & $R\geq$1.0 \\
+ & & & \multicolumn{4}{c}{Certified detection (\%) at $\ell_2$ radius} \\
+\cmidrule(lr){4-7}
+Smoothing & Acc. & Abstain & 0 & 0.25 & 0.5 & 0.75 \\
 \midrule
-0.25 & isotropic & 99.1$\pm$0.4 & 99.1 & 99.0 & 98.6 & 0.0 \\
-0.25 & subspace & 99.1$\pm$0.3 & 98.9 & 98.7 & 98.5 & 0.0 \\
-0.5 & isotropic & 99.2$\pm$0.2 & 99.4 & 99.3 & 99.0 & 98.0 \\
-0.5 & subspace & 99.1$\pm$0.3 & 99.2 & 99.1 & 99.1 & 98.4 \\
-1.0 & isotropic & 99.3$\pm$0.4 & 99.3 & 99.2 & 98.9 & 98.0 \\
-1.0 & subspace & 99.4$\pm$0.2 & 99.4 & 99.3 & 99.3 & 98.9 \\
+Isotropic, $\sigma=0.25$ & 93.6 & 0.3 & 85.5 & 81.6 & 76.1 & 66.0 \\
+Isotropic, $\sigma=0.5$ & 92.0 & 0.4 & 81.8 & 77.1 & 72.9 & 68.3 \\
+Giri et al.\ re-impl., $\sigma=0.3$ & 91.6 & 0.3 & 80.8 & 73.7 & 57.8 & 31.0 \\
 \bottomrule
 \end{tabular}
+% family split, seeds [0, 1, 2]; n = 10000 noise samples per point, alpha = 0.001

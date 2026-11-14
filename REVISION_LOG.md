@@ -684,6 +684,26 @@ carry a **Basis:** line saying what they were fixed from.
   now the 5-seed mean (`\NearTwinFamMal` / `Ben`), random-split values labelled seed 0; Definition 1 "the draft annotation
   of this study"; abstract "comes close to it only at"; §2 "to our knowledge, mostly on random splits".
 
+- **4-5** `[A2–A5, B2–B7, Am1, Am3–Am5]` **Sections 6–8 rewritten** (Stage 4b). New `tools/make_results.py` (supersedes
+  `make_figures.py`, which writes draft-v1 tables) → `tab_main` (all detectors: accuracy, TPR, FPR, group attack r=1;
+  includes the 2381–256–256–2 row, A4), `tab_attacks` (group attack r=0–3, all models), `tab_group_cert` (per edit type),
+  `tab_certified_training` (+ sweep ε=1 row), `tab_comparisons`, `tab_split_gap`, `tab_temporal`, `tab_smoothing`,
+  `fig_decay`, `fig_per_category` (Wilson intervals, categories < 30 distinct test files merged, distinct files from the
+  recomputed splits; Am3, B6), `fig_eps_coverage` (now final certified values, replacing the quick-pilot version) and
+  `numbers_results.tex` (macros `Res...`). Findings new to this entry: all violations 0 (and 0 corpus violations,
+  4,336 checks per model and seed); exact certificate gains 0.00 points over the bound on test; full-data check (1 seed)
+  is higher than the subset (MLP views main certified at r=1 60.6 vs 29.5%), so the subset is conservative; smoothing
+  σ 0.25 / 0.5 certifies 76.1 / 72.9% at ℓ2 radius 0.5; Giri re-impl. 57.8%. Limitation added: edit-aware sets measured on
+  benign originals, so their coverage for malware is an estimate. `results_text.tex` and §7–8 rewritten (%CHECK marks on
+  direction-dependent sentences); highlights rewritten without numbers (plain text cannot hold macros; each ≤ 85 chars).
+  Removed (git rm): draft `numbers.tex`, `numbers_temporal.tex`, `tab_clean`, `tab_eps_coverage`, `tab_temporal_cert`,
+  `tab_temporal_clean`, `fig_attacks`, `fig_certified_training`, `fig_dataset`, `fig_group_cert`, `fig_smoothing`, stale PNGs.
+  Checks: no undefined macro, citation, label or file anywhere. Not compiled (no LaTeX). `paper_overleaf.zip`: 35 files.
+  Deviations from the outline: `tab_clean` → `tab_main`; temporal tables merged into `tab_temporal`; PGD curves not
+  tabulated (the attack table is the group attack on all models); no `fig_group_cert` schematic in §4; Appendices A–F are
+  referenced but not written yet (Stage 4b of the plan); the abstract cites LightGBM's group-attack detection, as in the
+  approved outline, not the MLP evasion rate of plan 4a.3 (that one is in §6.2, `\ResGaMlpEvade`).
+
 ### 3g. Uniform-ball ε sweep (declared before any sweep run)
 - **3-16** `[A2, A3]` **Accuracy-matched comparison rule (plan 3g.4), declared before any sweep result.** Sweep:
   uniform-ball CROWN-IBP at ε_train ∈ {0.05, 0.1, 0.2, 0.5, 1, 2, 4} (plus max ε_f if larger and trainable), family

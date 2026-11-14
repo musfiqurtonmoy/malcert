@@ -1,7 +1,7 @@
 Highlights (Elsevier: 3-5 bullets, max 85 characters each, incl. spaces)
 
-- Constraint-aware threat model marks each EMBER feature immutable, mutable or monotone
-- Copying one benign feature group evades a 99%-accurate detector on 94% of malware
-- Group-ablation smoothing certifies detection against arbitrary feature-group edits
-- At its training budget, constraint-aware CROWN-IBP certifies 98% of malware
-- All certificates checked against attacks on BODMAS with zero violations
+- Real PE edits, measured on benign files, define a validated feature threat model
+- No measured edit stays in one EMBER group; small L-inf balls miss most edits
+- Edit-aligned group ablation with LightGBM views certifies at no significant cost
+- Edit-aware and uniform-ball certified training are complementary by edit family
+- Random splits overstate certified robustness compared with family-disjoint tests

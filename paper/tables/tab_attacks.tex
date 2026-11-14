@@ -1,10 +1,21 @@
-\begin{tabular}{llcccccc}
+\begin{tabular}{lrrrr}
 \toprule
-Model & Threat model & $\epsilon$=0.01 & $\epsilon$=0.02 & $\epsilon$=0.05 & $\epsilon$=0.1 & $\epsilon$=0.2 & $\epsilon$=0.5 \\
+Detector & $r=0$ & $r=1$ & $r=2$ & $r=3$ \\
 \midrule
-Standard MLP & unconstrained & 98.7$\pm$0.2 & 96.6$\pm$0.1 & 54.9$\pm$3.5 & 10.8$\pm$4.3 & 0.2$\pm$0.1 & 0.0$\pm$0.0 \\
-Standard MLP & constrained & 98.7$\pm$0.2 & 97.4$\pm$0.1 & 65.9$\pm$3.5 & 20.1$\pm$5.5 & 0.2$\pm$0.2 & 0.0$\pm$0.0 \\
-PGD-AT & unconstrained & 99.2$\pm$0.2 & 99.1$\pm$0.2 & 98.4$\pm$0.2 & 93.4$\pm$0.9 & 22.2$\pm$3.5 & 0.1$\pm$0.0 \\
-PGD-AT & constrained & 99.2$\pm$0.2 & 99.2$\pm$0.2 & 98.9$\pm$0.2 & 98.1$\pm$0.1 & 70.8$\pm$2.1 & 1.1$\pm$0.2 \\
+LightGBM (all features) & 88.5 & 0.0 & 0.0 & 0.0 \\
+LightGBM, monotonic & 88.6 & 0.0 & 0.0 & 0.0 \\
+MLP 2381--512--256--2 & 83.3 & 0.2 & 0.0 & 0.0 \\
+MLP 2381--256--256--2 & 82.3 & 0.2 & 0.0 & 0.0 \\
+PGD-AT on $B_\epsilon$ & 83.5 & 0.3 & 0.0 & 0.0 \\
+Group ablation, MLP views, main & 74.1 & 49.9 & 0.0 & 0.0 \\
+Group ablation, MLP views, second & 69.8 & 26.1 & 0.0 & 0.0 \\
+Group ablation, MLP views, EMBER groups & 60.8 & 0.0 & 0.0 & 0.0 \\
+Group ablation, LightGBM views, main & 83.4 & 62.6 & 0.0 & 0.0 \\
+Group ablation, LightGBM views, second & 78.8 & 37.0 & 0.0 & 0.0 \\
+CROWN-IBP, uniform ball & 82.3 & 0.0 & 0.0 & 0.0 \\
+CROWN-IBP, constrained box & 84.5 & 0.2 & 0.0 & 0.0 \\
+CROWN-IBP, edit-aware & 81.5 & 2.0 & 0.1 & 0.0 \\
+Giri et al., re-implementation & 82.3 & 0.7 & 0.0 & 0.0 \\
 \bottomrule
 \end{tabular}
+% malware detected (%) under the group-transplant attack in the main partition's groups; mean over 5 seeds; 500 malware, 10 donors

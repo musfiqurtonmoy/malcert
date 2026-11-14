@@ -1,6 +1,6 @@
 %% Manuscript for Computers & Security (Elsevier) -- elsarticle class.
 %% Every experimental number comes from a macro in tables/numbers*.tex, written by the script that owns the analysis.
-%% Stage 4a (2026-11-14): abstract and Sections 1-5 rewritten; Sections 6-8 are still the draft-v1 text.
+%% Stage 4a/4b (2026-11-14): all sections rewritten from the final Stage 3 results.
 \documentclass[preprint,12pt,authoryear]{elsarticle}
 \usepackage{amsmath,amssymb,amsthm}
 \usepackage{graphicx,booktabs,multirow}
@@ -9,8 +9,6 @@
 \newtheorem{theorem}{Theorem}
 \newtheorem{proposition}{Proposition}
 \newtheorem{definition}{Definition}
-\input{tables/numbers.tex}            % draft-v1 macros, still used by Sections 6-8 until they are rewritten
-\input{tables/numbers_temporal.tex}   % draft-v1 macros, still used by Sections 6-8 until they are rewritten
 \input{tables/numbers_ps.tex}
 \input{tables/numbers_eps.tex}
 \input{tables/numbers_fam.tex}
@@ -19,6 +17,7 @@
 \input{tables/numbers_stats.tex}
 \input{tables/numbers_sweep.tex}
 \input{tables/numbers_decay.tex}
+\input{tables/numbers_results.tex}
 \journal{Computers \& Security}
 
 \begin{document}
@@ -170,7 +169,7 @@ Every model is certified over $B_\epsilon$ (sound by Proposition~\ref{prop:box})
 
 %% ===================================================================================
 \section{Experimental setup}\label{sec:setup}
-\textbf{Data.} We use BODMAS \citep{yang2021bodmas}: 134,435 PE files with EMBER features, timestamps, and family and category labels for the malware. Experiments use a fixed, category-stratified subset of 30,000 files (\NCategories{} malware categories, \NFamilies{} families). Table~\ref{tab:repr} compares it with the full dataset on class ratio, category shares and families. The subset keeps memory within the 7.9\,GB of the machine used and keeps certification of every model on every test point affordable (Table~\ref{tab:runtime}); a single full-data run checks the main group certificate on all of BODMAS (Section~\ref{sec:results}). Features are transformed by $\phi$ with the statistics of each run's training part.
+\textbf{Data.} We use BODMAS \citep{yang2021bodmas}: 134,435 PE files with EMBER features, timestamps, and family and category labels for the malware. Experiments use a fixed, category-stratified subset of 30,000 files (\ResNCategories{} malware categories, \ResNFamilies{} families). Table~\ref{tab:repr} compares it with the full dataset on class ratio, category shares and families. The subset keeps memory within the 7.9\,GB of the machine used and keeps certification of every model on every test point affordable (Table~\ref{tab:runtime}); a single full-data run checks the main group certificate on all of BODMAS (Section~\ref{sec:results}). Features are transformed by $\phi$ with the statistics of each run's training part.
 
 \textbf{Splits.} The main split is \emph{family-disjoint}: every malware family goes wholly to training, validation or test, and benign files are split at random, with targets of 70/10/20\%. Families are assigned category by category, so each part's category mix stays close to the whole. A leakage audit shows why: under a random split (seed 0), \LeakRandFamOverlap\% of test malware belong to a family that is also in training, and \LeakRandNearMal\% of test malware have a training neighbour within $\ell_2$ distance 0.1 in standardised space, a \emph{near-twin} (benign: \LeakRandNearBen\%). Under the family split no test family occurs in training by construction, and near-twins make up \NearTwinFamMal\% of test malware and \NearTwinFamBen\% of test benign files (mean over \NSeedsFam{} seeds). BODMAS has \LeakDupRows{} exact duplicate rows, none with conflicting labels, and no test sample has an exact twin in training. The random split is evaluated with \NSeedsRand{} seeds for comparison with earlier work. Two temporal splits train on files up to the end of \TdCutA{} and \TdCutB{} and test on every later month.
 
@@ -224,16 +223,22 @@ Every model is certified over $B_\epsilon$ (sound by Proposition~\ref{prop:box})
 \input{results_text.tex}
 
 %% ===================================================================================
-\section{Discussion and limitations}
-\textbf{Feature space versus problem space.} All certificates are stated in feature space. Because our sets over-approximate realisable edits, they are sound for those edits, but they may be loose: a certificate against $r=1$ group covers any change to the import table, including changes that no real linker could produce. Conversely, attacks that alter immutable features by rewriting the binary (e.g.\ repacking) fall outside the model; this is a deliberate scoping choice shared with prior work \citep{pierazzi2020problemspace,demetrio2021exemples}.
+\section{Discussion and limitations}\label{sec:discussion}
+\textbf{What the guarantees cover.} Every certificate holds for feature vectors in its threat set, and each threat set is an over-approximation of the in-scope edits measured on \PsNFiles{} benign files. The group certificate covers any change, of any size, within $r$ groups, including changes no real tool would make. The edit-aware sets are tighter and shaped like the measured edits, but they cover only the edits that fall inside them: \FamContentCovOne\% of the held-out content edits and only \FamImportCovOne\% of the import edits at $t=1$ (Section~\ref{sec:families}). An $\ell_\infty$ box at a typical training budget covers \PsEpsLeTrainPct\% of the measured edits. Packing, obfuscation, recompilation and dropper wrapping are outside every set, as are edits we did not measure. The edits are plausibly functionality-preserving; we did not verify this by execution.
 
-\textbf{Choice of norm units.} $\ell_\infty$ and $\ell_2$ budgets are expressed in standardised units, which are not directly interpretable in bytes. The group certificate avoids this issue entirely, which is one reason we regard it as the most practically meaningful of the three. That judgement holds for a fixed data distribution only: under temporal drift the group certificate degrades more than CROWN-IBP, its certified detection at $r=1$ falling by \TmpAblCertDropMin{}--\TmpAblCertDropMax{} points across keep sizes against \TmpCrownCertDrop{} for CROWN-IBP (Section~\ref{sec:temporal}).
+\textbf{Edit sets measured on benign files.} The edit-aware sets and their coverage were measured on benign Windows binaries, because no malware was handled. Malware differs in size, packing and section layout, so the share of real malware edits that fall inside $T_f(t)$ is an estimate, not a measurement. The group threat sets do not depend on this, since they allow any change within the modified groups.
 
-\textbf{Concept drift.} Our temporal evaluation (Section~\ref{sec:temporal}) covers a single test window (\TmpTestStart{} to \TmpTestEnd{}) after the training period, and certified detection measured on a random split need not carry over to later samples at the same rate. On that window, CROWN-IBP's certified detection falls by \TmpCrownCertDrop{} points against \TmpCrownTprDrop{} for its clean detection, roughly \TmpCrownDropRatioInt{} times as much, so certificates should be recomputed as malware evolves rather than assumed to persist. Longer horizons and retraining strategies, as studied by \citet{pendlebury2019tesseract}, remain to be evaluated.
+\textbf{Which certificate to use.} For the edits most often used in practice (appends, string padding, timestamp and header edits), the main configuration with per-view LightGBM certifies \FamCertROneLgbmViews\% of malware at a clean-accuracy cost that is not significant. Section, import and stripping edits need the second operating point, which costs accuracy, or edit-aware training, which is strongest on section and import edits. Uniform-ball training at a large $\epsilon$ is competitive on content and stripping edits, but only at a false-positive rate that a deployed detector could not accept. The methods are complementary, and a deployment could combine them. %CHECK
+
+\textbf{Deployment and drift.} Certified detection decays within months of the training cut-off, and retraining recovers much of it (Section~\ref{sec:temporal}). Certificates should therefore be recomputed with every retraining rather than assumed to persist. With the group certificate this is cheap: certification costs a fraction of a millisecond per file (Table~\ref{tab:runtime}). %CHECK
+
+\textbf{Evaluation.} Random splits overstate certified detection by \RandFamGapMin{} to \RandFamGapMax{} points because test malware shares families with training. Results on random splits describe robustness for variants of known families. Five seeds give wide intervals, and the hyperparameters were tuned on seed 0's training families, a small optimism for seeds 1 to 4.
+
+\textbf{Generalizability.} All results use one dataset, BODMAS, and one extractor, EMBER version~2, on a 30,000-file subset; a single full-data run gives higher accuracy and certified detection than the subset. We did not evaluate EMBER 2018 or SOREL-20M; both are natural next steps. The grouping procedure itself is not tied to EMBER: for any extractor, one measures which features each edit changes and groups features that change together. A newer extractor with different blocks would need its own measurement. Tree-ensemble verification \citep{kantchelian2016evasion,chen2019robustness} could certify LightGBM directly under $\ell_\infty$, which we did not attempt.
 
 %% ===================================================================================
 \section{Conclusion}
-We showed that structure-blind certified defenses are a poor fit for PE feature vectors, and that exploiting three simple facts (some features are immutable, some only grow, and features come in semantic groups) yields certificates that are both meaningful and cheap. Feature-group ablation in particular gives deterministic, norm-free guarantees against modification of whole feature groups, the kind of edit real evasion tools perform. Under temporal drift, however, both certificates lose ground: the group certificate's certified detection at $r=1$ falls by \TmpAblCertDropMin{}--\TmpAblCertDropMax{} points depending on the keep size, and CROWN-IBP's by \TmpCrownCertDrop{} points against \TmpCrownTprDrop{} for its clean detection, roughly \TmpCrownDropRatioInt{} times as much, so certificates should be recomputed as malware evolves.
+A certified defence for malware detectors is only as useful as its threat model, and the threat model should be measured, not assumed. Measuring \PsNEditTypesInScope{} edit types on real PE files showed that real edits touch several EMBER groups and lie far outside the small norm balls of certified training. Aligning group-ablation certificates with the measured edits, and using LightGBM per view, gives a detector that certifies \FamCertROneLgbmViews\% of malware from unseen families against any change to one edit-aligned group, at a clean-accuracy cost of \CmpFAbs{} points that is not significant. Training against the measured edit families certifies \SwEditCert\% of malware at \SwEditFpr\% FPR, where uniform-ball training needs \SwUnifOneFpr\% FPR for comparable certified detection; the two are complementary across edit families. Family-disjoint and temporal evaluation show that random splits overstate certified robustness by \RandFamGapMin{} to \RandFamGapMax{} points depending on the model, and that certificates decay within months, so they must be recomputed as detectors are retrained.
 
 \section*{CRediT authorship contribution statement}
 \textbf{Md. Musfiqur Rahman:} Conceptualization, Methodology, Software, Investigation, Writing -- original draft.

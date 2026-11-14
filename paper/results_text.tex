@@ -1,87 +1,119 @@
-%% Results narrative. Numbers are macros from tables/numbers.tex; re-check every qualitative
-%% sentence (marked %CHECK) after the final full run, since directions can change.
+%% Section 6 (Results). Stage 4b, 2026-11-14. Every number is a macro; sentences whose direction depends on the
+%% numbers are marked %CHECK (CLAUDE.md). Tables and figures: tools/make_results.py, tools/eps_sweep.py.
+All results are on the family-disjoint split with \NSeedsFam{} seeds unless stated otherwise; $\pm$ in the tables is the half-width of the 95\% $t$-interval over seeds. In every run, no certified sample was evaded by an attack inside its threat set (\ResNViolations{} violations), and no certified corpus original changed its label under its real edit (\ResCorpusViolations{} violations; \ResCorpusChecked{} checks per model and seed).
 
-\subsection{Clean detection}
-Table~\ref{tab:clean} lists clean performance. LightGBM, the EMBER reference model, reaches \LgbmAcc\% accuracy and the standard MLP \MlpAcc\%. Most certifiable models cost little or no clean accuracy: the symmetric CROWN-IBP network reaches \CrownSymAcc\% (standard network of the same size: \StdAccSmall\%). The clearest cost is group ablation with single-group views ($k=1$, \AblOneCleanAcc\%), which loses more than one point against the standard MLP; larger keep sizes recover most of it ($k=3$: \AblThreeCleanAcc\%). %CHECK
+\subsection{Clean performance}\label{sec:clean}
+Table~\ref{tab:main} lists every detector. LightGBM on all features reaches \FamAccLgbm\% accuracy, and the monotonic variant matches it. The per-view LightGBM detector of the main configuration reaches \FamAccLgbmViews\% at \FamFprLgbmViews\% FPR. Its cost against LightGBM is \CmpFAbs{} points of accuracy, not significant (95\% interval of the difference \CmpFInt, Holm $p=\CmpFP$). %CHECK
+MLP views lose more accuracy than LightGBM views, and EMBER's own groups lose most. %CHECK
+The second operating point trades accuracy for coverage: \ResAccLgbmSecond\% with LightGBM views (FPR \ResFprLgbmSecond\%). Edit-aware CROWN-IBP reaches \SwEditAcc\% at \SwEditFpr\% FPR, a higher FPR than the other certified-training models. %CHECK
+The table includes the 2381--256--256--2 network that all certified-training models share.
 
-\begin{table}[t]\centering\small
-\caption{Clean test performance (mean $\pm$ std over \NSeeds{} \SeedsNoun{}).}\label{tab:clean}
-\resizebox{\linewidth}{!}{\input{tables/tab_clean.tex}}
+\begin{table}[tbp]
+\centering\small
+\caption{Clean test performance (\%) and malware detected under the group-transplant attack with one modified group, family split, \NSeedsFam{} seeds ($\pm$: half-width of the 95\% interval). The Giri re-implementation was run on \ResNSeedsSmooth{} seeds; its abstentions count as errors.}\label{tab:main}
+\resizebox{\textwidth}{!}{\input{tables/tab_main.tex}}
 \end{table}
 
-\subsection{C1: constrained attacks}
-Figure~\ref{fig:attacks} and Table~\ref{tab:attacks} show the malware detection rate that survives FGSM and PGD. Restricting the attacker to the reachable region weakens every attack: at $\epsilon=\AtkEps$, PGD evades the standard MLP on \MlpPgdCon\% of malware under constraints versus \MlpPgdUnc\% without them, so unconstrained evaluations overstate the threat. PGD adversarial training at $\epsilon=0.1$ reduces constrained evasion at the same budget to \AtPgdCon\%; its protection degrades beyond the training budget and is gone by $\epsilon=0.5$ (Table~\ref{tab:attacks}). %CHECK The group-transplant attack is far more damaging: copying a single feature group from a benign file evades the standard MLP on \MlpGroupEvadeOne\% of attacked malware (Fig.~\ref{fig:group}, grey). This motivates certificates against group-level edits rather than small norm balls.
+\subsection{Group-transplant attack}\label{sec:gattack}
+Copying one group of the main partition from a benign donor defeats every detector that is not built on group ablation (Table~\ref{tab:attacks}). LightGBM detects \FamGattackLgbm\% of the attacked malware and the standard MLP \ResGaMlp\%, so the attack evades the MLP on \ResGaMlpEvade\% of malware. PGD adversarial training (\ResGaPgdAt\%), the monotonic LightGBM (\ResGaMono\%), the Giri re-implementation (\ResGaGiri\%) and every certified-training model (at most \ResGaMaxOther\%) do no better. %CHECK
+The group-ablation detectors keep much of their detection: \ResGaAblMain\% with MLP views and \FamGattackLgbmViews\% with LightGBM views (pre-registered comparison~5: \CmpEDiff{} points against LightGBM, \CmpEInt, Holm $p=\CmpEP$). %CHECK
+The attack bounds robustness from above and the certificate from below; consistently, for the main configuration, certified detection at $r=1$ (Section~\ref{sec:groupres}) stays below detection under the attack. With two modified groups, beyond the main configuration's ceiling, detection by its LightGBM views falls to \ResGaLgbmViewsRTwo\%. %CHECK
 
-\begin{figure}[t]\centering
-\includegraphics[width=\linewidth]{figures/fig_attacks.pdf}
-\caption{Malware still detected under FGSM and PGD as the $\ell_\infty$ budget grows. Dashed: unconstrained attacker; solid: constrained (C1) attacker.}\label{fig:attacks}
+\begin{table}[tbp]
+\centering\small
+\caption{Malware detected (\%) under the group-transplant attack with $r$ groups of the main partition copied from benign donors, mean over seeds.}\label{tab:attacks}
+\resizebox{\textwidth}{!}{\input{tables/tab_attacks.tex}}
+\end{table}
+
+\subsection{Group certificates}\label{sec:groupres}
+Table~\ref{tab:groupcert} gives certified detection per in-scope edit type, each at the number of groups that edit needs. With EMBER's groups every edit needs at least two groups, so the $k=1$ certificate, which certifies \ResEmberROne\% of malware against one modified group, helps only through its values at $r\ge2$; averaged over the nine edit types it certifies \FamCertEditsEmber\%. The aligned main configuration certifies \FamCertEditsAblMain\% with MLP views (pre-registered comparison~3: \CmpCDiff{} points, \CmpCInt, Holm $p=\CmpCP$). %CHECK
+Per-view LightGBM certifies \FamCertROneLgbmViews\% of malware against any change to one aligned group, against \FamCertROneAblMain\% for MLP views (comparison~4: \CmpDDiff{} points, \CmpDInt, Holm $p=\CmpDP$). %CHECK
+The main configuration cannot certify section, import or stripping edits, which need two or three aligned groups. The second operating point reaches them: its per-view LightGBM certifies \ResCertLgbmSecondROne, \ResCertLgbmSecondRTwo{} and \ResCertLgbmSecondRThree\% of malware at $r=1$, 2 and 3, so every in-scope edit type is certified by at least one detector (Table~\ref{tab:coverage}). The price is accuracy (\ResAccLgbmSecond\%). %CHECK
+The exact certificate of Theorem~\ref{thm:exact} gains at most \ResExactGainMax{} points over the bound of Theorem~\ref{thm:abl}: the worst-case attacker can always choose groups whose views vote correctly. Figure~\ref{fig:cat} breaks detection and certified detection down by malware category.
+
+\begin{table}[tbp]
+\centering\small
+\caption{Certified detection (\%) of test malware per in-scope edit type, at the number of groups $r$ the edit needs in each grouping; 0.0 where the edit needs more groups than the configuration can certify. Last rows: mean over the nine types ($\pm$: 95\% half-width), clean accuracy, number of views and largest certifiable $r$.}\label{tab:groupcert}
+\resizebox{\textwidth}{!}{\input{tables/tab_group_cert.tex}}
+\end{table}
+
+\begin{figure}[tbp]
+\centering
+\includegraphics[width=\textwidth]{figures/fig_per_category.pdf}
+\caption{Detection and certified detection ($r=1$) per malware category, pooled over the \NSeedsFam{} family-split seeds, with Wilson 95\% intervals; $n$ is the number of distinct test files. Categories with fewer than 30 distinct test files are merged into ``other'' (\ResCatSmall). A file can be in the test part of several seeds, so the intervals are approximate.}\label{fig:cat}
 \end{figure}
 
-\begin{table}[t]\centering\small
-\caption{Malware detection rate (\%) under PGD.}\label{tab:attacks}
-\resizebox{\linewidth}{!}{\input{tables/tab_attacks.tex}}
+\subsection{Certified training}\label{sec:ctres}
+Table~\ref{tab:ct} compares the training methods over the edit-family sets $T_f(1)$. Edit-aware CROWN-IBP certifies \SwEditCert\% of malware averaged over the four families, at \SwEditFpr\% FPR: \SwEditContent\% for content, \SwEditSection\% for section, \SwEditImport\% for import and \SwEditStrip\% for stripping edits. Against all four families at once it certifies \ResEditAllFam\%.
+
+The tuned uniform-ball model ($\epsilon=0.1$) certifies almost nothing over these sets, but that reflects its tuning grid, which stopped at $\epsilon=0.1$. The sweep of Figure~\ref{fig:sweep} (\SwNModels{} models) gives the full picture. Uniform-ball training reaches comparable certified detection only at $\epsilon=\SwBestCertTOneEps$: \SwUnifOneCert\% at \SwUnifOneAcc\% accuracy and \SwUnifOneFpr\% FPR. At an FPR no higher than edit-aware training's, the best uniform-ball model ($\epsilon=\SwUnifLowFprEps$) certifies \SwUnifLowFprCert\%. From $\epsilon=\SwCollapseEps$ on, training collapses to a detector that labels everything benign. %CHECK
+Even the best $\epsilon$, chosen after the fact on test data and so favouring the baseline, is not significantly different overall: edit-aware minus uniform at $\epsilon=\SwBestCertTOneEps$ is $\SwBestDiff$ points, $[\SwBestLo,\SwBestHi]$ ($p=\SwBestP$, descriptive). The two methods are complementary by family: uniform $\epsilon=\SwBestCertTOneEps$ is better on content (\SwUnifOneContent{} vs \SwEditContent\%) and stripping (\SwUnifOneStrip{} vs \SwEditStrip\%), edit-aware on section (\SwEditSection{} vs \SwUnifOneSection\%) and import edits (\SwEditImport{} vs \SwUnifOneImport\%). %CHECK
+The pre-registered comparison with the tuned uniform baseline is met (comparison~1: \CmpADiff{} points, \CmpAInt, Holm $p=\CmpAP$), and so is the accuracy-matched comparison declared before the sweep ($\epsilon=\SwMatchedEps$, \SwMatchedAcc\% accuracy: \SwMatchedDiff{} points, $[\SwMatchedLo,\SwMatchedHi]$). Because the tuning grid was too narrow, we take the trade-off at matched FPR, not this difference, as the result. The uniform ball that would contain the edit-family sets (Section~\ref{sec:families}) lies far beyond the collapse point.
+
+\textbf{$\ell_\infty$ certificates.} On the constrained box at $\epsilon=\ResTrainEps$, box-trained CROWN-IBP certifies \ResBoxOnBox\%, uniform-ball \ResUnifOnBox\%, edit-aware \ResEditOnBox\% and the standard network \ResStdOnBox\% of malware; a box of this size contains only \PsEpsLeTrainPct\% of the measured edits (Figure~\ref{fig:epscov}). Training on the constrained box gives no gain over the uniform ball (comparison~2: \CmpBDiff{} points, \CmpBInt, Holm $p=\CmpBP$). This is a negative result for the draft's constraint-aware training: after the repair, the box is almost the full ball. %CHECK
+Certifying on the box still helps at verification time (Proposition~\ref{prop:box}): the box-trained model certifies \ResBoxOnBox\% on the box and \ResBoxOnBall\% on the full ball, the uniform-ball model \ResUnifOnBox\% and \ResUnifOnBall\%. %CHECK
+
+\begin{table}[tbp]
+\centering\small
+\caption{Certified training: clean accuracy and FPR (\%), certified detection (\%) over the edit-family sets $T_f(1)$ per family and averaged over the four ($\pm$: 95\% half-width), and over the constrained box $B_\epsilon$. Last row: the uniform-ball model of the sweep with the highest certified detection over $T_f(1)$.}\label{tab:ct}
+\resizebox{\textwidth}{!}{\input{tables/tab_certified_training.tex}}
 \end{table}
 
-\subsection{C2a: feature-group ablation certificates}
-Table~\ref{tab:group} and Fig.~\ref{fig:group} report certified detection as a function of the number $r$ of modified groups. Keep-size $k$ trades clean accuracy for certifiable $r$: with $k=1$ (nine single-group views) the detector certifies \AblOneCertR\% of malware against any change to one group and \AblOneCertRtwo\% against two, at \AblOneCleanAcc\% clean accuracy; $k=2$ certifies \AblTwoCertR\% at $r=1$ with \AblTwoCleanAcc\% accuracy; $k=3$ certifies \AblThreeCertR\% at $r=1$ with \AblThreeCleanAcc\% accuracy but nothing at $r\geq2$, as Theorem~\ref{thm:abl} predicts ($2\Delta_2=98$ exceeds the 84 views). The greedy group-transplant attack against the $k=1$ detector leaves \AblOneEmpR\% and \AblOneEmpRtwo\% of malware detected at $r=1,2$, close to the certified values, so the certificate is nearly tight. Across all runs the attack never evaded a certified sample (\AblViolations{} violations), as required by soundness.
-
-\begin{figure}[t]\centering
-\includegraphics[width=0.88\linewidth]{figures/fig_group_cert.pdf}
-\caption{Certified malware detection (solid) and detection under the group-transplant attack (dotted) versus the number of modified groups. Grey: undefended MLP.}\label{fig:group}
+\begin{figure}[tbp]
+\centering
+\includegraphics[width=0.75\textwidth]{figures/fig_eps_sweep.pdf}
+\caption{Uniform-ball CROWN-IBP trained at $\epsilon_{\text{train}}$ from 0.05 to the largest containment radius: clean accuracy and certified detection over $T_f(1)$ (mean over seeds). Dotted lines: edit-aware CROWN-IBP.}\label{fig:sweep}
 \end{figure}
 
-\begin{table}[t]\centering\small
-\caption{Certified malware detection (\%) of group-ablation smoothing against $r$ modified groups.}\label{tab:group}
-\resizebox{\linewidth}{!}{\input{tables/tab_group_cert.tex}}
-\end{table}
-
-\subsection{C2b: randomized smoothing}
-Contrary to the common assumption that smoothing collapses clean accuracy on PE features, Gaussian smoothing in standardised feature space keeps clean accuracy high: at $\sigma=\RsSigmaMax$ it is \RsIsoAccMax\% (isotropic) and \RsSubAccMax\% (subspace) on the \NCertPoints{} certified test points. %CHECK
-Restricting noise to the mutable subspace gives at most a small change (\RsSubHalf\% vs.\ \RsIsoHalf\% certified at $R=0.5$, $\sigma=\RsSigma$), because \MutablePct\% of the features are mutable: the subspace removes little noise. %CHECK
-The sharp drop of each curve in Fig.~\ref{fig:smoothing} is the sampling ceiling $\sigma\Phi^{-1}(\underline{p_A})$ for $n=\NCert$ samples, not a property of the classifier. Smoothing radii in standardised $\ell_2$ units are also hard to relate to real edits, which is why we treat this certificate as a baseline rather than a headline result.
-
-\begin{figure}[t]\centering
-\includegraphics[width=0.62\linewidth]{figures/fig_smoothing.pdf}
-\caption{Certified malware detection of Gaussian smoothing versus $\ell_2$ radius; dashed: noise on all features, solid: noise only on mutable features.}\label{fig:smoothing}
+\begin{figure}[tbp]
+\centering
+\includegraphics[width=0.75\textwidth]{figures/fig_eps_coverage.pdf}
+\caption{Share of the measured in-scope edits that fit in the constrained box $B_\epsilon$ (black), and certified detection over $B_\epsilon$ of the certified-training models, against $\epsilon$.}\label{fig:epscov}
 \end{figure}
 
-\begin{table}[t]\centering\small
-\caption{Randomized smoothing: clean accuracy and certified malware detection (\%) at several radii.}\label{tab:smoothing}
-\resizebox{\linewidth}{!}{\input{tables/tab_smoothing.tex}}
+\subsection{Pre-registered comparisons}\label{sec:cmp}
+Table~\ref{tab:cmp} collects the six comparisons declared before any test evaluation. After Holm correction, comparisons 1, 3, 4 and 5 are significant at the 5\% level; the box-constrained training ablation (2) and the clean-accuracy cost of per-view LightGBM (6) are not. Five seeds give wide intervals, so we read the size of each difference from its interval rather than from its $p$-value. %CHECK
+
+\begin{table}[tbp]
+\centering\small
+\caption{The six pre-registered comparisons on the family split: paired difference per seed (A minus B, percentage points), 95\% $t$-interval, paired $t$-test and Holm-corrected $p$-value.}\label{tab:cmp}
+\resizebox{\textwidth}{!}{\input{tables/tab_comparisons.tex}}
 \end{table}
 
-\subsection{C3: constraint-aware certified training}\label{sec:ct}
-Figure~\ref{fig:ct} and Table~\ref{tab:ct} show certified malware detection under the constrained $\ell_\infty$ threat. Standard and PGD-trained networks are rarely certifiable at the training budget ($\epsilon=\TrainEps$: \StdCert\% and \PgdAtCert\%), although PGD-AT resists the attack empirically. IBP and CROWN-IBP training raise certified detection to \IbpCert\% and \CrownSymCert\% at no measurable cost in clean accuracy. Bounding over the constrained box instead of the full ball certifies more samples, and the gain grows with the budget: \CrownSymCert\% vs.\ \CrownSymCertUnc\% at $\epsilon=\TrainEps$ and \CrownSymCertTen\% vs.\ \CrownSymCertTenUnc\% at $\epsilon=0.1$. %CHECK
-Asymmetric training does not pay off. At $\epsilon=\TrainEps$ it certifies \CrownAsymCert$\pm$\CrownAsymCertStd\% of malware versus \CrownSymCert$\pm$\CrownSymCertStd\% for symmetric CROWN-IBP, a gain within seed-to-seed variation (though positive \AsymGainSeeds); at $\epsilon=0.1$ it certifies less (\CrownAsymCertTen$\pm$\CrownAsymCertTenStd\% vs.\ \CrownSymCertTen$\pm$\CrownSymCertTenStd\%, lower \AsymLossTenSeeds); and it raises the false-positive rate from \CrownSymFpr\% to \CrownAsymFpr\%: making only malware robust pushes the decision boundary into benign territory. In deployment, where false positives are costly, symmetric CROWN-IBP is the better operating point. %CHECK
-No sample certified by bound propagation was ever evaded by PGD (\CTViolations{} violations).
+\subsection{Random versus family-disjoint split}\label{sec:gap}
+On the random split every certified-detection metric is higher, by \RandFamGapMin{} to \RandFamGapMax{} points depending on the model (Table~\ref{tab:gap}); clean accuracy rises less. %CHECK
+Near-duplicates do not explain the gap: removing test samples with a training neighbour within distance 0.1 changes no main metric on the family split by more than \NearTwinMaxShift{} points. The gap comes from family overlap: under a random split, \LeakRandFamOverlap\% of test malware belong to a family seen in training (seed 0). A random split therefore measures how well certificates hold for variants of known families, not for new ones.
 
-\begin{figure}[t]\centering
-\includegraphics[width=0.62\linewidth]{figures/fig_certified_training.pdf}
-\caption{Certified malware detection versus $\ell_\infty$ budget (constrained box), for networks with the same 2381--256--256--2 architecture. Dotted: asymmetric CROWN-IBP certified over the unconstrained box.}\label{fig:ct}
+\textbf{Full-data check.} On all \ResFullN{} BODMAS files (one seed, family split), LightGBM reaches \ResFullAccLgbm\% accuracy (subset, same seed: \ResSubAccLgbm\%), the main MLP-view detector \ResFullAccAblMain\% (\ResSubAccAblMain\%), and its certified detection at $r=1$ is \ResFullCertAblMain\% (\ResSubCertAblMain\%), with \ResFullViolations{} violations. With more training families both the detectors and their certificates improve, so the subset results are, if anything, conservative. %CHECK
+
+\begin{table}[tbp]
+\centering\small
+\caption{Random split (\NSeedsRand{} seeds) against family-disjoint split (\NSeedsFam{} seeds): mean [95\% interval] and the gap in points.}\label{tab:gap}
+\resizebox{\textwidth}{!}{\input{tables/tab_split_gap.tex}}
+\end{table}
+
+\subsection{Temporal decay}\label{sec:temporal}
+Models trained on files up to \TdCutA{} and up to \TdCutB{} were tested on every later month (Table~\ref{tab:temporal}, Figure~\ref{fig:decay}; 3 seeds each). In the first test month, per-view LightGBM certifies \TdFirstLgbmViewsA\% and \TdFirstLgbmViewsB\% of malware at $r=1$ (cut-offs \TdCutA{} and \TdCutB), MLP views \TdFirstAblMainA\% and \TdFirstAblMainB\%, and edit-aware CROWN-IBP \TdFirstEditA\% and \TdFirstEditB\% over $T_f(1)$. Certified detection falls below 90\% of its first-month value within \TdMonthsMin{} to \TdMonthsMax{} months. The lowest month, \ResTdLowMonth, is low under both cut-offs (LightGBM views: \ResTdLowLgbmViews\% for cut-off \TdCutA), which points to a hard month rather than steady decay. %CHECK
+Retraining at the later cut-off recovers \TdRetrainGainMin{} to \TdRetrainGainMax{} points of certified detection, averaged over the \TdNCommonMonths{} months both cut-offs test. For clean TPR, reweighting the in-distribution per-category TPR to each month's category mix changes it by only \TdCompMin{} to \TdCompMax{} points, while the observed change is \TdDriftMin{} to \TdDriftMax{} points: the decline is drift within categories, not a change of category mix. %CHECK
+BODMAS benign files reach back years before the malware collection, so FPR changes across test months should be read with care.
+
+\begin{table}[tbp]
+\centering\small
+\caption{Temporal evaluation: per test month, the number of test files, LightGBM's TPR and FPR, and certified detection (\%), mean over 3 seeds per cut-off.}\label{tab:temporal}
+\resizebox{\textwidth}{!}{\input{tables/tab_temporal.tex}}
+\end{table}
+
+\begin{figure}[tbp]
+\centering
+\includegraphics[width=\textwidth]{figures/fig_decay.pdf}
+\caption{Certified detection per test month for the two training cut-offs (solid: earlier, dashed: later), with LightGBM's clean TPR for reference; mean over 3 seeds.}\label{fig:decay}
 \end{figure}
 
-\begin{table}[t]\centering\small
-\caption{Certified malware detection (\%) under the constrained $\ell_\infty$ threat; last column: certified samples evaded by PGD (must be 0).}\label{tab:ct}
-\resizebox{\linewidth}{!}{\input{tables/tab_certified_training.tex}}
-\end{table}
+\subsection{Randomized smoothing baseline}\label{sec:smooth}
+Isotropic Gaussian smoothing, with $\sigma$ fixed beforehand at the standard values and $n=\ResRsN$ noise samples on every test point (\ResNSeedsSmooth{} seeds), reaches \ResRsQuarterAcc\% accuracy at $\sigma=0.25$ and \ResRsHalfAcc\% at $\sigma=0.5$, and certifies \ResRsQuarterCertHalf\% and \ResRsHalfCertHalf\% of malware at $\ell_2$ radius 0.5 (Table~\ref{tab:smoothing}). The Giri re-implementation reaches \ResRsGiriAcc\% and \ResRsGiriCertHalf\%. These radii are in standardised units: an $\ell_2$ ball of radius 0.5 contains only edits whose largest single feature change is at most 0.5, and only \PsEpsLeOnePct\% of the measured edits keep their largest change within even $\epsilon=1$. The smoothed Giri detector also falls to the group-transplant attack (Table~\ref{tab:attacks}). Smoothing is therefore a baseline here, not a defence against the measured edits. %CHECK
 
-\subsection{Per-category robustness}
-Figure~\ref{fig:cat} breaks certified detection down by malware category, averaged over the \NSeeds{} seeds' test splits. Large categories (trojan, worm, backdoor) are certified at high rates by every method, trojans being the lowest of the three, while bound-propagation certificates are more uniform across categories than the group certificate. The group certificate is lowest on file-infecting viruses, plausibly because an infected host is mostly benign content so few single-group views vote malware. This observation remains tentative: each test split holds fewer than ten viruses, and even across all seeds the number of distinct viruses tested (shown in the figure) is small. Information stealers and viruses are the two weakest categories for every method. %CHECK
-
-\begin{figure}[t]\centering
-\includegraphics[width=0.72\linewidth]{figures/fig_per_category.pdf}
-\caption{Certified malware detection (\%) per category, averaged over the \NSeeds{} seeds' test splits ($n$ = distinct test files across all seeds). Not shown, for having fewer than three test samples per seed on average: \HiddenCats.}\label{fig:cat}
-\end{figure}
-
-\subsection{Robustness under temporal drift}\label{sec:temporal}
-Following the temporal-split principle of \citet{pendlebury2019tesseract}, in which every training file precedes every test file, we also train on files up to \TmpTrainEnd{} and test on the later window \TmpTestStart{} to \TmpTestEnd{} (Tables~\ref{tab:temporal-clean} and~\ref{tab:temporal-cert}). We measure drift by malware detection (TPR) rather than accuracy: the false-positive rate drops for \TmpFprDropModels{} on the temporal window (standard MLP: \TmpMlpFprRand\% to \TmpMlpFprTemp\%; CROWN-IBP: \TmpCrownFprRand\% to \TmpCrownFprTemp\%), which inflates accuracy, and the temporal test window holds a \TmpMalShareCmp{} share of malware (\TmpMalShareTemp\% vs.\ \TmpMalShareRand\%), which changes accuracy as well. For CROWN-IBP, clean detection falls by \TmpCrownTprDrop$\pm$\TmpCrownTprDropStd{} points and certified detection at $\epsilon=\TmpCertEps$ by \TmpCrownCertDrop$\pm$\TmpCrownCertDropStd{}, roughly \TmpCrownDropRatioInt{} times as much; the gap is \TmpCrownGapRatio{} times their combined standard deviation. For group ablation ($k=1$), clean detection falls by \TmpAblTprDrop$\pm$\TmpAblTprDropStd{} points and certified detection at $r=1$ by \TmpAblCertDrop$\pm$\TmpAblCertDropStd{}; the gap of \TmpAblGap{} points is about one combined standard deviation (\TmpAblDropStd{}), so we do not claim it as significant. Across keep sizes, $k=3$ drifts less than $k=1$ in both clean and certified detection (\TmpAblThreeTprDrop$\pm$\TmpAblThreeTprDropStd{} vs.\ \TmpAblTprDrop$\pm$\TmpAblTprDropStd{} points of clean detection; \TmpAblThreeCertDrop$\pm$\TmpAblThreeCertDropStd{} vs.\ \TmpAblCertDrop$\pm$\TmpAblCertDropStd{} points of certified detection at $r=1$); $k=2$ lies between on average, with high variance in certified detection (\TmpAblTwoCertDrop$\pm$\TmpAblTwoCertDropStd{} points). \TmpCrownVsMlpSentence{} \TmpCrownVsMlpAccSentence{} %CHECK
-
-\begin{table}[t]\centering\small
-\caption{Clean test performance (\%) under the random and the temporal split (mean $\pm$ std over \NSeeds{} \SeedsNoun{}). The temporal split uses one fixed test window (\TmpTestStart{} to \TmpTestEnd{}), so its $\pm$ reflects training randomness only; values without $\pm$ are identical across seeds.}\label{tab:temporal-clean}
-\resizebox{\linewidth}{!}{\input{tables/tab_temporal_clean.tex}}
-\end{table}
-
-\begin{table}[t]\centering\small
-\caption{Certified malware detection (\%) under the random and the temporal split (mean $\pm$ std over \NSeeds{} \SeedsNoun{}), and its drop (random minus temporal), whose $\pm$ combines the standard deviations of both splits. In the text, differences between drops are judged against the combined seed-to-seed standard deviation, which is conservative (assumes independence).}\label{tab:temporal-cert}
-\resizebox{\linewidth}{!}{\input{tables/tab_temporal_cert.tex}}
+\begin{table}[tbp]
+\centering\small
+\caption{Randomized smoothing on every test point: clean accuracy, abstention rate and certified detection (\%) at several $\ell_2$ radii (standardised units).}\label{tab:smoothing}
+\input{tables/tab_smoothing.tex}
 \end{table}

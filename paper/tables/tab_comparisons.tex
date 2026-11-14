@@ -1,0 +1,13 @@
+\begin{tabular}{rlrrrr}
+\toprule
+\# & Comparison (A vs B) & A $-$ B (points) & 95\% interval & $p$ & Holm $p$ \\
+\midrule
+1 & Edit-aware vs uniform-ball CROWN-IBP, certified over $T_f(1)$ & $+56.0$ & $[49.0,\,62.9]$ & $<0.001$ & $<0.001$ \\
+2 & Box vs uniform-ball CROWN-IBP, certified at $\epsilon=0.05$ & $+0.5$ & $[-0.8,\,1.8]$ & 0.340 & 0.340 \\
+3 & Aligned (main) vs EMBER groups, certified over the nine edit types & $+11.3$ & $[7.6,\,15.1]$ & 0.001 & 0.004 \\
+4 & LightGBM views vs MLP views (main), certified at $r=1$ & $+18.5$ & $[8.4,\,28.6]$ & 0.007 & 0.021 \\
+5 & LightGBM views (main) vs LightGBM, detected under group attack at $r=1$ & $+62.6$ & $[47.4,\,77.8]$ & $<0.001$ & 0.002 \\
+6 & LightGBM views (main) vs LightGBM, clean accuracy & $-1.8$ & $[-4.1,\,0.6]$ & 0.101 & 0.203 \\
+\bottomrule
+\end{tabular}
+% paired over 5 family-split seeds; declared before any test evaluation (log 3-1)
