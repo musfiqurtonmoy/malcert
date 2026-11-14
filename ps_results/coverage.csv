@@ -1,11 +1,11 @@
-technique,edit,level,r_needed,certified_detection_k1,source
-Overlay append (padding),E1,(a) or (b): to be measured,4,to be measured,not measured yet
-String padding,E2,(a) or (b): to be measured,4,to be measured,not measured yet
-Section injection,E3,"(b) inside, not certifiable",6,none possible (r>4),not measured yet
-Import addition,E4,"(b) inside, not certifiable",7,none possible (r>4),not measured yet
-Timestamp edit,E5,(a) or (b): to be measured,3,to be measured,not measured yet
-Section renaming,E6,(a) or (b): to be measured,4,to be measured,not measured yet
-Checksum and DOS-header edits,E7,(a) or (b): to be measured,3,to be measured,not measured yet
-Signature and debug stripping,E8,"(b) inside, not certifiable",6,none possible (r>4),not measured yet
-Header version and DLL-characteristics edits,E10,(a) or (b): to be measured,3,to be measured,not measured yet
-Packing (UPX),E9,(c) out of scope,9,--,not measured yet
+technique,edit,level,groups_max_ember,main,second,source
+Overlay append (padding),E1,"(a) certified, main",4,1 / 55.1%,1 / 64.4%,"results_family + results_family_s34, 5 seed(s)"
+String padding,E2,"(a) certified, main",4,1 / 55.1%,1 / 64.4%,"results_family + results_family_s34, 5 seed(s)"
+Section injection,E3,"(a) certified, second only",6,2 / none possible,2 / 52.4%,"results_family + results_family_s34, 5 seed(s)"
+Import addition,E4,"(a) certified, second only",7,3 / none possible,3 / 32.2%,"results_family + results_family_s34, 5 seed(s)"
+Timestamp edit,E5,"(a) certified, main",3,1 / 55.1%,1 / 64.4%,"results_family + results_family_s34, 5 seed(s)"
+Section renaming,E6,"(a) certified, second only",4,2 / none possible,2 / 52.4%,"results_family + results_family_s34, 5 seed(s)"
+Checksum and DOS-header edits,E7,"(a) certified, main",3,1 / 55.1%,1 / 64.4%,"results_family + results_family_s34, 5 seed(s)"
+Signature and debug stripping,E8,"(a) certified, second only",6,2 / none possible,3 / 32.2%,"results_family + results_family_s34, 5 seed(s)"
+Header version and DLL-characteristics edits,E10,"(a) certified, main",3,1 / 55.1%,2 / 52.4%,"results_family + results_family_s34, 5 seed(s)"
+Packing (UPX),E9,(c) out of scope,9,--,--,"results_family + results_family_s34, 5 seed(s)"

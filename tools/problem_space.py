@@ -96,8 +96,9 @@ def bodmas_stats():
 def main():
     ap = argparse.ArgumentParser()
     ap.add_argument("--paper", default=os.path.join(ROOT, "paper"))
-    ap.add_argument("--res", default=None,
-                    help="results folder: fills the coverage table with the measured certified detection (k=1)")
+    ap.add_argument("--res", nargs="+", default=None,
+                    help="results folder(s), seeds pooled: fills the coverage table with the measured certified "
+                         "detection of per-view LightGBM under the edit-aligned groupings")
     ap.add_argument("--propose", action="store_true",
                     help="print the annotation the rule gives and do not fail if data.py differs (used once, to freeze it)")
     a = ap.parse_args()
@@ -414,43 +415,55 @@ def write_tables(paper, corpus, man, D, M, Mall, EV, mut_d, mono_d, mut_r, mono_
     # r needed = the LARGEST number of groups the edit changed in any measured file (every file must be covered).
     # Certified detection: group-ablation certificate with k = 1 (the only keep size that reaches r > 2), from --res.
     # This table is for the 9 EMBER groups; it is filled again after the edit-aligned grouping of Stage 2b.
+    # Since Stage 3 (log 4-1): r needed and certified detection come from the edit-aligned groupings of the results
+    # (cert_by_edit), for the headline detector (per-view LightGBM, main = aligned5 k=2) and the second operating point
+    # (per-view LightGBM, aligned7 k=1), mean over all seeds of the given folders.
     cert, cert_src = None, "not measured yet"
     if res:
         import json
-        Rj = json.load(open(os.path.join(res, "results.json")))
-        cert = np.mean([s["ablation"]["1"]["cert_tpr"] for s in Rj["seeds"].values()], 0)
-        cert_src = f"{os.path.basename(os.path.normpath(res))}, {len(Rj['seeds'])} seed(s), {Rj['config']['epochs']} epochs"
-    C = ["\\begin{tabular}{lllrlp{0.30\\linewidth}}", "\\toprule",
-         "Technique & Measured as & Level & $r$ needed & Certified detection at that $r$ & Evidence \\\\", "\\midrule"]
+        seeds = [s for f in res for s in json.load(open(os.path.join(f, "results.json")))["seeds"].values()]
+        cert = {}
+        for cfgname in ("lgbm_main", "lgbm_second"):
+            for e in seeds[0]["ablation"][cfgname]["cert_by_edit"]:
+                rows = [s["ablation"][cfgname]["cert_by_edit"][e] for s in seeds]
+                cert[(cfgname, e)] = (rows[0]["r_needed"], rows[0]["certifiable"], float(np.mean([x["cert_tpr"] for x in rows])))
+        cert_src = f"{' + '.join(os.path.basename(os.path.normpath(f)) for f in res)}, {len(seeds)} seed(s)"
+    C = ["\\begin{tabular}{lllrrp{0.30\\linewidth}}", "\\toprule",
+         "Technique & Measured as & Level & \\multicolumn{2}{c}{$r$ needed / certified detection} & Evidence \\\\",
+         " & & & main & second & \\\\", "\\midrule"]
     cov = []
     for e, (lab, tech, _) in EDITS.items():
         if EDIT_SCOPE[e] == "control" or e not in Mall.index:
             continue
         r = Mall.loc[e]
         rmax = int(r.groups_max)
+        cells = ["--", "--"]
         if EDIT_SCOPE[e] == "out":
-            level, cd = "(c) out of scope", "--"
-            evid = (f"{int(r.n_files)} files: changes {r.groups_median:.0f} of {G} groups (median); "
+            level = "(c) out of scope"
+            evid = (f"{int(r.n_files)} files: changes {r.groups_median:.0f} of {G} EMBER groups (median); "
                     f"{pct(1 - r.repaired_box_inside)}\\% of files change features annotated immutable")
         else:
             assert r.repaired_box_inside == 1 and r.repaired_group_inside == 1, e
             evid = f"{int(r.n_files)} files, all inside the threat set; $\\epsilon$ needed: {fe(r.eps_median)}"
-            if rmax > R_CEIL:
-                level, cd = "(b) inside, not certifiable", f"none possible ($r>{R_CEIL}$)"
-            elif cert is None:
-                level, cd = "(a) or (b): to be measured", "to be measured"
+            if cert is None:
+                level, cells = "(a) or (b): to be measured", ["to be measured"] * 2
             else:
-                c = float(cert[rmax])
-                level = "(a) inside and certified" if c > 0 else "(b) inside, not certifiable"
-                cd = f"{100 * c:.1f}\\%"
-        cov.append((tech, e.split("_")[0], level, rmax, cd.replace("\\%", "%").replace("$", "")))
-        C.append(f"{tech} & {e.split('_')[0]} & {level} & {rmax} & {cd} & {evid} \\\\")
+                got = []
+                for i, cfgname in enumerate(("lgbm_main", "lgbm_second")):
+                    rn, ok, c = cert[(cfgname, e)]
+                    cells[i] = f"{rn} / {100 * c:.1f}\\%" if ok else f"{rn} / none possible"
+                    got.append(ok and c > 0)
+                level = ("(a) certified, main" if got[0] else "(a) certified, second only" if got[1]
+                         else "(b) inside, not certifiable")
+        cov.append((tech, e.split("_")[0], level, rmax, cells[0].replace("\\%", "%"), cells[1].replace("\\%", "%")))
+        C.append(f"{tech} & {e.split('_')[0]} & {level} & {cells[0]} & {cells[1]} & {evid} \\\\")
     C.append("\\midrule")
     for tech, why in NOT_MEASURED:
         C.append(f"{tech} & not measured & (c) out of scope & -- & -- & {why} \\\\")
-    C += ["\\bottomrule", "\\end{tabular}", f"% certified detection: 9 EMBER groups, k = 1; source: {cert_src}"]
+    C += ["\\bottomrule", "\\end{tabular}",
+          f"% r needed under the edit-aligned groupings; certified detection of per-view LightGBM; source: {cert_src}"]
     open(os.path.join(tdir, "tab_coverage.tex"), "w").write("\n".join(C))
-    pd.DataFrame(cov, columns=["technique", "edit", "level", "r_needed", "certified_detection_k1"]).assign(
+    pd.DataFrame(cov, columns=["technique", "edit", "level", "groups_max_ember", "main", "second"]).assign(
         source=cert_src).to_csv(os.path.join(RES, "coverage.csv"), index=False)
 
     # ---- Table: edit map per architecture (1i.1) ----
@@ -566,7 +579,7 @@ def write_tables(paper, corpus, man, D, M, Mall, EV, mut_d, mono_d, mut_r, mono_
             f.write(f"\\newcommand{{\\{k}}}{{{v}}}\n")
     print("\ncoverage:")
     for c in cov:
-        print("   %-46s %-4s %-30s r=%d  certified: %s" % c)
+        print("   %-46s %-4s %-30s EMBER groups max %d | main %s | second %s" % c)
     print(f"\nwrote 4 tables and {len(N)} macros to {tdir}")
 
 

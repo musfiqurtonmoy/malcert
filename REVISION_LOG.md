@@ -654,6 +654,26 @@ carry a **Basis:** line saying what they were fixed from.
   macros listed per owning script), section map with comment IDs, appendices, removals. No manuscript edits yet.
   Random-vs-family gap in certified detection: 14.3–50.3 points (per-view LightGBM main 41.6, MLP views main 50.3).
 
+- **4-1** `[A2, A3, A4, B7]` **Macros (step 1, commit `cc294fe`).** `stats.py`: `\Fam<Stem>` / `\Rand<Stem>` (+`Lo`/`Hi`)
+  per model metric, `\NSeedsFam` / `\NSeedsRand`, `\CmpFAbs`, `\RandFamGapMin` / `Max` (14 / 50: certified-detection
+  metrics at ≥ 1% on either split). `eps_sweep.py`: C3-wording macros (`\SwEdit*`, `\SwUnifOne*`, `\SwUnifLowFpr*`,
+  `\SwBest*`, `\SwRadiusUnit*`); "FPR near 1%" read as **matched FPR**: best uniform model whose mean FPR ≤ edit-aware's
+  (ε = 0.2: 3.1% at 1.1% FPR). `temporal_decay.py` → `numbers_decay.tex` (retraining gain = mean over the 5 months both
+  cut-offs test: 9–13 points). `paper/OUTLINE.md` follows the 3g C3 wording.
+- **4-2** `[B2]` **Coverage table filled** (log 1-23). `problem_space.py --res results_family results_family_s34`: r needed
+  under the edit-aligned groupings and certified detection of per-view LightGBM, main and second, 5 seeds. Every
+  in-scope edit type is level (a) for at least one detector: E1, E2, E5, E7, E10 by main (55.1%); E3, E6 (r = 2) and
+  E4, E8 (r = 3) by the second point only (32–52%). No other problem-space output changed.
+- **4-3** `[A1, A2, A3, A4, A5, B1–B7, Am2, Am6, Am7]` **Abstract and Sections 1–5 rewritten** (`paper/main.tex`),
+  following `OUTLINE.md`; all numbers are macros; Sections 6–8 still the draft text (still input `numbers.tex`,
+  `numbers_temporal.tex`). Author changed to Md. Musfiqur Rahman (plan 4c.6; the draft named another author), CRediT
+  name likewise; affiliation placeholder and red generative-AI placeholder kept. `refs.bib`: Lucas et al. 2023, Chen et al.
+  2019, Kantchelian et al. 2016 added from memory, **not yet checked in Google Scholar**. Checks: no undefined macro
+  in abstract–§5, no duplicate macro, every citation key defined, no duplicate or dangling label; abstract 234 words.
+  No LaTeX installation on this PC: **not compiled**. `paper_overleaf.zip` rebuilt (47 files).
+  Deviations from the outline: `fig_eps_coverage` / `tab_eps_coverage` moved from §3 to §6.4 (they still hold quick-pilot
+  certified values, log 1-18); `\PsNFilesAll` / `\PsNEditedInScopeAll` not needed.
+
 ### 3g. Uniform-ball ε sweep (declared before any sweep run)
 - **3-16** `[A2, A3]` **Accuracy-matched comparison rule (plan 3g.4), declared before any sweep result.** Sweep:
   uniform-ball CROWN-IBP at ε_train ∈ {0.05, 0.1, 0.2, 0.5, 1, 2, 4} (plus max ε_f if larger and trainable), family

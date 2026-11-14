@@ -1,21 +1,22 @@
-\begin{tabular}{lllrlp{0.30\linewidth}}
+\begin{tabular}{lllrrp{0.30\linewidth}}
 \toprule
-Technique & Measured as & Level & $r$ needed & Certified detection at that $r$ & Evidence \\
+Technique & Measured as & Level & \multicolumn{2}{c}{$r$ needed / certified detection} & Evidence \\
+ & & & main & second & \\
 \midrule
-Overlay append (padding) & E1 & (a) or (b): to be measured & 4 & to be measured & 900 files, all inside the threat set; $\epsilon$ needed: 1.9 \\
-String padding & E2 & (a) or (b): to be measured & 4 & to be measured & 300 files, all inside the threat set; $\epsilon$ needed: 9.8 \\
-Section injection & E3 & (b) inside, not certifiable & 6 & none possible ($r>4$) & 600 files, all inside the threat set; $\epsilon$ needed: 22 \\
-Import addition & E4 & (b) inside, not certifiable & 7 & none possible ($r>4$) & 236 files, all inside the threat set; $\epsilon$ needed: 17 \\
-Timestamp edit & E5 & (a) or (b): to be measured & 3 & to be measured & 150 files, all inside the threat set; $\epsilon$ needed: 0.22 \\
-Section renaming & E6 & (a) or (b): to be measured & 4 & to be measured & 150 files, all inside the threat set; $\epsilon$ needed: 25 \\
-Checksum and DOS-header edits & E7 & (a) or (b): to be measured & 3 & to be measured & 450 files, all inside the threat set; $\epsilon$ needed: 0.019 \\
-Signature and debug stripping & E8 & (b) inside, not certifiable & 6 & none possible ($r>4$) & 181 files, all inside the threat set; $\epsilon$ needed: 2.4 \\
-Header version and DLL-characteristics edits & E10 & (a) or (b): to be measured & 3 & to be measured & 1202 files, all inside the threat set; $\epsilon$ needed: 2.2 \\
-Packing (UPX) & E9 & (c) out of scope & 9 & -- & 149 files: changes 8 of 9 groups (median); 100\% of files change features annotated immutable \\
+Overlay append (padding) & E1 & (a) certified, main & 1 / 55.1\% & 1 / 64.4\% & 900 files, all inside the threat set; $\epsilon$ needed: 1.9 \\
+String padding & E2 & (a) certified, main & 1 / 55.1\% & 1 / 64.4\% & 300 files, all inside the threat set; $\epsilon$ needed: 9.8 \\
+Section injection & E3 & (a) certified, second only & 2 / none possible & 2 / 52.4\% & 600 files, all inside the threat set; $\epsilon$ needed: 22 \\
+Import addition & E4 & (a) certified, second only & 3 / none possible & 3 / 32.2\% & 236 files, all inside the threat set; $\epsilon$ needed: 17 \\
+Timestamp edit & E5 & (a) certified, main & 1 / 55.1\% & 1 / 64.4\% & 150 files, all inside the threat set; $\epsilon$ needed: 0.22 \\
+Section renaming & E6 & (a) certified, second only & 2 / none possible & 2 / 52.4\% & 150 files, all inside the threat set; $\epsilon$ needed: 25 \\
+Checksum and DOS-header edits & E7 & (a) certified, main & 1 / 55.1\% & 1 / 64.4\% & 450 files, all inside the threat set; $\epsilon$ needed: 0.019 \\
+Signature and debug stripping & E8 & (a) certified, second only & 2 / none possible & 3 / 32.2\% & 181 files, all inside the threat set; $\epsilon$ needed: 2.4 \\
+Header version and DLL-characteristics edits & E10 & (a) certified, main & 1 / 55.1\% & 2 / 52.4\% & 1202 files, all inside the threat set; $\epsilon$ needed: 2.2 \\
+Packing (UPX) & E9 & (c) out of scope & -- & -- & 149 files: changes 8 of 9 EMBER groups (median); 100\% of files change features annotated immutable \\
 \midrule
 Repacking, crypters & not measured & (c) out of scope & -- & -- & replace the file by a stub that unpacks the original at run time \\
 Code obfuscation, metamorphism & not measured & (c) out of scope & -- & -- & rewrite the instructions, so every content-derived feature changes \\
 Dropper wrapping & not measured & (c) out of scope & -- & -- & embed the file in a different host program \\
 \bottomrule
 \end{tabular}
-% certified detection: 9 EMBER groups, k = 1; source: not measured yet
+% r needed under the edit-aligned groupings; certified detection of per-view LightGBM; source: results_family + results_family_s34, 5 seed(s)
