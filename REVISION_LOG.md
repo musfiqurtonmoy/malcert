@@ -676,6 +676,24 @@ carry a **Basis:** line saying what they were fixed from.
   - **Smoke test** (seed 0, ε 0.1, 1 epoch, scratch folder): runs end to end in 21 s incl. `--analyse`; accuracy 93.0%,
     FPR 0.5%, certified 0% at own ε and over T_f(1). With 1 epoch the ε ramp never starts (5 warm-up epochs), so the
     smoke test checks the pipeline, not robust training. Full sweep: 40 models, about 20–25 min (`RUN_NEXT.md`).
+- **3-18** `[A2, A3]` **Sweep result** (`results_eps_sweep/`, 40 of 40 models, one code hash; run flagged dirty only
+  because the uncommitted 3g plan edit was in the tree). `--analyse` → `sweep_summary.csv`, `accuracy_matched.csv`,
+  `paper/figures/fig_eps_sweep.pdf`, `paper/tables/numbers_sweep.tex`. Means over 5 seeds, ε_train: accuracy / FPR /
+  certified over T_f(1): 0.05: 92.9 / 0.4 / 0.0; 0.1: 92.0 / 0.4 / 0.0; 0.2: 89.8 / 1.1 / 3.1; 0.5: 89.6 / 3.5 / 24.5;
+  **1: 89.9 / 6.5 / 47.3** (content 72.5, section 32.6, import 0.0, strip 84.2); 2: 79.1 / 0.1 / 0.0; 4 and 290.2:
+  collapsed in all 5 seeds (constant benign, 57.7%). Edit-aware: 91.4 / 1.2 / 56.0 (content 40.7, section 66.8,
+  import 40.2, strip 76.3).
+  - **Pre-registered accuracy-matched comparison (3-16):** matched ε = 0.1 (92.0% vs 91.4%); edit-aware − uniform
+    **+56.0 points [49.0, 62.9]**, p < 0.001 (secondary, outside the Holm family).
+  - **Reporting rule 3g.5 applies:** ε = 1 comes close. Edit-aware − ε 1 (descriptive, not pre-registered):
+    +8.7 [−8.8, 26.1], interval includes 0. ε = 1 beats edit-aware on content and strip, loses on section and import
+    (0%), at 1.5 points lower accuracy and 5.4 times the FPR (6.5% vs 1.2%). C3 wording to be revised in Stage 4
+    (author's decision): the advantage is certified detection at low FPR and on section/import edits, not overall.
+  - **The 290 radius:** hashed `Section.entry_name` buckets (bucket 1, 35 or 46, depending on the seed), each non-zero in
+    exactly one training file, so training sd = 0.00478 (signed-log units); the section family allows a change of up to
+    1.386 there (structural rule for name-hashed blocks, 2-23): 1.386 / 0.00478 = 290. Other radii likewise come from
+    near-constant features: content `ByteEntropyHistogram[56]` (sd 0.00035), import `Imports.libraries` buckets
+    (sd 0.0096), strip `Section.entropy[1]` (sd 0.037).
 
 ### Ideas not done
 - Execution check of edited binaries in a sandboxed VM (would turn "plausibly functionality-preserving" into

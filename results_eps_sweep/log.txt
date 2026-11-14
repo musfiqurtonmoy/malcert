@@ -1,0 +1,51 @@
+=== eps sweep | seeds (0, 1, 2, 3, 4) | eps grid + max eps_f | epochs 40 | commit 56d3b84 | Sat Nov 14 05:02:48 2026 ===
+seed 0: containment radius F_content 109.369, F_section 290.153, F_import 72.540, F_strip 44.187; grid [0.05, 0.1, 0.2, 0.5, 1.0, 2.0, 4.0, 290.2]
+  eps 0.05: acc 0.9495 fpr 0.0046 collapsed False cert@own 0.5476 cert T_f(1) mean 0.0000 (26s)
+  eps 0.1: acc 0.9470 fpr 0.0055 collapsed False cert@own 0.4774 cert T_f(1) mean 0.0000 (22s)
+  eps 0.2: acc 0.9117 fpr 0.0096 collapsed False cert@own 0.4853 cert T_f(1) mean 0.0210 (22s)
+  eps 0.5: acc 0.9138 fpr 0.0340 collapsed False cert@own 0.5361 cert T_f(1) mean 0.3310 (22s)
+  eps 1: acc 0.9291 fpr 0.0711 collapsed False cert@own 0.6956 cert T_f(1) mean 0.4688 (22s)
+  eps 2: acc 0.8099 fpr 0.0017 collapsed False cert@own 0.0000 cert T_f(1) mean 0.0000 (22s)
+  eps 4: acc 0.5775 fpr 0.0000 collapsed True cert@own 0.0000 cert T_f(1) mean 0.0000 (22s)
+  eps 290.2: acc 0.5775 fpr 0.0000 collapsed True cert@own 0.0000 cert T_f(1) mean 0.0000 (22s)
+seed 0 done in 207s
+seed 1: containment radius F_content 125.251, F_section 290.197, F_import 83.770, F_strip 46.465; grid [0.05, 0.1, 0.2, 0.5, 1.0, 2.0, 4.0, 290.2]
+  eps 0.05: acc 0.9256 fpr 0.0038 collapsed False cert@own 0.6892 cert T_f(1) mean 0.0000 (23s)
+  eps 0.1: acc 0.9158 fpr 0.0052 collapsed False cert@own 0.6663 cert T_f(1) mean 0.0002 (22s)
+  eps 0.2: acc 0.8868 fpr 0.0131 collapsed False cert@own 0.5883 cert T_f(1) mean 0.0787 (22s)
+  eps 0.5: acc 0.8731 fpr 0.0313 collapsed False cert@own 0.5887 cert T_f(1) mean 0.2015 (22s)
+  eps 1: acc 0.8980 fpr 0.0746 collapsed False cert@own 0.6473 cert T_f(1) mean 0.6455 (22s)
+  eps 2: acc 0.8285 fpr 0.0015 collapsed False cert@own 0.0000 cert T_f(1) mean 0.0000 (22s)
+  eps 4: acc 0.5770 fpr 0.0000 collapsed True cert@own 0.0000 cert T_f(1) mean 0.0000 (22s)
+  eps 290.2: acc 0.5770 fpr 0.0000 collapsed True cert@own 0.0000 cert T_f(1) mean 0.0000 (22s)
+seed 1 done in 185s
+seed 2: containment radius F_content 110.904, F_section 290.197, F_import 102.596, F_strip 44.191; grid [0.05, 0.1, 0.2, 0.5, 1.0, 2.0, 4.0, 290.2]
+  eps 0.05: acc 0.9501 fpr 0.0029 collapsed False cert@own 0.5978 cert T_f(1) mean 0.0000 (22s)
+  eps 0.1: acc 0.9287 fpr 0.0032 collapsed False cert@own 0.5032 cert T_f(1) mean 0.0000 (22s)
+  eps 0.2: acc 0.9000 fpr 0.0058 collapsed False cert@own 0.4838 cert T_f(1) mean 0.0021 (22s)
+  eps 0.5: acc 0.9246 fpr 0.0340 collapsed False cert@own 0.4434 cert T_f(1) mean 0.2389 (22s)
+  eps 1: acc 0.8985 fpr 0.0575 collapsed False cert@own 0.6445 cert T_f(1) mean 0.4123 (22s)
+  eps 2: acc 0.7588 fpr 0.0003 collapsed False cert@own 0.0000 cert T_f(1) mean 0.0000 (22s)
+  eps 4: acc 0.5770 fpr 0.0000 collapsed True cert@own 0.0000 cert T_f(1) mean 0.0000 (22s)
+  eps 290.2: acc 0.5770 fpr 0.0000 collapsed True cert@own 0.0000 cert T_f(1) mean 0.0000 (22s)
+seed 2 done in 184s
+seed 3: containment radius F_content 117.011, F_section 290.199, F_import 83.771, F_strip 52.620; grid [0.05, 0.1, 0.2, 0.5, 1.0, 2.0, 4.0, 290.2]
+  eps 0.05: acc 0.9335 fpr 0.0041 collapsed False cert@own 0.5740 cert T_f(1) mean 0.0000 (22s)
+  eps 0.1: acc 0.9256 fpr 0.0041 collapsed False cert@own 0.5602 cert T_f(1) mean 0.0000 (22s)
+  eps 0.2: acc 0.9076 fpr 0.0148 collapsed False cert@own 0.5384 cert T_f(1) mean 0.0083 (22s)
+  eps 0.5: acc 0.9168 fpr 0.0369 collapsed False cert@own 0.6077 cert T_f(1) mean 0.2163 (22s)
+  eps 1: acc 0.9059 fpr 0.0659 collapsed False cert@own 0.6928 cert T_f(1) mean 0.2760 (22s)
+  eps 2: acc 0.8071 fpr 0.0023 collapsed False cert@own 0.0000 cert T_f(1) mean 0.0000 (22s)
+  eps 4: acc 0.5770 fpr 0.0000 collapsed True cert@own 0.0000 cert T_f(1) mean 0.0000 (22s)
+  eps 290.2: acc 0.5770 fpr 0.0000 collapsed True cert@own 0.0000 cert T_f(1) mean 0.0000 (22s)
+seed 3 done in 184s
+seed 4: containment radius F_content 122.011, F_section 290.198, F_import 145.099, F_strip 42.536; grid [0.05, 0.1, 0.2, 0.5, 1.0, 2.0, 4.0, 290.2]
+  eps 0.05: acc 0.8843 fpr 0.0038 collapsed False cert@own 0.5926 cert T_f(1) mean 0.0000 (22s)
+  eps 0.1: acc 0.8841 fpr 0.0041 collapsed False cert@own 0.5823 cert T_f(1) mean 0.0000 (22s)
+  eps 0.2: acc 0.8859 fpr 0.0110 collapsed False cert@own 0.5645 cert T_f(1) mean 0.0429 (22s)
+  eps 0.5: acc 0.8528 fpr 0.0366 collapsed False cert@own 0.5416 cert T_f(1) mean 0.2349 (22s)
+  eps 1: acc 0.8618 fpr 0.0569 collapsed False cert@own 0.6033 cert T_f(1) mean 0.5631 (22s)
+  eps 2: acc 0.7495 fpr 0.0000 collapsed False cert@own 0.0000 cert T_f(1) mean 0.0000 (22s)
+  eps 4: acc 0.5770 fpr 0.0000 collapsed True cert@own 0.0000 cert T_f(1) mean 0.0000 (22s)
+  eps 290.2: acc 0.5770 fpr 0.0000 collapsed True cert@own 0.0000 cert T_f(1) mean 0.0000 (22s)
+seed 4 done in 184s
