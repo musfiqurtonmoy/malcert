@@ -6,6 +6,7 @@
 \usepackage{graphicx,booktabs,multirow}
 \usepackage[hidelinks]{hyperref}
 \usepackage{xcolor}
+\usepackage{placeins}
 \newtheorem{theorem}{Theorem}
 \newtheorem{proposition}{Proposition}
 \newtheorem{definition}{Definition}
@@ -59,6 +60,7 @@ We make four contributions:
 Section~\ref{sec:related} reviews related work, Section~\ref{sec:threat} the measurement and the threat model, Section~\ref{sec:methods} the certificates and training methods, and Section~\ref{sec:setup} the experimental protocol. Section~\ref{sec:results} reports the results.
 
 %% ===================================================================================
+\FloatBarrier
 \section{Related work}\label{sec:related}
 \textbf{Evasion of static detectors.} Feature-space attacks on malware detectors go back at least to \citet{grosse2017adversarial}. Problem-space attacks edit real binaries: appending bytes, injecting sections, padding strings, rewriting headers \citep{kolosnjaji2018adversarial,demetrio2021exemples}, or choosing such actions by reinforcement learning \citep{anderson2018learning}. \citet{pierazzi2020problemspace} formalise the gap between the two and argue that only realisable transformations should count. We follow that principle and go one step further: we measure the feature-space footprint of each transformation and build the threat model from the measurements.
 
@@ -69,6 +71,7 @@ Section~\ref{sec:related} reviews related work, Section~\ref{sec:threat} the mea
 \textbf{Evaluation methodology.} \citet{pendlebury2019tesseract} show that random splits overstate detection performance because they mix past and future samples; BODMAS \citep{yang2021bodmas} provides timestamps and family labels that make temporal and family-disjoint evaluation possible. We apply both to certified detection, which earlier work on certified malware detection has evaluated, to our knowledge, mostly on random splits.
 
 %% ===================================================================================
+\FloatBarrier
 \section{Threat model and problem-space validation}\label{sec:threat}
 \subsection{Features}
 Let $x\in\mathbb{R}^{d}$, $d=2381$, be the EMBER (version~2) feature vector of a PE file \citep{anderson2018ember}, after a per-feature signed logarithm $s(v)=\mathrm{sign}(v)\log(1+|v|)$ and a z-score with training statistics, $\phi_i(v)=(s(v)-\mu_i)/\sigma_i$. Because $\phi$ is strictly increasing per coordinate, ``feature $i$ can only increase'' keeps its meaning after the transform. We describe the vector as \PsNUnits{} \emph{feature units}, each a contiguous block produced by one step of the extractor (e.g.\ the byte histogram, the string count, the hashed import functions), with a kind: normalised histogram, count or size, 0/1 flag, other value, or hashed bucket. The units nest within EMBER's nine \emph{groups}: byte histogram, byte-entropy histogram, strings, general, header, section, imports, exports and data directories.
@@ -85,6 +88,12 @@ Let $x\in\mathbb{R}^{d}$, $d=2381$, be the EMBER (version~2) feature vector of a
 Each coordinate $i$ is \emph{immutable} ($i\notin\mathcal{M}$), \emph{mutable} ($i\in\mathcal{M}$) or \emph{increase-only} ($i\in\mathcal{N}\subseteq\mathcal{M}$). A feature unit is mutable if an in-scope edit changed it in at least one measured file, or if the draft annotation of this study treated it as mutable. It is increase-only if it is mutable, a count or size, and never decreased under any edit. A unit that no edit changed but that an edit could plausibly change is kept mutable and labelled ``conservative, not observed''.
 \end{definition}
 The rule gives $|\mathcal{M}|=\PsNMutable$ and $|\mathcal{N}|=\PsNMonotone$ (earlier annotation: \PsNMutableDraft{} and \PsNMonotoneDraft), and all nine EMBER groups contain mutable features (earlier: \PsNAttackableDraft). Table~\ref{tab:annotation} summarises the annotation per group; Appendix~C lists it per unit with its evidence.
+
+\begin{table}[!htbp]
+\centering\small
+\caption{Repaired feature annotation per EMBER group: mutable and increase-only features before (draft) and after the repair. Per-unit evidence in Appendix~C.}\label{tab:annotation}
+\resizebox{\textwidth}{!}{\input{tables/tab_annotation.tex}}
+\end{table}
 
 \begin{definition}[Constrained box]
 For a budget $\epsilon$, $B_\epsilon(x)=\prod_i[\ell_i,u_i]$ with $\ell_i=u_i=x_i$ for $i\notin\mathcal{M}$, $[\ell_i,u_i]=[x_i,x_i+\epsilon]$ for $i\in\mathcal{N}$ and $[x_i-\epsilon,x_i+\epsilon]$ otherwise, each intersected with the natural bound of feature $i$.
@@ -103,6 +112,18 @@ For any sound box-bounding method, every input certified over the full $\ell_\in
 \subsection{What real edits change}\label{sec:editmap}
 Table~\ref{tab:editmap} is the edit map. Two findings matter for certification. \emph{Edits touch several EMBER groups.} Every byte change moves both byte histograms, so even the smallest edit (a checksum change) touches \PsEsevenGroupsMed{} groups; appends and string padding touch \PsEoneGroupsMed, section injection \PsEthreeGroupsMed{} to \PsEthreeGroupsMax{} and import addition \PsEfourGroupsMed. No measured file changes only one group. The rebuild control separates what LIEF's builder changes from the edit itself: import addition still changes \PsEfourOwnGroupsMed{} groups relative to a file rebuilt without the edit. \emph{Edits are large in standardised units.} The median $\epsilon$ an edit needs ranges from \PsEsevenEpsMed{} for header edits to \PsEsixEpsMed{} for section renaming (Table~\ref{tab:editmap}; Table~\ref{tab:epsunits} converts $\epsilon$ into bytes, strings, imports and sections). Of the in-scope edits, \PsEpsLeTrainPct\% fit in $B_\epsilon$ at $\epsilon=0.05$, \PsEpsLeOnePct\% at $\epsilon=1$ and \PsEpsLeTenPct\% at $\epsilon=10$. An $\ell_\infty$ certificate at a typical training budget therefore covers only header-level and very small edits.
 
+\begin{table}[!htbp]
+\centering\small
+\caption{Edit map over the \PsNEditedInScope{} in-scope edited files of the \PsNFiles-file corpus: share of files in which each EMBER group changes, number of groups changed, $\epsilon$ needed in standardised units, and share of files inside the draft threat set. E9 (UPX) is out of scope; E0 is the LIEF rebuild control.}\label{tab:editmap}
+\resizebox{\textwidth}{!}{\input{tables/tab_edit_map.tex}}
+\end{table}
+
+\begin{table}[!htbp]
+\centering\small
+\caption{$\epsilon$ in real units for the median test malware of one seed: the largest increase in each quantity that an $\ell_\infty$ budget allows, and the $\epsilon$ that one more unit needs.}\label{tab:epsunits}
+\resizebox{\textwidth}{!}{\input{tables/tab_eps_units.tex}}
+\end{table}
+
 \subsection{Edit families and edit-aware threat sets}\label{sec:families}
 The edits fall into four families by the features they change: content edits $F_{\text{content}}$ (E1, E2, E5, E7, E10), section edits $F_{\text{section}}$ (E3, E6), import edits $F_{\text{import}}$ (E4) and stripping $F_{\text{strip}}$ (E8). We split the corpus originals at random into a \emph{fit} half and an \emph{eval} half; all edits of one original stay in its half. From the fit half only, each family $f$ gets a support $S_f$ (the features changed in at least 1\% of its edited files) and, for each $i\in S_f$, an interval $[\mathrm{lo}_{f,i},\mathrm{hi}_{f,i}]$ of the observed change in signed-log units, widened to include 0. Hashed blocks keyed by a name (imported libraries and functions, exports, and the five section blocks) are treated structurally: a new name lands in an effectively random bucket, so the whole block enters the support and every bucket may change by up to the largest change seen in that block. The edit-aware threat set at scale $t>0$ is
 \begin{equation}
@@ -115,7 +136,14 @@ intersected with the natural bounds. $T_f(1)$ covers \FamContentCovOne\% of the 
 \subsection{Coverage}\label{sec:coverage}
 Table~\ref{tab:coverage} states, per evasion technique, one of three levels: (a) inside the threat set and certified, with the measured certified detection at the number of groups $r$ the edit needs; (b) inside the threat set but not certifiable; (c) out of scope. $r$ is the largest number of groups the edit changed in any measured file, so every measured file is covered. Under the edit-aligned groupings of Section~\ref{sec:grouping}, every in-scope edit type reaches level (a) for at least one of the two detectors we evaluate. Section injection and renaming, import addition and stripping need more groups than the main configuration can tolerate and are certified only by the second operating point. Packing, repacking, obfuscation and dropper wrapping are out of scope.
 
+\begin{table}[!htbp]
+\centering\small
+\caption{Coverage of evasion techniques. Level (a): inside the threat set and certified; (b): inside but not certifiable; (c): out of scope. For each detector, the number of edit-aligned groups $r$ the technique needs (largest over the measured files) and the certified detection of per-view LightGBM at that $r$ (family split, \NSeedsFam{} seeds). Main: aligned5, $k=2$; second: aligned7, $k=1$.}\label{tab:coverage}
+\resizebox{\textwidth}{!}{\input{tables/tab_coverage.tex}}
+\end{table}
+
 %% ===================================================================================
+\FloatBarrier
 \section{Methods}\label{sec:methods}
 \subsection{Group-ablation certificate: exact form and ceiling}\label{sec:cert}
 For a keep size $k$, let $\mathcal{V}_k$ be the $\binom{G}{k}$ subsets of groups. A base classifier $h_S$ sees only the features of the kept groups $S$ (the others are set to the training mean), and the detector votes over all views: $n_c(x)=|\{S\in\mathcal{V}_k:h_S(x)=c\}|$, $g(x)=\arg\max_c n_c(x)$. Following \citet{levine2020patch}, a modification of $r$ groups can change only views that keep one of them.
@@ -168,8 +196,21 @@ Every model is certified over $B_\epsilon$ (sound by Proposition~\ref{prop:box})
 \textbf{Attacks.} PGD \citep{madry2018towards} on $B_\epsilon$ projects every step onto the box, so the attack and the certificate describe the same set. The \emph{group-transplant} attack copies whole groups from benign donor files, choosing at each step the group and donor that most reduce the malware score, up to $r$ groups. It runs on every model with the same donors, in the groups of the main configuration. Since every attacked input lies inside the group threat set, a certified sample that the attack evades would be a soundness violation; we count these and they must be zero.
 
 %% ===================================================================================
+\FloatBarrier
 \section{Experimental setup}\label{sec:setup}
 \textbf{Data.} We use BODMAS \citep{yang2021bodmas}: 134,435 PE files with EMBER features, timestamps, and family and category labels for the malware. Experiments use a fixed, category-stratified subset of 30,000 files (\ResNCategories{} malware categories, \ResNFamilies{} families). Table~\ref{tab:repr} compares it with the full dataset on class ratio, category shares and families. The subset keeps memory within the 7.9\,GB of the machine used and keeps certification of every model on every test point affordable (Table~\ref{tab:runtime}); a single full-data run checks the main group certificate on all of BODMAS (Section~\ref{sec:results}). Features are transformed by $\phi$ with the statistics of each run's training part.
+
+\begin{table}[!htbp]
+\centering\small
+\caption{Representativeness of the 30,000-file subset compared with all of BODMAS.}\label{tab:repr}
+\resizebox{\textwidth}{!}{\input{tables/tab_representativeness.tex}}
+\end{table}
+
+\begin{table}[!htbp]
+\centering\small
+\caption{Cost per model on the GTX 1050 Ti (family split, mean over \NSeedsFam{} seeds): training time, certification time per test sample and forward passes per sample.}\label{tab:runtime}
+\resizebox{\textwidth}{!}{\input{tables/tab_runtime.tex}}
+\end{table}
 
 \textbf{Splits.} The main split is \emph{family-disjoint}: every malware family goes wholly to training, validation or test, and benign files are split at random, with targets of 70/10/20\%. Families are assigned category by category, so each part's category mix stays close to the whole. A leakage audit shows why: under a random split (seed 0), \LeakRandFamOverlap\% of test malware belong to a family that is also in training, and \LeakRandNearMal\% of test malware have a training neighbour within $\ell_2$ distance 0.1 in standardised space, a \emph{near-twin} (benign: \LeakRandNearBen\%). Under the family split no test family occurs in training by construction, and near-twins make up \NearTwinFamMal\% of test malware and \NearTwinFamBen\% of test benign files (mean over \NSeedsFam{} seeds). BODMAS has \LeakDupRows{} exact duplicate rows, none with conflicting labels, and no test sample has an exact twin in training. The random split is evaluated with \NSeedsRand{} seeds for comparison with earlier work. Two temporal splits train on files up to the end of \TdCutA{} and \TdCutB{} and test on every later month.
 
@@ -181,48 +222,13 @@ Every model is certified over $B_\epsilon$ (sound by Proposition~\ref{prop:box})
 
 \textbf{Implementation.} PyTorch and LightGBM on a single NVIDIA GTX 1050 Ti (4\,GB); all hyperparameters are in Appendix~A and all attack and certification procedures in Appendix~B. Table~\ref{tab:runtime} lists training and certification cost per model.
 
-%% ----------------------------------- tables of Sections 3 and 5 -----------------------------------
-\begin{table}[tbp]
-\centering\small
-\caption{Repaired feature annotation per EMBER group: mutable and increase-only features before (draft) and after the repair. Per-unit evidence in Appendix~C.}\label{tab:annotation}
-\resizebox{\textwidth}{!}{\input{tables/tab_annotation.tex}}
-\end{table}
-
-\begin{table}[tbp]
-\centering\small
-\caption{Edit map over the \PsNEditedInScope{} in-scope edited files of the \PsNFiles-file corpus: share of files in which each EMBER group changes, number of groups changed, $\epsilon$ needed in standardised units, and share of files inside the draft threat set. E9 (UPX) is out of scope; E0 is the LIEF rebuild control.}\label{tab:editmap}
-\resizebox{\textwidth}{!}{\input{tables/tab_edit_map.tex}}
-\end{table}
-
-\begin{table}[tbp]
-\centering\small
-\caption{$\epsilon$ in real units for the median test malware of one seed: the largest increase in each quantity that an $\ell_\infty$ budget allows, and the $\epsilon$ that one more unit needs.}\label{tab:epsunits}
-\resizebox{\textwidth}{!}{\input{tables/tab_eps_units.tex}}
-\end{table}
-
-\begin{table}[tbp]
-\centering\small
-\caption{Coverage of evasion techniques. Level (a): inside the threat set and certified; (b): inside but not certifiable; (c): out of scope. For each detector, the number of edit-aligned groups $r$ the technique needs (largest over the measured files) and the certified detection of per-view LightGBM at that $r$ (family split, \NSeedsFam{} seeds). Main: aligned5, $k=2$; second: aligned7, $k=1$.}\label{tab:coverage}
-\resizebox{\textwidth}{!}{\input{tables/tab_coverage.tex}}
-\end{table}
-
-\begin{table}[tbp]
-\centering\small
-\caption{Representativeness of the 30,000-file subset compared with all of BODMAS.}\label{tab:repr}
-\resizebox{\textwidth}{!}{\input{tables/tab_representativeness.tex}}
-\end{table}
-
-\begin{table}[tbp]
-\centering\small
-\caption{Cost per model on the GTX 1050 Ti (family split, mean over \NSeedsFam{} seeds): training time, certification time per test sample and forward passes per sample.}\label{tab:runtime}
-\resizebox{\textwidth}{!}{\input{tables/tab_runtime.tex}}
-\end{table}
-
 %% ===================================================================================
+\FloatBarrier
 \section{Results}\label{sec:results}
 \input{results_text.tex}
 
 %% ===================================================================================
+\FloatBarrier
 \section{Discussion and limitations}\label{sec:discussion}
 \textbf{What the guarantees cover.} Every certificate holds for feature vectors in its threat set, and each threat set is an over-approximation of the in-scope edits measured on \PsNFiles{} benign files. The group certificate covers any change, of any size, within $r$ groups, including changes no real tool would make. The edit-aware sets are tighter and shaped like the measured edits, but they cover only the edits that fall inside them: \FamContentCovOne\% of the held-out content edits and only \FamImportCovOne\% of the import edits at $t=1$ (Section~\ref{sec:families}). An $\ell_\infty$ box at a typical training budget covers \PsEpsLeTrainPct\% of the measured edits. Packing, obfuscation, recompilation and dropper wrapping are outside every set, as are edits we did not measure. The edits are plausibly functionality-preserving; we did not verify this by execution.
 
@@ -230,16 +236,18 @@ Every model is certified over $B_\epsilon$ (sound by Proposition~\ref{prop:box})
 
 \textbf{Which certificate to use.} For the edits most often used in practice (appends, string padding, timestamp and header edits), the main configuration with per-view LightGBM certifies \FamCertROneLgbmViews\% of malware at a clean-accuracy cost that is not significant. Section, import and stripping edits need the second operating point, which costs accuracy, or edit-aware training, which is strongest on section and import edits. Uniform-ball training at a large $\epsilon$ is competitive on content and stripping edits, but only at a false-positive rate that a deployed detector could not accept. The methods are complementary, and a deployment could combine them. %CHECK
 
-\textbf{Deployment and drift.} Certified detection decays within months of the training cut-off, and retraining recovers much of it (Section~\ref{sec:temporal}). Certificates should therefore be recomputed with every retraining rather than assumed to persist. With the group certificate this is cheap: certification costs a fraction of a millisecond per file (Table~\ref{tab:runtime}). %CHECK
+\textbf{Deployment and drift.} Certified detection decays within months of the training cut-off, and retraining recovers much of it (Section~\ref{sec:temporal}). Certificates should therefore be recomputed with every retraining rather than assumed to persist. In this data, with two cut-offs, retraining \TdCutGapMonths{} months later recovered \TdRetrainGainMin{} to \TdRetrainGainMax{} points of certified detection, so retraining and re-certifying at least that often appears advisable. With the group certificate this is cheap: certification costs a fraction of a millisecond per file (Table~\ref{tab:runtime}). %CHECK
 
 \textbf{Evaluation.} Random splits overstate certified detection by \RandFamGapMin{} to \RandFamGapMax{} points because test malware shares families with training. Results on random splits describe robustness for variants of known families. Five seeds give wide intervals, and the hyperparameters were tuned on seed 0's training families, a small optimism for seeds 1 to 4.
 
 \textbf{Generalizability.} All results use one dataset, BODMAS, and one extractor, EMBER version~2, on a 30,000-file subset; a single full-data run gives higher accuracy and certified detection than the subset. We did not evaluate EMBER 2018 or SOREL-20M; both are natural next steps. The grouping procedure itself is not tied to EMBER: for any extractor, one measures which features each edit changes and groups features that change together. A newer extractor with different blocks would need its own measurement. Tree-ensemble verification \citep{kantchelian2016evasion,chen2019robustness} could certify LightGBM directly under $\ell_\infty$, which we did not attempt.
 
 %% ===================================================================================
+\FloatBarrier
 \section{Conclusion}
 A certified defence for malware detectors is only as useful as its threat model, and the threat model should be measured, not assumed. Measuring \PsNEditTypesInScope{} edit types on real PE files showed that real edits touch several EMBER groups and lie far outside the small norm balls of certified training. Aligning group-ablation certificates with the measured edits, and using LightGBM per view, gives a detector that certifies \FamCertROneLgbmViews\% of malware from unseen families against any change to one edit-aligned group, at a clean-accuracy cost of \CmpFAbs{} points that is not significant. Training against the measured edit families certifies \SwEditCert\% of malware at \SwEditFpr\% FPR, where uniform-ball training needs \SwUnifOneFpr\% FPR for comparable certified detection; the two are complementary across edit families. Family-disjoint and temporal evaluation show that random splits overstate certified robustness by \RandFamGapMin{} to \RandFamGapMax{} points depending on the model, and that certificates decay within months, so they must be recomputed as detectors are retrained.
 
+\FloatBarrier
 \section*{CRediT authorship contribution statement}
 \textbf{Md. Musfiqur Rahman:} Conceptualization, Methodology, Software, Investigation, Writing -- original draft.
 
@@ -247,7 +255,7 @@ A certified defence for malware detectors is only as useful as its threat model,
 The author declares no competing financial interests or personal relationships that could have appeared to influence the work reported in this paper.
 
 \section*{Data availability}
-BODMAS is publicly available from its authors. Code to reproduce all experiments, figures and tables will be released upon publication.
+BODMAS is publicly available from its authors. Code to reproduce all experiments, figures and tables is available at \url{https://github.com/musfiqurtonmoy/malcert} (made public at submission).
 
 \section*{Declaration of generative AI use}
 \textcolor{red}{[Elsevier requires a statement if AI tools were used in writing; describe your use here.]}

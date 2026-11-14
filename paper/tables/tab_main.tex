@@ -1,21 +1,21 @@
-\begin{tabular}{lrrrr}
+\begin{tabular}{lrrr}
 \toprule
-Detector & Accuracy & TPR & FPR & Detected under group attack, $r=1$ \\
+Detector & Accuracy & TPR & FPR \\
 \midrule
-LightGBM (all features) & 94.6\,$\pm$\,1.4 & 87.6\,$\pm$\,3.2 & 0.2\,$\pm$\,0.1 & 0.0\,$\pm$\,0.0 \\
-LightGBM, monotonic & 94.6\,$\pm$\,1.4 & 87.6\,$\pm$\,3.2 & 0.3\,$\pm$\,0.1 & 0.0\,$\pm$\,0.0 \\
-MLP 2381--512--256--2 & 92.2\,$\pm$\,2.7 & 82.4\,$\pm$\,6.5 & 0.6\,$\pm$\,0.2 & 0.2\,$\pm$\,0.2 \\
-MLP 2381--256--256--2 & 91.7\,$\pm$\,3.2 & 81.4\,$\pm$\,7.4 & 0.6\,$\pm$\,0.2 & 0.2\,$\pm$\,0.2 \\
-PGD-AT on $B_\epsilon$ & 92.8\,$\pm$\,3.9 & 83.5\,$\pm$\,9.2 & 0.4\,$\pm$\,0.1 & 0.3\,$\pm$\,0.2 \\
-Group ablation, MLP views, main & 88.5\,$\pm$\,3.3 & 73.5\,$\pm$\,7.7 & 0.5\,$\pm$\,0.1 & 49.9\,$\pm$\,5.2 \\
-Group ablation, MLP views, second & 86.0\,$\pm$\,3.6 & 69.4\,$\pm$\,8.7 & 1.8\,$\pm$\,0.3 & 26.1\,$\pm$\,5.4 \\
-Group ablation, MLP views, EMBER groups & 83.0\,$\pm$\,2.7 & 60.5\,$\pm$\,6.2 & 0.5\,$\pm$\,0.1 & 0.0\,$\pm$\,0.0 \\
-Group ablation, LightGBM views, main & 92.8\,$\pm$\,2.4 & 83.3\,$\pm$\,5.5 & 0.2\,$\pm$\,0.1 & 62.6\,$\pm$\,15.2 \\
-Group ablation, LightGBM views, second & 90.8\,$\pm$\,5.1 & 78.9\,$\pm$\,12.2 & 0.5\,$\pm$\,0.1 & 37.0\,$\pm$\,7.3 \\
-CROWN-IBP, uniform ball & 92.2\,$\pm$\,3.2 & 82.0\,$\pm$\,7.5 & 0.4\,$\pm$\,0.1 & 0.0\,$\pm$\,0.0 \\
-CROWN-IBP, constrained box & 93.0\,$\pm$\,3.9 & 83.9\,$\pm$\,9.3 & 0.4\,$\pm$\,0.1 & 0.2\,$\pm$\,0.2 \\
-CROWN-IBP, edit-aware & 91.4\,$\pm$\,3.8 & 81.2\,$\pm$\,9.0 & 1.2\,$\pm$\,0.1 & 2.0\,$\pm$\,1.8 \\
-Giri et al., re-implementation & 91.6\,$\pm$\,5.2 & -- & -- & 0.7\,$\pm$\,0.6 \\
+LightGBM (all features) & 94.6\,$\pm$\,1.4 & 87.6\,$\pm$\,3.2 & 0.2\,$\pm$\,0.1 \\
+LightGBM, monotonic & 94.6\,$\pm$\,1.4 & 87.6\,$\pm$\,3.2 & 0.3\,$\pm$\,0.1 \\
+MLP 2381--512--256--2 & 92.2\,$\pm$\,2.7 & 82.4\,$\pm$\,6.5 & 0.6\,$\pm$\,0.2 \\
+MLP 2381--256--256--2 & 91.7\,$\pm$\,3.2 & 81.4\,$\pm$\,7.4 & 0.6\,$\pm$\,0.2 \\
+PGD-AT on $B_\epsilon$ & 92.8\,$\pm$\,3.9 & 83.5\,$\pm$\,9.2 & 0.4\,$\pm$\,0.1 \\
+Group ablation, MLP views, main & 88.5\,$\pm$\,3.3 & 73.5\,$\pm$\,7.7 & 0.5\,$\pm$\,0.1 \\
+Group ablation, MLP views, second & 86.0\,$\pm$\,3.6 & 69.4\,$\pm$\,8.7 & 1.8\,$\pm$\,0.3 \\
+Group ablation, MLP views, EMBER groups & 83.0\,$\pm$\,2.7 & 60.5\,$\pm$\,6.2 & 0.5\,$\pm$\,0.1 \\
+Group ablation, LightGBM views, main & 92.8\,$\pm$\,2.4 & 83.3\,$\pm$\,5.5 & 0.2\,$\pm$\,0.1 \\
+Group ablation, LightGBM views, second & 90.8\,$\pm$\,5.1 & 78.9\,$\pm$\,12.2 & 0.5\,$\pm$\,0.1 \\
+CROWN-IBP, uniform ball & 92.2\,$\pm$\,3.2 & 82.0\,$\pm$\,7.5 & 0.4\,$\pm$\,0.1 \\
+CROWN-IBP, constrained box & 93.0\,$\pm$\,3.9 & 83.9\,$\pm$\,9.3 & 0.4\,$\pm$\,0.1 \\
+CROWN-IBP, edit-aware & 91.4\,$\pm$\,3.8 & 81.2\,$\pm$\,9.0 & 1.2\,$\pm$\,0.1 \\
+Giri et al., re-implementation & 91.6\,$\pm$\,5.2 & -- & -- \\
 \bottomrule
 \end{tabular}
 % family split, 5 seeds; +- = half-width of the 95% t-interval; Giri accuracy on 3 seeds (abstentions count as errors)

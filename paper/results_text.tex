@@ -3,41 +3,43 @@
 All results are on the family-disjoint split with \NSeedsFam{} seeds unless stated otherwise; $\pm$ in the tables is the half-width of the 95\% $t$-interval over seeds. In every run, no certified sample was evaded by an attack inside its threat set (\ResNViolations{} violations), and no certified corpus original changed its label under its real edit (\ResCorpusViolations{} violations; \ResCorpusChecked{} checks per model and seed).
 
 \subsection{Clean performance}\label{sec:clean}
-Table~\ref{tab:main} lists every detector. LightGBM on all features reaches \FamAccLgbm\% accuracy, and the monotonic variant matches it. The per-view LightGBM detector of the main configuration reaches \FamAccLgbmViews\% at \FamFprLgbmViews\% FPR. Its cost against LightGBM is \CmpFAbs{} points of accuracy, not significant (95\% interval of the difference \CmpFInt, Holm $p=\CmpFP$). %CHECK
+Table~\ref{tab:main} lists every detector. LightGBM on all features reaches \FamAccLgbm\% accuracy, and the monotonic variant matches it. The per-view LightGBM detector of the main configuration reaches \FamAccLgbmViews\% at \FamFprLgbmViews\% FPR. Its cost against LightGBM is \CmpFAbs{} points of accuracy, not significant (95\% interval of the difference \CmpFInt, Holm \CmpFPeq). %CHECK
 MLP views lose more accuracy than LightGBM views, and EMBER's own groups lose most. %CHECK
 The second operating point trades accuracy for coverage: \ResAccLgbmSecond\% with LightGBM views (FPR \ResFprLgbmSecond\%). Edit-aware CROWN-IBP reaches \SwEditAcc\% at \SwEditFpr\% FPR, a higher FPR than the other certified-training models. %CHECK
 The table includes the 2381--256--256--2 network that all certified-training models share.
 
-\begin{table}[tbp]
+\begin{table}[!htbp]
 \centering\small
-\caption{Clean test performance (\%) and malware detected under the group-transplant attack with one modified group, family split, \NSeedsFam{} seeds ($\pm$: half-width of the 95\% interval). The Giri re-implementation was run on \ResNSeedsSmooth{} seeds; its abstentions count as errors.}\label{tab:main}
+\caption{Clean test performance (\%), family split, \NSeedsFam{} seeds ($\pm$: half-width of the 95\% interval). The Giri re-implementation was run on \ResNSeedsSmooth{} seeds; its abstentions count as errors.}\label{tab:main}
 \resizebox{\textwidth}{!}{\input{tables/tab_main.tex}}
 \end{table}
 
 \subsection{Group-transplant attack}\label{sec:gattack}
 Copying one group of the main partition from a benign donor defeats every detector that is not built on group ablation (Table~\ref{tab:attacks}). LightGBM detects \FamGattackLgbm\% of the attacked malware and the standard MLP \ResGaMlp\%, so the attack evades the MLP on \ResGaMlpEvade\% of malware. PGD adversarial training (\ResGaPgdAt\%), the monotonic LightGBM (\ResGaMono\%), the Giri re-implementation (\ResGaGiri\%) and every certified-training model (at most \ResGaMaxOther\%) do no better. %CHECK
-The group-ablation detectors keep much of their detection: \ResGaAblMain\% with MLP views and \FamGattackLgbmViews\% with LightGBM views (pre-registered comparison~5: \CmpEDiff{} points against LightGBM, \CmpEInt, Holm $p=\CmpEP$). %CHECK
+The group-ablation detectors keep much of their detection: \ResGaAblMain\% with MLP views and \FamGattackLgbmViews\% with LightGBM views (pre-registered comparison~5: \CmpEDiff{} points against LightGBM, \CmpEInt, Holm \CmpEPeq). %CHECK
 The attack bounds robustness from above and the certificate from below; consistently, for the main configuration, certified detection at $r=1$ (Section~\ref{sec:groupres}) stays below detection under the attack. With two modified groups, beyond the main configuration's ceiling, detection by its LightGBM views falls to \ResGaLgbmViewsRTwo\%. %CHECK
 
-\begin{table}[tbp]
+\begin{table}[!htbp]
 \centering\small
 \caption{Malware detected (\%) under the group-transplant attack with $r$ groups of the main partition copied from benign donors, mean over seeds.}\label{tab:attacks}
 \resizebox{\textwidth}{!}{\input{tables/tab_attacks.tex}}
 \end{table}
 
 \subsection{Group certificates}\label{sec:groupres}
-Table~\ref{tab:groupcert} gives certified detection per in-scope edit type, each at the number of groups that edit needs. With EMBER's groups every edit needs at least two groups, so the $k=1$ certificate, which certifies \ResEmberROne\% of malware against one modified group, helps only through its values at $r\ge2$; averaged over the nine edit types it certifies \FamCertEditsEmber\%. The aligned main configuration certifies \FamCertEditsAblMain\% with MLP views (pre-registered comparison~3: \CmpCDiff{} points, \CmpCInt, Holm $p=\CmpCP$). %CHECK
-Per-view LightGBM certifies \FamCertROneLgbmViews\% of malware against any change to one aligned group, against \FamCertROneAblMain\% for MLP views (comparison~4: \CmpDDiff{} points, \CmpDInt, Holm $p=\CmpDP$). %CHECK
+Table~\ref{tab:groupcert} gives certified detection per in-scope edit type, each at the number of groups that edit needs. With EMBER's groups every edit needs at least two groups, so the $k=1$ certificate, which certifies \ResEmberROne\% of malware against one modified group, helps only through its values at $r\ge2$; averaged over the nine edit types it certifies \FamCertEditsEmber\%. The aligned main configuration certifies \FamCertEditsAblMain\% with MLP views (pre-registered comparison~3: \CmpCDiff{} points, \CmpCInt, Holm \CmpCPeq). %CHECK
+Per-view LightGBM certifies \FamCertROneLgbmViews\% of malware against any change to one aligned group, against \FamCertROneAblMain\% for MLP views (comparison~4: \CmpDDiff{} points, \CmpDInt, Holm \CmpDPeq). %CHECK
 The main configuration cannot certify section, import or stripping edits, which need two or three aligned groups. The second operating point reaches them: its per-view LightGBM certifies \ResCertLgbmSecondROne, \ResCertLgbmSecondRTwo{} and \ResCertLgbmSecondRThree\% of malware at $r=1$, 2 and 3, so every in-scope edit type is certified by at least one detector (Table~\ref{tab:coverage}). The price is accuracy (\ResAccLgbmSecond\%). %CHECK
-The exact certificate of Theorem~\ref{thm:exact} gains at most \ResExactGainMax{} points over the bound of Theorem~\ref{thm:abl}: the worst-case attacker can always choose groups whose views vote correctly. Figure~\ref{fig:cat} breaks detection and certified detection down by malware category.
+The exact certificate of Theorem~\ref{thm:exact} gains nothing over the bound of Theorem~\ref{thm:abl}, so the simple bound is already exact in practice: the worst-case attacker can always choose groups whose views vote correctly. %CHECK (\ResExactGainMax{} points)
 
-\begin{table}[tbp]
+\textbf{Per category.} Figure~\ref{fig:cat} breaks detection and certified detection down by malware category. Averaged over all test malware, per-view LightGBM certifies \ResCatAllCert\% at $r=1$. The weakest categories are \ResCatWeakA{} (\ResCatWeakAN{} distinct test files, \ResCatWeakACert\% certified, Wilson interval $[\ResCatWeakALo,\ResCatWeakAHi]$) and \ResCatWeakB{} (\ResCatWeakBN{} files, \ResCatWeakBCert\%, $[\ResCatWeakBLo,\ResCatWeakBHi]$). Both rest on few files from few families, so these differences are tentative. %CHECK
+
+\begin{table}[!htbp]
 \centering\small
 \caption{Certified detection (\%) of test malware per in-scope edit type, at the number of groups $r$ the edit needs in each grouping; 0.0 where the edit needs more groups than the configuration can certify. Last rows: mean over the nine types ($\pm$: 95\% half-width), clean accuracy, number of views and largest certifiable $r$.}\label{tab:groupcert}
 \resizebox{\textwidth}{!}{\input{tables/tab_group_cert.tex}}
 \end{table}
 
-\begin{figure}[tbp]
+\begin{figure}[!htbp]
 \centering
 \includegraphics[width=\textwidth]{figures/fig_per_category.pdf}
 \caption{Detection and certified detection ($r=1$) per malware category, pooled over the \NSeedsFam{} family-split seeds, with Wilson 95\% intervals; $n$ is the number of distinct test files. Categories with fewer than 30 distinct test files are merged into ``other'' (\ResCatSmall). A file can be in the test part of several seeds, so the intervals are approximate.}\label{fig:cat}
@@ -48,24 +50,24 @@ Table~\ref{tab:ct} compares the training methods over the edit-family sets $T_f(
 
 The tuned uniform-ball model ($\epsilon=0.1$) certifies almost nothing over these sets, but that reflects its tuning grid, which stopped at $\epsilon=0.1$. The sweep of Figure~\ref{fig:sweep} (\SwNModels{} models) gives the full picture. Uniform-ball training reaches comparable certified detection only at $\epsilon=\SwBestCertTOneEps$: \SwUnifOneCert\% at \SwUnifOneAcc\% accuracy and \SwUnifOneFpr\% FPR. At an FPR no higher than edit-aware training's, the best uniform-ball model ($\epsilon=\SwUnifLowFprEps$) certifies \SwUnifLowFprCert\%. From $\epsilon=\SwCollapseEps$ on, training collapses to a detector that labels everything benign. %CHECK
 Even the best $\epsilon$, chosen after the fact on test data and so favouring the baseline, is not significantly different overall: edit-aware minus uniform at $\epsilon=\SwBestCertTOneEps$ is $\SwBestDiff$ points, $[\SwBestLo,\SwBestHi]$ ($p=\SwBestP$, descriptive). The two methods are complementary by family: uniform $\epsilon=\SwBestCertTOneEps$ is better on content (\SwUnifOneContent{} vs \SwEditContent\%) and stripping (\SwUnifOneStrip{} vs \SwEditStrip\%), edit-aware on section (\SwEditSection{} vs \SwUnifOneSection\%) and import edits (\SwEditImport{} vs \SwUnifOneImport\%). %CHECK
-The pre-registered comparison with the tuned uniform baseline is met (comparison~1: \CmpADiff{} points, \CmpAInt, Holm $p=\CmpAP$), and so is the accuracy-matched comparison declared before the sweep ($\epsilon=\SwMatchedEps$, \SwMatchedAcc\% accuracy: \SwMatchedDiff{} points, $[\SwMatchedLo,\SwMatchedHi]$). Because the tuning grid was too narrow, we take the trade-off at matched FPR, not this difference, as the result. The uniform ball that would contain the edit-family sets (Section~\ref{sec:families}) lies far beyond the collapse point.
+The pre-registered comparison with the tuned uniform baseline is met (comparison~1: \CmpADiff{} points, \CmpAInt, Holm \CmpAPeq), and so is the accuracy-matched comparison declared before the sweep ($\epsilon=\SwMatchedEps$, \SwMatchedAcc\% accuracy: \SwMatchedDiff{} points, $[\SwMatchedLo,\SwMatchedHi]$). Because the tuning grid was too narrow, we take the trade-off at matched FPR, not this difference, as the result. The uniform ball that would contain the edit-family sets (Section~\ref{sec:families}) lies far beyond the collapse point.
 
-\textbf{$\ell_\infty$ certificates.} On the constrained box at $\epsilon=\ResTrainEps$, box-trained CROWN-IBP certifies \ResBoxOnBox\%, uniform-ball \ResUnifOnBox\%, edit-aware \ResEditOnBox\% and the standard network \ResStdOnBox\% of malware; a box of this size contains only \PsEpsLeTrainPct\% of the measured edits (Figure~\ref{fig:epscov}). Training on the constrained box gives no gain over the uniform ball (comparison~2: \CmpBDiff{} points, \CmpBInt, Holm $p=\CmpBP$). This is a negative result for the draft's constraint-aware training: after the repair, the box is almost the full ball. %CHECK
+\textbf{$\ell_\infty$ certificates.} On the constrained box at $\epsilon=\ResTrainEps$, box-trained CROWN-IBP certifies \ResBoxOnBox\%, uniform-ball \ResUnifOnBox\%, edit-aware \ResEditOnBox\% and the standard network \ResStdOnBox\% of malware; a box of this size contains only \PsEpsLeTrainPct\% of the measured edits (Figure~\ref{fig:epscov}). Training on the constrained box gives no gain over the uniform ball (comparison~2: \CmpBDiff{} points, \CmpBInt, Holm \CmpBPeq). This is a negative result for the draft's constraint-aware training: after the repair, the box is almost the full ball. %CHECK
 Certifying on the box still helps at verification time (Proposition~\ref{prop:box}): the box-trained model certifies \ResBoxOnBox\% on the box and \ResBoxOnBall\% on the full ball, the uniform-ball model \ResUnifOnBox\% and \ResUnifOnBall\%. %CHECK
 
-\begin{table}[tbp]
+\begin{table}[!htbp]
 \centering\small
 \caption{Certified training: clean accuracy and FPR (\%), certified detection (\%) over the edit-family sets $T_f(1)$ per family and averaged over the four ($\pm$: 95\% half-width), and over the constrained box $B_\epsilon$. Last row: the uniform-ball model of the sweep with the highest certified detection over $T_f(1)$.}\label{tab:ct}
 \resizebox{\textwidth}{!}{\input{tables/tab_certified_training.tex}}
 \end{table}
 
-\begin{figure}[tbp]
+\begin{figure}[!htbp]
 \centering
 \includegraphics[width=0.75\textwidth]{figures/fig_eps_sweep.pdf}
 \caption{Uniform-ball CROWN-IBP trained at $\epsilon_{\text{train}}$ from 0.05 to the largest containment radius: clean accuracy and certified detection over $T_f(1)$ (mean over seeds). Dotted lines: edit-aware CROWN-IBP.}\label{fig:sweep}
 \end{figure}
 
-\begin{figure}[tbp]
+\begin{figure}[!htbp]
 \centering
 \includegraphics[width=0.75\textwidth]{figures/fig_eps_coverage.pdf}
 \caption{Share of the measured in-scope edits that fit in the constrained box $B_\epsilon$ (black), and certified detection over $B_\epsilon$ of the certified-training models, against $\epsilon$.}\label{fig:epscov}
@@ -74,7 +76,7 @@ Certifying on the box still helps at verification time (Proposition~\ref{prop:bo
 \subsection{Pre-registered comparisons}\label{sec:cmp}
 Table~\ref{tab:cmp} collects the six comparisons declared before any test evaluation. After Holm correction, comparisons 1, 3, 4 and 5 are significant at the 5\% level; the box-constrained training ablation (2) and the clean-accuracy cost of per-view LightGBM (6) are not. Five seeds give wide intervals, so we read the size of each difference from its interval rather than from its $p$-value. %CHECK
 
-\begin{table}[tbp]
+\begin{table}[!htbp]
 \centering\small
 \caption{The six pre-registered comparisons on the family split: paired difference per seed (A minus B, percentage points), 95\% $t$-interval, paired $t$-test and Holm-corrected $p$-value.}\label{tab:cmp}
 \resizebox{\textwidth}{!}{\input{tables/tab_comparisons.tex}}
@@ -86,7 +88,7 @@ Near-duplicates do not explain the gap: removing test samples with a training ne
 
 \textbf{Full-data check.} On all \ResFullN{} BODMAS files (one seed, family split), LightGBM reaches \ResFullAccLgbm\% accuracy (subset, same seed: \ResSubAccLgbm\%), the main MLP-view detector \ResFullAccAblMain\% (\ResSubAccAblMain\%), and its certified detection at $r=1$ is \ResFullCertAblMain\% (\ResSubCertAblMain\%), with \ResFullViolations{} violations. With more training families both the detectors and their certificates improve, so the subset results are, if anything, conservative. %CHECK
 
-\begin{table}[tbp]
+\begin{table}[!htbp]
 \centering\small
 \caption{Random split (\NSeedsRand{} seeds) against family-disjoint split (\NSeedsFam{} seeds): mean [95\% interval] and the gap in points.}\label{tab:gap}
 \resizebox{\textwidth}{!}{\input{tables/tab_split_gap.tex}}
@@ -97,13 +99,13 @@ Models trained on files up to \TdCutA{} and up to \TdCutB{} were tested on every
 Retraining at the later cut-off recovers \TdRetrainGainMin{} to \TdRetrainGainMax{} points of certified detection, averaged over the \TdNCommonMonths{} months both cut-offs test. For clean TPR, reweighting the in-distribution per-category TPR to each month's category mix changes it by only \TdCompMin{} to \TdCompMax{} points, while the observed change is \TdDriftMin{} to \TdDriftMax{} points: the decline is drift within categories, not a change of category mix. %CHECK
 BODMAS benign files reach back years before the malware collection, so FPR changes across test months should be read with care.
 
-\begin{table}[tbp]
+\begin{table}[!htbp]
 \centering\small
 \caption{Temporal evaluation: per test month, the number of test files, LightGBM's TPR and FPR, and certified detection (\%), mean over 3 seeds per cut-off.}\label{tab:temporal}
 \resizebox{\textwidth}{!}{\input{tables/tab_temporal.tex}}
 \end{table}
 
-\begin{figure}[tbp]
+\begin{figure}[!htbp]
 \centering
 \includegraphics[width=\textwidth]{figures/fig_decay.pdf}
 \caption{Certified detection per test month for the two training cut-offs (solid: earlier, dashed: later), with LightGBM's clean TPR for reference; mean over 3 seeds.}\label{fig:decay}
@@ -112,8 +114,9 @@ BODMAS benign files reach back years before the malware collection, so FPR chang
 \subsection{Randomized smoothing baseline}\label{sec:smooth}
 Isotropic Gaussian smoothing, with $\sigma$ fixed beforehand at the standard values and $n=\ResRsN$ noise samples on every test point (\ResNSeedsSmooth{} seeds), reaches \ResRsQuarterAcc\% accuracy at $\sigma=0.25$ and \ResRsHalfAcc\% at $\sigma=0.5$, and certifies \ResRsQuarterCertHalf\% and \ResRsHalfCertHalf\% of malware at $\ell_2$ radius 0.5 (Table~\ref{tab:smoothing}). The Giri re-implementation reaches \ResRsGiriAcc\% and \ResRsGiriCertHalf\%. These radii are in standardised units: an $\ell_2$ ball of radius 0.5 contains only edits whose largest single feature change is at most 0.5, and only \PsEpsLeOnePct\% of the measured edits keep their largest change within even $\epsilon=1$. The smoothed Giri detector also falls to the group-transplant attack (Table~\ref{tab:attacks}). Smoothing is therefore a baseline here, not a defence against the measured edits. %CHECK
 
-\begin{table}[tbp]
+\begin{table}[!htbp]
 \centering\small
 \caption{Randomized smoothing on every test point: clean accuracy, abstention rate and certified detection (\%) at several $\ell_2$ radii (standardised units).}\label{tab:smoothing}
 \input{tables/tab_smoothing.tex}
 \end{table}
+\FloatBarrier

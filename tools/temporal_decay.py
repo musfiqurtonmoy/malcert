@@ -95,6 +95,9 @@ def main():
     cuts = sorted(M.cutoff.unique())
     stem = {"cert_r1_abl_main": "AblMain", "cert_r1_abl_lgbm_main": "LgbmViews", "cert_t1_crown_edit": "Edit"}
     N = {f"TdCut{'AB'[i]}": c for i, c in enumerate(cuts)}
+    if len(cuts) == 2:
+        (ya, ma), (yb, mb) = (map(int, c.split("-")) for c in cuts)
+        N["TdCutGapMonths"] = str(12 * (yb - ya) + mb - ma)
     for i, c in enumerate(cuts):
         for _, r in U[U.cutoff == c].iterrows():
             N[f"TdFirst{stem[r.metric]}{'AB'[i]}"] = f"{100 * r.first_value:.1f}"

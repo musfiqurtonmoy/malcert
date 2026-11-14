@@ -175,6 +175,7 @@ def main():
                 k = "Cmp" + "ABCDEF"[i]
                 N[k + "Diff"], N[k + "Lo"], N[k + "Hi"] = (f"{100 * r.mean_diff:.1f}", f"{100 * r.ci_lo:.1f}", f"{100 * r.ci_hi:.1f}")
                 N[k + "P"] = f"{r.p_holm:.3f}" if r.p_holm >= 0.001 else "<0.001"
+                N[k + "Peq"] = f"\\ensuremath{{p={r.p_holm:.3f}}}" if r.p_holm >= 0.001 else "\\ensuremath{p<0.001}"   # "Holm \CmpAPeq"
                 N[k + "Int"] = f"\\ensuremath{{[{100 * r.ci_lo:.1f},\\,{100 * r.ci_hi:.1f}]}}"   # the one interval macro
             nd = neardup(folders)
             nd.to_csv(os.path.join(res, "stats_neardup.csv"), index=False)

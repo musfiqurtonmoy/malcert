@@ -704,6 +704,14 @@ carry a **Basis:** line saying what they were fixed from.
   referenced but not written yet (Stage 4b of the plan); the abstract cites LightGBM's group-attack detection, as in the
   approved outline, not the MLP evasion rate of plan 4a.3 (that one is in §6.2, `\ResGaMlpEvade`).
 
+- **4-6** `[Am3, B6, B7, A6]` **Author's fixes to §6–8.** Per-category paragraph (`\ResCatWeak*`: the two named
+  categories with the lowest certified detection, computed: virus 33 files 3.3%, information stealer 44 files 27.9%,
+  labelled tentative); Figure 1 legend above the bars; retraining sentence in "Deployment and drift" (`\TdCutGapMonths`
+  = 4); data availability links github.com/musfiqurtonmoy/malcert; "Holm p=<0.001" fixed by `\Cmp<X>Peq` macros
+  (relation included); exact-certificate sentence; group-attack column dropped from Table 7; floats `[!htbp]`, tables
+  of §3 and §5 moved next to their first reference, `placeins` with `\FloatBarrier` before every section; `refs.bib`
+  braces around "(De)Randomized".
+
 ### 3g. Uniform-ball ε sweep (declared before any sweep run)
 - **3-16** `[A2, A3]` **Accuracy-matched comparison rule (plan 3g.4), declared before any sweep result.** Sweep:
   uniform-ball CROWN-IBP at ε_train ∈ {0.05, 0.1, 0.2, 0.5, 1, 2, 4} (plus max ε_f if larger and trainable), family
