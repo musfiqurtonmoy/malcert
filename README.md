@@ -28,8 +28,9 @@ conda activate malcert
 python -c "import torch; print(torch.cuda.is_available(), torch.cuda.get_arch_list())"
 ```
 
-Exact package versions are in `requirements-lock.txt`. PyTorch 2.14.0 from the cu126 index is the last build that
-supports Pascal GPUs (sm_61). Only the optional problem-space measurement needs a second environment,
+Without conda, the same versions install into any Python 3.11 environment with
+`pip install -r requirements-lock.txt` (the file carries the PyTorch cu126 index). PyTorch 2.14.0 from the cu126 index
+is the last build that supports Pascal GPUs (sm_61). Only the optional problem-space measurement needs a second environment,
 `environment-ps.yml` (Python 3.7, LIEF 0.10.1 and the EMBER feature extractor, which is installed separately under its
 own licence and not included here).
 
@@ -89,7 +90,7 @@ python tests/test_families.py       # edit-family sets and edit-aware certificat
 
 ## 6. Development history
 
-`REVISION_LOG.md` records every change made while revising the draft, with the reviewer comment it answers and the
+`REVISION_LOG.md` records every change made while revising the draft, with the pre-submission review comment it answers and the
 basis of every choice; `REVISION_PLAN.md` is the plan it followed. Earlier results folders and pilot runs remain in the
 git history.
 
