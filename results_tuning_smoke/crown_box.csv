@@ -1,2 +1,0 @@
-eps,val_acc,val_tpr,val_fpr,cert,cert_F_content,cert_F_section,cert_F_import,cert_F_strip,seconds_per_epoch,val_acc_folds,seconds
-0.05,0.910446327401015,0.8081064955323685,0.011754462342185459,0.0,0.0,0.0,0.0,0.0,0.9666666666666667,"[0.8557, 0.9312, 0.9445]",2.9

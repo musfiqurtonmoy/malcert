@@ -729,6 +729,15 @@ carry a **Basis:** line saying what they were fixed from.
   the section of their first reference. (6) Sole author, email, CRediT roles, affiliation correct; no other author name
   in the repository; no LICENSE file exists; generative-AI declaration left as the red placeholder. (7) Zip rebuilt.
   Not done here: compilation (no LaTeX on this PC), Google Scholar check of references.
+- **4-9** `[A6, B8]` **Public-release preparation (main).** The code fingerprint (`run_all.code_fingerprint`: SHA-256 over
+  the raw bytes of `run_all.py` and `malcert/*.py`, docstrings included) is compared with the current code on resume
+  (`run_all.py`) and in `tools/eps_sweep.py`, so docstring edits in `malcert/` would change it: no code file was edited
+  and `REVISION_PLAN.md` is kept (docstrings cite it). Removed with `git rm` (history kept): `results/`, `results_full/`,
+  `results_temporal/`, `results_pc/`, `results_draft_v1/`, all `results_pilot_*`, `results_tuning_smoke/`,
+  `make_figures.py`, `paper_overleaf.zip`, `RUN_NEXT.md`, `CLAUDE.md`, `tools/make_temporal.py` (referenced nowhere),
+  `paper/OUTLINE.md`. `.gitignore`: `results/`, `paper_overleaf.zip`. `data/` tracks only `README.txt`. MIT `LICENSE`;
+  README rewritten (install, data, reproduction, results-to-paper map, citation). Comment naming CLAUDE.md removed from
+  `results_text.tex`. 21 unit tests pass.
 
 ### 3g. Uniform-ball ε sweep (declared before any sweep run)
 - **3-16** `[A2, A3]` **Accuracy-matched comparison rule (plan 3g.4), declared before any sweep result.** Sweep:

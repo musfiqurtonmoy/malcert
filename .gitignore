@@ -10,3 +10,7 @@ data/*.csv
 # Only the extracted feature vectors and the result tables (ps_results/) are versioned.
 ps_corpus/
 ps_tools/
+
+# Default run_all.py output folder and the generated Overleaf archive (rebuilt by reproduce.py)
+results/
+paper_overleaf.zip
