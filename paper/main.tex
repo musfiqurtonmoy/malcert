@@ -7,6 +7,7 @@
 \usepackage[hidelinks]{hyperref}
 \usepackage{xcolor}
 \usepackage{placeins}
+\usepackage{longtable}
 \newtheorem{theorem}{Theorem}
 \newtheorem{proposition}{Proposition}
 \newtheorem{definition}{Definition}
@@ -87,11 +88,11 @@ Let $x\in\mathbb{R}^{d}$, $d=2381$, be the EMBER (version~2) feature vector of a
 \begin{definition}[Feature annotation]
 Each coordinate $i$ is \emph{immutable} ($i\notin\mathcal{M}$), \emph{mutable} ($i\in\mathcal{M}$) or \emph{increase-only} ($i\in\mathcal{N}\subseteq\mathcal{M}$). A feature unit is mutable if an in-scope edit changed it in at least one measured file, or if the draft annotation of this study treated it as mutable. It is increase-only if it is mutable, a count or size, and never decreased under any edit. A unit that no edit changed but that an edit could plausibly change is kept mutable and labelled ``conservative, not observed''.
 \end{definition}
-The rule gives $|\mathcal{M}|=\PsNMutable$ and $|\mathcal{N}|=\PsNMonotone$ (earlier annotation: \PsNMutableDraft{} and \PsNMonotoneDraft), and all nine EMBER groups contain mutable features (earlier: \PsNAttackableDraft). Table~\ref{tab:annotation} summarises the annotation per group; Appendix~C lists it per unit with its evidence.
+The rule gives $|\mathcal{M}|=\PsNMutable$ and $|\mathcal{N}|=\PsNMonotone$ (earlier annotation: \PsNMutableDraft{} and \PsNMonotoneDraft), and all nine EMBER groups contain mutable features (earlier: \PsNAttackableDraft). Table~\ref{tab:annotation} summarises the annotation per group; Appendix~\ref{app:annotation} lists it per unit with its evidence.
 
 \begin{table}[!htbp]
 \centering\small
-\caption{Repaired feature annotation per EMBER group: mutable and increase-only features before (draft) and after the repair. Per-unit evidence in Appendix~C.}\label{tab:annotation}
+\caption{Repaired feature annotation per EMBER group: mutable and increase-only features before (draft) and after the repair. Per-unit evidence in Appendix~\ref{app:annotation}.}\label{tab:annotation}
 \resizebox{\textwidth}{!}{\input{tables/tab_annotation.tex}}
 \end{table}
 
@@ -176,7 +177,7 @@ For the nine EMBER groups the largest certifiable $r$ is 4, 2, 1, 1 and 0 for $k
 \subsection{Edit-aligned grouping}\label{sec:grouping}
 EMBER's groups are the extractor's blocks, not units of attack, and Section~\ref{sec:editmap} showed that edits cut across them. We therefore group features that change together under the same edits, using only the problem-space measurements. The building blocks are \textsc{content} (byte and byte-entropy histograms, strings, file size, relocation flag and timestamp, changed by every in-scope edit), \textsc{hdrmut} (the header fields E10 changes), \textsc{sigdbg} (signature and debug flags and data-directory entries, changed by E8), \textsc{section} (section features and header size), \textsc{imports} (import and export counts and hashes, import-table and IAT entries), and two blocks that no in-scope edit changes (\textsc{immhdr}, fixed header fields; \textsc{immdd}, fixed data-directory entries). Groups built only from fixed features cast permanent votes that no in-scope edit can flip; they also keep any error permanently.
 
-We enumerated a small set of candidate partitions (Appendix~E) and fixed a selection rule before evaluating any of them: maximise the mean certified detection over the nine in-scope edit types, each at the $r$ it needs, among candidates whose validation accuracy is within one point of the best. The rule selected \textbf{aligned5, $k=2$} as the main configuration: \textsc{content}+\textsc{hdrmut}+\textsc{sigdbg}, \textsc{section}, \textsc{imports}, \textsc{immhdr} and \textsc{immdd} ($G=5$, three attackable groups, ten views, largest certifiable $r=1$). It certifies E1, E2, E5, E7 and E10, which need $r=1$. Before any test evaluation we also declared a second operating point, \textbf{aligned7, $k=1$}, with all seven blocks as groups ($G=7$, five attackable, seven views, largest certifiable $r=3$). It reaches every in-scope edit type, at lower accuracy, and we report it as a coverage--accuracy trade-off, not as the recommended detector. EMBER's nine groups with $k=1$ are the negative baseline.
+We enumerated a small set of candidate partitions (Appendix~\ref{app:grouping}) and fixed a selection rule before evaluating any of them: maximise the mean certified detection over the nine in-scope edit types, each at the $r$ it needs, among candidates whose validation accuracy is within one point of the best. The rule selected \textbf{aligned5, $k=2$} as the main configuration: \textsc{content}+\textsc{hdrmut}+\textsc{sigdbg}, \textsc{section}, \textsc{imports}, \textsc{immhdr} and \textsc{immdd} ($G=5$, three attackable groups, ten views, largest certifiable $r=1$). It certifies E1, E2, E5, E7 and E10, which need $r=1$. Before any test evaluation we also declared a second operating point, \textbf{aligned7, $k=1$}, with all seven blocks as groups ($G=7$, five attackable, seven views, largest certifiable $r=3$). It reaches every in-scope edit type, at lower accuracy, and we report it as a coverage--accuracy trade-off, not as the recommended detector. EMBER's nine groups with $k=1$ are the negative baseline.
 
 \subsection{Per-view LightGBM}\label{sec:lgbmviews}
 Theorems~\ref{thm:abl} and \ref{thm:exact} only count votes, so any base classifier can serve as $h_S$. We train one LightGBM model \citep{ke2017lightgbm} per view on the features that view keeps, for both the main and the second configuration. This answers why a gradient-boosted detector, the de-facto standard on EMBER features, should not be certified: it can be, through its views.
@@ -191,7 +192,7 @@ For a ReLU network with margin $m(x)=z_y(x)-z_{1-y}(x)$, IBP \citep{gowal2018ibp
 Every model is certified over $B_\epsilon$ (sound by Proposition~\ref{prop:box}) and over each $T_f(t)$. As a soundness check on real files, for every eval-half corpus file whose real edit lies inside $T_f(t)$, an original certified benign over $T_f(t)$ must keep its label after the edit.
 
 \subsection{Baselines and attacks}\label{sec:baselines}
-\textbf{Detectors.} LightGBM on all features (the EMBER reference); a monotonic LightGBM constrained to be non-decreasing in the increase-only features \citep{incer2018monotonic}; a standard MLP; PGD adversarial training on $B_\epsilon$ \citep{madry2018towards}; and our re-implementation of \citet{giri2026towards}, which trains with random EMBER-group ablation and Gaussian noise and certifies an $\ell_2$ radius (deviations from the original are listed in Appendix~B). Isotropic randomized smoothing \citep{cohen2019certified} with $\sigma\in\{0.25,0.5\}$ is reported as a baseline on every test point.
+\textbf{Detectors.} LightGBM on all features (the EMBER reference); a monotonic LightGBM constrained to be non-decreasing in the increase-only features \citep{incer2018monotonic}; a standard MLP; PGD adversarial training on $B_\epsilon$ \citep{madry2018towards}; and our re-implementation of \citet{giri2026towards}, which trains with random EMBER-group ablation and Gaussian noise and certifies an $\ell_2$ radius (deviations from the original are listed in Appendix~\ref{app:proc}). Isotropic randomized smoothing \citep{cohen2019certified} with $\sigma\in\{0.25,0.5\}$ is reported as a baseline on every test point.
 
 \textbf{Attacks.} PGD \citep{madry2018towards} on $B_\epsilon$ projects every step onto the box, so the attack and the certificate describe the same set. The \emph{group-transplant} attack copies whole groups from benign donor files, choosing at each step the group and donor that most reduce the malware score, up to $r$ groups. It runs on every model with the same donors, in the groups of the main configuration. Since every attacked input lies inside the group threat set, a certified sample that the attack evades would be a soundness violation; we count these and they must be zero.
 
@@ -214,13 +215,13 @@ Every model is certified over $B_\epsilon$ (sound by Proposition~\ref{prop:box})
 
 \textbf{Splits.} The main split is \emph{family-disjoint}: every malware family goes wholly to training, validation or test, and benign files are split at random, with targets of 70/10/20\%. Families are assigned category by category, so each part's category mix stays close to the whole. A leakage audit shows why: under a random split (seed 0), \LeakRandFamOverlap\% of test malware belong to a family that is also in training, and \LeakRandNearMal\% of test malware have a training neighbour within $\ell_2$ distance 0.1 in standardised space, a \emph{near-twin} (benign: \LeakRandNearBen\%). Under the family split no test family occurs in training by construction, and near-twins make up \NearTwinFamMal\% of test malware and \NearTwinFamBen\% of test benign files (mean over \NSeedsFam{} seeds). BODMAS has \LeakDupRows{} exact duplicate rows, none with conflicting labels, and no test sample has an exact twin in training. The random split is evaluated with \NSeedsRand{} seeds for comparison with earlier work. Two temporal splits train on files up to the end of \TdCutA{} and \TdCutB{} and test on every later month.
 
-\textbf{Tuning.} Every tunable setting was chosen before any test evaluation, by grouped 3-fold cross-validation over the training and validation parts of the seed-0 family split. Families were assigned to folds in the same category-by-category way, and the test part was never used. Clean detectors were selected by accuracy; certified detectors by certified detection subject to a mean FPR of at most 1\% (or the lowest FPR if no setting met it). The grids were small (Appendix~F): MLP learning rate and epochs; per-view LightGBM trees and leaves; uniform-ball and box CROWN-IBP training budget $\epsilon\in\{0.05,0.1\}$; edit-aware $t_{\text{train}}\in\{0.5,1\}$ with mean or maximum aggregation. Tuning used seed 0's training families, some of which fall in the test part of seeds 1 to 4; with two to four settings per model this optimism is small, and seed 0 is free of it (per-seed values in Appendix~F). In hindsight the uniform-ball grid was too narrow: the selected $\epsilon=0.1$ certifies almost nothing over the edit sets. We therefore added an $\epsilon$ sweep (\SwNModels{} models, $\epsilon$ from 0.05 to the largest containment radius) with an accuracy-matched comparison rule declared before the sweep was run (Section~\ref{sec:results}).
+\textbf{Tuning.} Every tunable setting was chosen before any test evaluation, by grouped 3-fold cross-validation over the training and validation parts of the seed-0 family split. Families were assigned to folds in the same category-by-category way, and the test part was never used. Clean detectors were selected by accuracy; certified detectors by certified detection subject to a mean FPR of at most 1\% (or the lowest FPR if no setting met it). The grids were small (Appendix~\ref{app:tuning}): MLP learning rate and epochs; per-view LightGBM trees and leaves; uniform-ball and box CROWN-IBP training budget $\epsilon\in\{0.05,0.1\}$; edit-aware $t_{\text{train}}\in\{0.5,1\}$ with mean or maximum aggregation. Tuning used seed 0's training families, some of which fall in the test part of seeds 1 to 4; with two to four settings per model this optimism is small, and seed 0 is free of it (per-seed values in Appendix~\ref{app:tuning}). In hindsight the uniform-ball grid was too narrow: the selected $\epsilon=0.1$ certifies almost nothing over the edit sets. We therefore added an $\epsilon$ sweep (\SwNModels{} models, $\epsilon$ from 0.05 to the largest containment radius) with an accuracy-matched comparison rule declared before the sweep was run (Section~\ref{sec:results}).
 
 \textbf{Statistics.} The family split is evaluated with \NSeedsFam{} seeds; each seed redraws the family assignment and retrains every model. We report means with 95\% $t$-intervals. Model comparisons use paired differences per seed, with a 95\% $t$-interval and a paired $t$-test, Holm-corrected across six comparisons declared before any test evaluation: (1) edit-aware vs uniform-ball CROWN-IBP, certified detection over $T_f(1)$ averaged over the four families, the pre-registered rule for contribution~3; (2) box vs uniform-ball CROWN-IBP at $\epsilon=0.05$; (3) aligned vs EMBER groups, certified detection over the nine edit types; (4) per-view LightGBM vs MLP views at $r=1$; (5) per-view LightGBM vs LightGBM under the group-transplant attack at $r=1$; (6) per-view LightGBM vs LightGBM in clean accuracy. Five seeds give wide intervals, and we read small differences accordingly. As a sensitivity check, the main metrics are recomputed without test samples that have a training neighbour within distance 0.1.
 
 \textbf{Metrics.} Accuracy, true-positive rate (TPR) and FPR on the test part; \emph{certified detection}, the share of test malware that is classified correctly and certified; for group certificates, certified detection per edit type at the $r$ that edit needs; for certified training, certified detection over $T_f(1)$ per family and averaged over the four families, and over $B_\epsilon$.
 
-\textbf{Implementation.} PyTorch and LightGBM on a single NVIDIA GTX 1050 Ti (4\,GB); all hyperparameters are in Appendix~A and all attack and certification procedures in Appendix~B. Table~\ref{tab:runtime} lists training and certification cost per model.
+\textbf{Implementation.} PyTorch and LightGBM on a single NVIDIA GTX 1050 Ti (4\,GB); all hyperparameters are in Appendix~\ref{app:hyper} and all attack and certification procedures in Appendix~\ref{app:proc}. Table~\ref{tab:runtime} lists training and certification cost per model.
 
 %% ===================================================================================
 \FloatBarrier
@@ -234,9 +235,9 @@ Every model is certified over $B_\epsilon$ (sound by Proposition~\ref{prop:box})
 
 \textbf{Edit sets measured on benign files.} The edit-aware sets and their coverage were measured on benign Windows binaries, because no malware was handled. Malware differs in size, packing and section layout, so the share of real malware edits that fall inside $T_f(t)$ is an estimate, not a measurement. The group threat sets do not depend on this, since they allow any change within the modified groups.
 
-\textbf{Which certificate to use.} For the edits most often used in practice (appends, string padding, timestamp and header edits), the main configuration with per-view LightGBM certifies \FamCertROneLgbmViews\% of malware at a clean-accuracy cost that is not significant. Section, import and stripping edits need the second operating point, which costs accuracy, or edit-aware training, which is strongest on section and import edits. Uniform-ball training at a large $\epsilon$ is competitive on content and stripping edits, but only at a false-positive rate that a deployed detector could not accept. The methods are complementary, and a deployment could combine them. %CHECK
+\textbf{Which certificate to use.} For the edits most often used in practice (appends, string padding, timestamp and header edits), the main configuration with per-view LightGBM certifies \FamCertROneLgbmViews\% of malware at a clean-accuracy cost that is not significant. Section, import and stripping edits need the second operating point, which costs accuracy, or edit-aware training, which is strongest on section and import edits. Uniform-ball training at a large $\epsilon$ is competitive on content and stripping edits, but only at a false-positive rate that a deployed detector could not accept. The methods are complementary, and a deployment could combine them. %CHECK verified 2026-11-14 against the final macros
 
-\textbf{Deployment and drift.} Certified detection decays within months of the training cut-off, and retraining recovers much of it (Section~\ref{sec:temporal}). Certificates should therefore be recomputed with every retraining rather than assumed to persist. In this data, with two cut-offs, retraining \TdCutGapMonths{} months later recovered \TdRetrainGainMin{} to \TdRetrainGainMax{} points of certified detection, so retraining and re-certifying at least that often appears advisable. With the group certificate this is cheap: certification costs a fraction of a millisecond per file (Table~\ref{tab:runtime}). %CHECK
+\textbf{Deployment and drift.} Certified detection decays within months of the training cut-off, and retraining recovers much of it (Section~\ref{sec:temporal}). Certificates should therefore be recomputed with every retraining rather than assumed to persist. In this data, with two cut-offs, retraining \TdCutGapMonths{} months later recovered \TdRetrainGainMin{} to \TdRetrainGainMax{} points of certified detection, so retraining and re-certifying at least that often appears advisable. With the group certificate this is cheap: certification costs a fraction of a millisecond per file (Table~\ref{tab:runtime}). %CHECK verified 2026-11-14 against the final macros
 
 \textbf{Evaluation.} Random splits overstate certified detection by \RandFamGapMin{} to \RandFamGapMax{} points because test malware shares families with training. Results on random splits describe robustness for variants of known families. Five seeds give wide intervals, and the hyperparameters were tuned on seed 0's training families, a small optimism for seeds 1 to 4.
 
@@ -259,6 +260,114 @@ BODMAS is publicly available from its authors. Code to reproduce all experiments
 
 \section*{Declaration of generative AI use}
 \textcolor{red}{[Elsevier requires a statement if AI tools were used in writing; describe your use here.]}
+
+%% ===================================================================================
+\FloatBarrier
+\appendix
+\section{Hyperparameters}\label{app:hyper}
+Table~\ref{tab:hyper} lists every setting of every model, generated from the configuration file of the released code (full preset). Settings chosen by tuning are those of Appendix~\ref{app:tuning}; all others were fixed before any experiment.
+
+\begin{table}[!htbp]
+\centering\small
+\caption{Hyperparameters of all models (generated from \texttt{malcert/config.py} and \texttt{run\_all.py}).}\label{tab:hyper}
+\input{tables/tab_hyper.tex}
+\end{table}
+
+\FloatBarrier
+\section{Attack settings and certification procedures}\label{app:proc}
+Table~\ref{tab:attack} lists the attack and smoothing settings. The certification procedures are as follows; all of them use the trained models only and are deterministic except smoothing.
+
+\begin{table}[!htbp]
+\centering\small
+\caption{Attack and certification settings (generated from \texttt{malcert/config.py}).}\label{tab:attack}
+\input{tables/tab_attack.tex}
+\end{table}
+
+\textbf{Group-ablation certificate (bound, Theorem~\ref{thm:abl}).} Input: views $\mathcal{V}_k$, base classifiers $h_S$, sample $x$, label $y$, radius $r$.
+\begin{enumerate}
+\item For every $S\in\mathcal{V}_k$, compute $h_S(x)$ on $x$ with all groups outside $S$ set to the training mean; count $n_y$ and $n_c$ for $c\neq y$.
+\item Set $\Delta_r=\binom{G}{k}-\binom{G-r}{k}$. Return \emph{certified} if $n_y-\max_{c\neq y}n_c>2\Delta_r$.
+\end{enumerate}
+\textbf{Group-ablation certificate (exact, Theorem~\ref{thm:exact}).} Same input, plus the attackable groups $\mathcal{A}$.
+\begin{enumerate}
+\item Compute the votes $h_S(x)$ once.
+\item For every $A\subseteq\mathcal{A}$ with $|A|=r$: let $U_A$ be the views that keep no group of $A$; let $a$ be the views in $U_A$ voting $y$, $b$ the views in $U_A$ voting otherwise, and $t=|\mathcal{V}_k|-|U_A|$. If $a\le b+t$, return \emph{not certified}.
+\item Return \emph{certified}. (Cost: $\binom{|\mathcal{A}|}{r}$ vote counts; no further forward pass.)
+\end{enumerate}
+\textbf{Bound verification (IBP and CROWN).} Input: network, $x$, $y$, a box $[\ell,u]$, which is $B_\epsilon(x)$ or $T_f(t;x)$, intersected with the natural bounds.
+\begin{enumerate}
+\item Propagate $[\ell,u]$ through the network with interval arithmetic to obtain pre-activation bounds and the IBP lower bound $\underline{m}_{\text{IBP}}$ on the margin $z_y-z_{1-y}$.
+\item With those pre-activation bounds, compute the CROWN linear relaxation backwards from the margin and minimise it over $[\ell,u]$ to obtain $\underline{m}_{\text{CROWN}}$.
+\item Return \emph{certified} if $\max(\underline{m}_{\text{IBP}},\underline{m}_{\text{CROWN}})>0$.
+\end{enumerate}
+\textbf{Randomized smoothing (CERTIFY of \citet{cohen2019certified}).} Input: base network $h$, $x$, $\sigma$, $n_0$, $n$, $\alpha$.
+\begin{enumerate}
+\item Draw $n_0$ noisy copies $x+\eta$, $\eta\sim\mathcal{N}(0,\sigma^2I)$, and take the most frequent class $\hat c$.
+\item Draw $n$ further copies and count $k$ votes for $\hat c$; let $\underline{p}$ be the one-sided Clopper--Pearson lower confidence bound at level $1-\alpha$ \citep{clopper1934}.
+\item If $\underline{p}>1/2$, return $\hat c$ with radius $R=\sigma\,\Phi^{-1}(\underline{p})$; otherwise \emph{abstain}.
+\end{enumerate}
+
+\textbf{Giri et al.\ re-implementation: deviations.} We combine their Gaussian-noise and random-ablation training as described and certify an $\ell_2$ radius with the CERTIFY procedure above. Deviations: an MLP base classifier instead of their LightGBM; the nine EMBER groups instead of their finer groups of about 50 features; noise on every training sample; and $\sigma$ in our standardised units. The results are therefore a re-implementation, not a reproduction.
+
+\FloatBarrier
+\section{Full feature annotation}\label{app:annotation}
+Table~\ref{tab:annfull} gives the annotation of Section~\ref{sec:tm} for each of the \PsNUnits{} feature units, with the rule that decided it and the edits that changed the unit in the measured corpus. Units marked ``conservative, not observed'' were kept mutable or not increase-only by reasoning, which only enlarges the threat set.
+
+{\footnotesize
+\input{tables/tab_annotation_long.tex}
+}
+
+\FloatBarrier
+\section{Problem-space details}\label{app:ps}
+\textbf{Architectures.} Table~\ref{tab:editmaparch} repeats the edit map separately for the \PsNFilesPeSixtyFour{} PE32+ and the \PsNFilesPeThirtyTwo{} PE32 files. The groups touched are the same for both; the $\epsilon$ needed differs little. LIEF's builder fails on some PE32 files for import addition, so \PsNImportFail{} originals have no E4 variant.
+
+\textbf{Rebuild controls.} LIEF rewrites the whole file when it adds a section or an import. A plain rebuild without any edit changes a median of \PsEthreeRebuildGroupsMed{} groups, a rebuild with the import table \PsEfourRebuildGroupsMed. Relative to the rebuilt file, section injection itself still changes \PsEthreeOwnGroupsMed{} groups and import addition \PsEfourOwnGroupsMed, so the rebuild does not inflate their footprint.
+
+\textbf{Relocation flag.} In \PsNRelocArtefact{} files whose relocation table ends at the end of the file, LIEF reports no relocations until any byte is appended. The file's relocations do not change, but the feature does, so the flag is kept mutable.
+
+\textbf{Packing.} UPX packs \PsUpxDefaultPacked{} of the \PsNFiles{} originals with default settings; most refusals (\PsUpxGuardCf) are caused by Control Flow Guard. With \texttt{--force} it packs \PsUpxForcePacked. Packed files change features annotated immutable and are out of scope.
+
+\textbf{Extractor compatibility.} \XcNMatches{} corpus file also occurs in BODMAS, with an identical feature vector (\XcNMatchesIdentical{} of \XcNMatches). A LightGBM model trained on BODMAS (FPR \XcBodmasFpr\% on BODMAS test data) labels \XcBenignRate\% of the originals benign. \XcNFilesOutsideRange{} files have a value outside the range of all BODMAS rows, and \XcOutsideBandPct\% of feature entries lie outside the 1--99\% band of BODMAS benign files.
+
+\textbf{Interval rule of the edit families.} Table~\ref{tab:familyrule} compares the first interval rule (per-feature 95\% intervals) with the final one (structural treatment of name-hashed blocks, full fit-half range elsewhere). A file is covered only if every changed feature lies inside its interval, so per-feature 95\% intervals compound to almost no coverage for edits that change hundreds of features.
+
+\begin{table}[!htbp]
+\centering\small
+\caption{Edit map per architecture: files, groups changed (median and maximum) and median $\epsilon$ needed.}\label{tab:editmaparch}
+\resizebox{\textwidth}{!}{\input{tables/tab_edit_map_arch.tex}}
+\end{table}
+
+\begin{table}[!htbp]
+\centering\small
+\caption{Edit-family sets: support size and eval-half coverage (\%) of $T_f(t)$ under the first (95\% intervals) and the final interval rule.}\label{tab:familyrule}
+\resizebox{\textwidth}{!}{\input{tables/tab_family_rule.tex}}
+\end{table}
+
+\FloatBarrier
+\section{Grouping candidates and validation selection}\label{app:grouping}
+Table~\ref{tab:groupingval} lists every grouping candidate with the keep sizes whose ceiling allows $r\ge1$, evaluated on the validation part of the random split (seed 0, quick budgets) before any test evaluation. The score is the mean certified detection over the nine in-scope edit types at the $r$ each needs. Eligible candidates have validation accuracy within one point of the best; among them the highest score was selected. The last column is the largest gain of the exact certificate over the bound across $r$, which is negligible for every candidate.
+
+\begin{table}[!htbp]
+\centering\small
+\caption{Grouping candidates on the validation split (\%): groups, attackable groups, views, largest certifiable $r$, accuracy, FPR, score, number of edit types certified, eligibility, and the exact-minus-bound gain (points).}\label{tab:groupingval}
+\resizebox{\textwidth}{!}{\input{tables/tab_grouping_val.tex}}
+\end{table}
+
+\FloatBarrier
+\section{Tuning grids and per-seed results}\label{app:tuning}
+Table~\ref{tab:tuning} gives every grid point with its mean over the three cross-validation folds; the chosen setting is marked. Certified detection for per-view LightGBM is the mean over the nine edit types, for CROWN-IBP the mean over the four families over $T_f(1)$. Table~\ref{tab:perseed} gives the main metrics per family-split seed. Seed 0's training and validation families were used for tuning, so its test part is free of tuning optimism. Seeds 1 to 4, whose test parts may contain tuning families, show no consistent advantage over seed 0: seed 0 has the highest clean accuracy and the highest certified detection of the certified-training models, while seeds 1 to 4 certify more with MLP-view group ablation. %CHECK verified 2026-11-14 against the final macros
+
+\begin{table}[!htbp]
+\centering\small
+\caption{Tuning grids (grouped 3-fold cross-validation, fold means, \%). $\ast$: chosen setting.}\label{tab:tuning}
+\input{tables/tab_tuning.tex}
+\end{table}
+
+\begin{table}[!htbp]
+\centering\small
+\caption{Main metrics (\%) per family-split seed.}\label{tab:perseed}
+\resizebox{\textwidth}{!}{\input{tables/tab_per_seed.tex}}
+\end{table}
 
 \bibliographystyle{elsarticle-harv}
 \bibliography{refs}
