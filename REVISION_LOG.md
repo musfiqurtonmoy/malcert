@@ -635,7 +635,8 @@ carry a **Basis:** line saying what they were fixed from.
   [45.7, 64.4], MLP views main 36.6 [29.7, 43.5]; over the 9 edit types: main 20.3, second 43.7, EMBER 9.0, per-view
   LightGBM 30.6; over T_f(1): edit-aware 56.0 [49.0, 63.0], uniform and box 0.0; at ε = 0.05: box 73.1, uniform 72.6.
   Comparisons 3-1 (difference in points [interval], Holm p): 1 +56.0 [49.0, 62.9], 0.0001; 2 +0.5 [−0.8, 1.8], 0.34;
-  3 +11.3 [7.6, 15.1], 0.004; 4 +18.5 [8.4, 28.6], 0.021; 5 +62.6 [47.4, 77.8], 0.002; 6 −1.8 [−4.2, 0.6], 0.20.
+  3 +11.3 [7.6, 15.1], 0.004; 4 +18.5 [8.4, 28.6], 0.021; 5 +62.6 [47.4, 77.8], 0.002; 6 −1.8 [−4.1, 0.6], 0.20 (corrected 2026-11-14: first logged as −4.2, a hand-rounding
+  slip of −4.146; the macros were always −4.1).
   **C3 rule (2-15): met** (edit-aware > uniform-ball, interval above zero). The original C3 claim (box-constrained
   better than uniform at ε = 0.05) is **not supported** (comparison 2). Near-twins: 2.4% of test malware; removing
   them moves every main metric by ≤ 1.1 points. Random split (3 seeds) for contrast: LightGBM 99.5, per-view LightGBM
@@ -673,6 +674,15 @@ carry a **Basis:** line saying what they were fixed from.
   No LaTeX installation on this PC: **not compiled**. `paper_overleaf.zip` rebuilt (47 files).
   Deviations from the outline: `fig_eps_coverage` / `tab_eps_coverage` moved from §3 to §6.4 (they still hold quick-pilot
   certified values, log 1-18); `\PsNFilesAll` / `\PsNEditedInScopeAll` not needed.
+
+- **4-4** `[A4, A5, B4, A6]` **Author's fixes to abstract–§5.** LIEF sentence (EMBER authors' statement; BODMAS does not
+  document its version); tuning-optimism sentence (seed 0's training families can fall in the test part of seeds 1–4);
+  affiliation: Department of Mechatronics Engineering, RUET, Rajshahi ("Enngineering" in the request read as a typo);
+  runtime table resized; one interval macro per comparison `\Cmp<X>Int` (`stats.py`), used everywhere. Check of the
+  introduction against the stats output: the clean-accuracy interval is [−4.1, 0.6] (−4.146 raw); the hand-typed −4.2 in
+  `OUTLINE.md` and log 3-13 was wrong and is corrected; the manuscript always used the macro. Family-split near-twin share
+  now the 5-seed mean (`\NearTwinFamMal` / `Ben`), random-split values labelled seed 0; Definition 1 "the draft annotation
+  of this study"; abstract "comes close to it only at"; §2 "to our knowledge, mostly on random splits".
 
 ### 3g. Uniform-ball ε sweep (declared before any sweep run)
 - **3-16** `[A2, A3]` **Accuracy-matched comparison rule (plan 3g.4), declared before any sweep result.** Sweep:

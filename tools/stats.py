@@ -174,9 +174,16 @@ def main():
             for i, r in C.iterrows():
                 k = "Cmp" + "ABCDEF"[i]
                 N[k + "Diff"], N[k + "Lo"], N[k + "Hi"] = (f"{100 * r.mean_diff:.1f}", f"{100 * r.ci_lo:.1f}", f"{100 * r.ci_hi:.1f}")
-                N[k + "P"] = f"{r.p_holm:.3f}"
+                N[k + "P"] = f"{r.p_holm:.3f}" if r.p_holm >= 0.001 else "<0.001"
+                N[k + "Int"] = f"\\ensuremath{{[{100 * r.ci_lo:.1f},\\,{100 * r.ci_hi:.1f}]}}"   # the one interval macro
             nd = neardup(folders)
             nd.to_csv(os.path.join(res, "stats_neardup.csv"), index=False)
+            tw = nd[nd.model == "near_twin_share"]
+            N["NearTwinFamMal"], N["NearTwinFamBen"] = f"{100 * tw.tpr.mean():.1f}", f"{100 * tw.fpr.mean():.1f}"
+            q = nd[nd.model != "near_twin_share"].groupby(["model", "subset"])[["tpr", "acc"]].mean()
+            shift = [abs(q.loc[(m, "all"), c] - q.loc[(m, "no_near_twins"), c]) for m in q.index.levels[0]
+                     for c in ("tpr", "acc") if not np.isnan(q.loc[(m, "all"), c])]
+            N["NearTwinMaxShift"] = f"{100 * max(shift):.1f}"
     S = pd.DataFrame(out)
     S.to_csv(os.path.join(a.family[0], "stats_summary.csv"), index=False)
     # per-model macros: <Fam|Rand><Name> mean, ...Lo / ...Hi 95% interval (percent, 1 decimal)

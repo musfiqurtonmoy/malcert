@@ -17,9 +17,10 @@ Section 4 defines edit-aware training as the constraint-aware method. Optional s
 
 - The family-disjoint split is the main result everywhere. Random-split numbers appear only as a comparison with
   earlier work, and to show by how much the random split overstates.
-- Cost of certification: "\CmpFAbs{} points, not significant" with its interval
-  [\CmpFLo, \CmpFHi], Holm p = \CmpFP. **(new)** `\CmpFAbs` (absolute value of `\CmpFDiff`) in `stats.py`.
-- Box-constrained CROWN-IBP is reported as a **negative ablation**: +\CmpBDiff{} points [\CmpBLo, \CmpBHi], p = \CmpBP.
+- Cost of certification: "\CmpFAbs{} points, not significant" with its interval \CmpFInt, Holm p = \CmpFP.
+  Every comparison interval is written with its one macro `\Cmp<X>Int` (from `stats.py`), never assembled from
+  `Lo`/`Hi` by hand.
+- Box-constrained CROWN-IBP is reported as a **negative ablation**: +\CmpBDiff{} points \CmpBInt, p = \CmpBP.
 - Intervals, not "positive in every seed" or "N combined standard deviations"; say that 5 seeds give wide intervals.
 - Every L-infinity certified-training number is followed by its coverage (\PsEpsLeTrainPct\% of measured edits at ε = 0.05).
 
@@ -36,7 +37,8 @@ Section 4 defines edit-aware training as the constraint-aware method. Optional s
    - Headline detector, per-view LightGBM: 55.1% certified at r = 1 [45.7, 64.4], against 36.6% for MLP views
      (+18.5 [8.4, 28.6], p = 0.021). Under the group attack at r = 1 it detects 62.6%, where plain LightGBM detects 0%
      (+62.6 [47.4, 77.8], p = 0.002).
-   - Clean accuracy 92.8% against 94.6%: 1.8 points, not significant [−4.2, 0.6], p = 0.20.
+   - Clean accuracy 92.8% against 94.6%: 1.8 points, not significant, \CmpFInt (= [−4.1, 0.6]; an earlier hand-typed
+     "−4.2" here was a rounding slip), p = 0.20.
    - Answers A2, A3, B5.
 3. **Edit-aware certified training** (wording per REVISION_PLAN "3g result and C3 wording").
    - Threat sets T_f(t) are built from the measured edit families. Edit-aware CROWN-IBP certifies \SwEditCert\% of
