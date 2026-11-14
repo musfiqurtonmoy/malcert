@@ -41,6 +41,7 @@ The plan was trimmed to the least work that still answers every comment. Do not 
 | A5, B4 | Family leakage and duplicates | 3b |
 | A5, B3 | Subset justification, generalizability | 3e, 3f |
 | A5, B7, Am4, Am5 | Temporal windows, drift vs composition, update frequency | 3c |
+| A2 (fairness) | Uniform-ball baseline across training budgets | 3g |
 | A6, B8 | Reproducibility, editorial placeholders | 4b, 4c |
 | Am1–Am3, Am6, Am7 | Minor items | 1f, 4 |
 
@@ -307,6 +308,18 @@ All Stage 3 experiments use the 30K subset, which also keeps memory within the P
 - The paragraph states the single-dataset limit plainly and names EMBER 2018 and SOREL-20M as future work.
 
 ---
+
+### 3g. Uniform-ball ε sweep: fairness check for the C3 comparison (added 2026-11-14, before Stage 4 results text)
+**Why.** Uniform-ball CROWN-IBP certifies 0% over T_f(1), but it was trained at ε = 0.1 while the edit sets need far larger changes on a few features. A reviewer may call the baseline a strawman. This sweep shows what uniform-ball training achieves at every training budget, including budgets large enough to contain the edit sets.
+
+1. **Containment radius.** For each family f, compute ε_f = the smallest uniform ε whose ball contains T_f(1), i.e. the largest |interval endpoint| over its support in standardized units. Report ε_f per family and their maximum.
+2. **Sweep.** Train uniform-ball CROWN-IBP at ε_train ∈ {0.05, 0.1, 0.2, 0.5, 1, 2, 4}, plus max ε_f if larger and trainable. Family split, seeds 0–4. All other settings as tuned in 2i; only ε varies, and nothing is selected from the sweep.
+   - If training collapses (a constant classifier), record it as such.
+3. **Report per ε_train:** clean accuracy, FPR, certified detection over T_f(1) (mean over the four families and per family), and certified detection at its own ε_train. Edit-aware CROWN-IBP appears as a reference point.
+4. **Accuracy-matched comparison (declared now, before any sweep result).** Compare edit-aware CROWN-IBP with the sweep model whose mean clean accuracy is closest to edit-aware's (ties: the larger ε). Use a paired difference in certified detection over T_f(1), with a 95% interval. This is a secondary analysis, not part of the Holm family of six.
+5. **Reporting rule.** Report whatever the sweep shows. If some ε_train reaches certified detection over T_f(1) comparable to edit-aware's at similar accuracy, say so plainly and revise the C3 wording in Stage 4.
+6. **Output.** `tools/eps_sweep.py`, results in `results_eps_sweep/`, one figure (clean accuracy and certified detection over T_f(1) against ε_train, edit-aware as a marker), macros prefixed `Sw`.
+7. **Cost.** Seven ε values × 5 seeds of one small network; expect about 1–1.5 h. The user runs it from a terminal. Do not change code while it runs.
 
 ## Stage 4: manuscript, reproducibility, final audit
 
